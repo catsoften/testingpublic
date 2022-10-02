@@ -168,6 +168,17 @@ class LuaScriptInterface: public CommandInterface
 	static int graphics_getColors(lua_State * l);
 	static int graphics_getHexColor(lua_State * l);
 
+	void initRecordAPI();
+	static int record_record(lua_State * l);
+	static int record_pause(lua_State * l);
+	static int record_area(lua_State * l);
+	static int record_fps(lua_State * l);
+	static int record_scale(lua_State * l);
+	static int record_format(lua_State * l);
+	static int record_buffer(lua_State * l);
+	static int record_writeThread(lua_State * l);
+	static int record_quality(lua_State * l);
+
 	void initFileSystemAPI();
 	static int fileSystem_list(lua_State * l);
 	static int fileSystem_exists(lua_State * l);

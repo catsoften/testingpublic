@@ -1551,9 +1551,19 @@ ByteString GameController::TakeScreenshot(int captureUI, int fileType)
 	return gameView->TakeScreenshot(captureUI, fileType);
 }
 
+void GameController::ShowRecord()
+{
+	gameView->ShowRecord();
+}
+
 int GameController::Record(bool record)
 {
 	return gameView->Record(record);
+}
+
+RecordState* GameController::GetRecordState()
+{
+	return gameView->GetRecordState();
 }
 
 void GameController::NotifyAuthUserChanged(Client * sender)

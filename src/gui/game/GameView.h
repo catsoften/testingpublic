@@ -7,6 +7,8 @@
 #include "common/String.h"
 #include "gui/interface/Window.h"
 #include "simulation/Sample.h"
+#include "record/RecordController.h"
+#include "record/RecordMenu.h"
 
 enum DrawMode
 {
@@ -15,7 +17,7 @@ enum DrawMode
 
 enum SelectMode
 {
-	SelectNone, SelectStamp, SelectCopy, SelectCut, PlaceSave
+	SelectNone, SelectStamp, SelectCopy, SelectCut, PlaceSave, SelectRecord
 };
 
 namespace ui
@@ -73,9 +75,8 @@ private:
 	bool doScreenshot;
 	int screenshotIndex;
 	time_t lastScreenshotTime;
-	int recordingIndex;
-	bool recording;
-	int recordingFolder;
+	RecordState recordState;
+	RecordController recordCon;
 
 	ui::Point currentPoint, lastPoint;
 	GameController * c;
@@ -159,7 +160,9 @@ public:
 	ui::Point GetPlaceSaveOffset() { return placeSaveOffset; }
 	void SetPlaceSaveOffset(ui::Point offset) { placeSaveOffset = offset; }
 	ByteString TakeScreenshot(int captureUI, int fileType);
+	void ShowRecord();
 	int Record(bool record);
+	RecordState* GetRecordState();
 
 	//all of these are only here for one debug lines
 	bool GetMouseDown() { return isMouseDown; }

@@ -154,6 +154,12 @@ zlib_dep = dependency('zlib', static: is_static)
 sdl2_dep = dependency('sdl2', static: is_static)
 
 project_link_args = []
+if host_platform == 'linux' or host_platform == 'darwin'
+	project_link_args += [ '../libwebp/libwebp.a', '../libwebp/libwebpdemux.a', '../libwebp/libwebpmux.a' ]
+endif
+if host_platform == 'windows'
+	project_link_args += [ '../libwebp/libwebp.lib', '../libwebp/libwebpdemux.lib', '../libwebp/libwebpmux.lib' ]
+endif
 project_c_args = []
 project_cpp_args = []
 if is_msvc

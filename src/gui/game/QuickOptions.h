@@ -50,3 +50,12 @@ public:
 	bool GetToggle() override;
 	void perform() override;
 };
+
+class RecordShowOption: public QuickOption
+{
+	GameController * c;
+public:
+	RecordShowOption(GameModel * m, GameController * c_);
+	bool GetToggle() override;
+	void perform() override;
+};

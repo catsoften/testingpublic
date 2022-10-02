@@ -195,9 +195,7 @@ GameView::GameView():
 	doScreenshot(false),
 	screenshotIndex(1),
 	lastScreenshotTime(0),
-	recordingIndex(0),
-	recording(false),
-	recordingFolder(0),
+	recordCon(recordState),
 	currentPoint(ui::Point(0, 0)),
 	lastPoint(ui::Point(0, 0)),
 	ren(NULL),
@@ -940,28 +938,34 @@ ByteString GameView::TakeScreenshot(int captureUI, int fileType)
 	return filename;
 }
 
+void GameView::ShowRecord()
+{
+	new RecordMenu(recordState, recordCon);
+}
+
 int GameView::Record(bool record)
 {
-	if (!record)
+	auto& rs = recordState;
+	if (rs.CanStopStart())
 	{
-		recording = false;
-		recordingFolder = 0;
-	}
-	else if (!recording)
-	{
-		// block so that the return value is correct
-		bool record = ConfirmPrompt::Blocking("Recording", "You're about to start recording all drawn frames. This will use a load of disk space.");
-		if (record)
+		if (!record)
 		{
-			time_t startTime = time(NULL);
-			recordingFolder = startTime;
-			Platform::MakeDirectory("recordings");
-			Platform::MakeDirectory(ByteString::Build("recordings", PATH_SEP, recordingFolder).c_str());
-			recording = true;
-			recordingIndex = 0;
+			if (rs.IsActive())
+			{
+				recordCon.StopRecording();
+			}
+		}
+		else if (!rs.IsActive())
+		{
+			recordCon.StartRecording();
 		}
 	}
-	return recordingFolder;
+	return rs.file;
+}
+
+RecordState* GameView::GetRecordState()
+{
+	return &recordState;
 }
 
 void GameView::updateToolButtonScroll()
@@ -1150,6 +1154,7 @@ void GameView::OnMouseUp(int x, int y, unsigned button)
 		isMouseDown = false;
 		if (selectMode != SelectNone)
 		{
+			auto& rs = recordState;
 			if (button == SDL_BUTTON_LEFT && selectPoint1.X != -1 && selectPoint1.Y != -1 && selectPoint2.X != -1 && selectPoint2.Y != -1)
 			{
 				if (selectMode == PlaceSave)
@@ -1184,9 +1189,21 @@ void GameView::OnMouseUp(int x, int y, unsigned button)
 						c->CutRegion(ui::Point(x1, y1), ui::Point(x2, y2));
 					else if (selectMode == SelectStamp)
 						c->StampRegion(ui::Point(x1, y1), ui::Point(x2, y2));
+					else if (selectMode == SelectRecord)
+					{
+						rs.x1 = x1;
+						rs.y1 = y1;
+						rs.x2 = x2;
+						rs.y2 = y2;
+						rs.RecalcPos(true);
+					}
 				}
 			}
 			selectMode = SelectNone;
+			if (rs.select == 2)
+			{
+				rs.select = 3;
+			}
 			return;
 		}
 
@@ -1394,6 +1411,8 @@ void GameView::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl,
 	case SDL_SCANCODE_R:
 		if (ctrl)
 			c->ReloadSim();
+		else
+			ShowRecord();
 		break;
 	case SDL_SCANCODE_E:
 		c->OpenElementSearch();
@@ -1727,6 +1746,20 @@ void GameView::OnTick(float dt)
 		toolTipPresence -= int(dt)>0?int(dt):1;
 		if(toolTipPresence<0)
 			toolTipPresence = 0;
+	}
+	if (recordState.select == 1)
+	{
+		selectPoint1 = selectPoint2 = ui::Point(-1, -1);
+		selectMode = SelectRecord;
+		isMouseDown = false;
+		buttonTip = "\x0F\xEF\xEF\020Click-and-drag to specify an area to record (right click = cancel)";
+		buttonTipShow = 120;
+		recordState.select = 2;
+	}
+	else if (recordState.select == 3)
+	{
+		ShowRecord();
+		recordState.select = 0;
 	}
 	c->Update();
 }
@@ -2140,14 +2173,14 @@ void GameView::OnDraw()
 			TakeScreenshot(0, 0);
 		}
 
-		if(recording)
+		auto& rs = recordState;
+		if(rs.stage == RecordStage::Recording && !rs.halt)
 		{
-			VideoBuffer screenshot(ren->DumpFrame());
-			std::vector<char> data = format::VideoBufferToPPM(screenshot);
-
-			ByteString filename = ByteString::Build("recordings", PATH_SEP, recordingFolder, PATH_SEP, "frame_", Format::Width(recordingIndex++, 6), ".ppm");
-
-			Client::Ref().WriteFile(data, filename);
+			if (++rs.ratioFrame >= rs.ratio)
+			{
+				recordCon.WriteFrame(ren);
+				rs.ratioFrame = 0;
+			}
 		}
 
 		if (logEntries.size())
@@ -2172,13 +2205,34 @@ void GameView::OnDraw()
 		}
 	}
 
-	if (recording)
+	auto& rs = recordState;
+	if (rs.stage != RecordStage::Stopped)
 	{
-		String sampleInfo = String::Build("#", screenshotIndex, " ", String(0xE00E), " REC");
-
+		int symbol;
+		String text;
+		int colr, colg, colb;
+		switch (rs.stage)
+		{
+			case RecordStage::Paused:
+				symbol = 0xE010;
+				text = " PAS";
+				colr = colg = colb = 127;
+				break;
+			case RecordStage::Writing:
+				symbol = 0xE002;
+				text = " WRT";
+				colr = 63, colg = 255, colb = 127;
+				break;
+			default:
+				symbol = 0xE00E;
+				text = " REC";
+				colr = 255, colg = 50, colb = 20;
+				break;
+		}
+		String sampleInfo = String::Build("#", rs.file, " ", String(symbol), text);
 		int textWidth = Graphics::textwidth(sampleInfo);
 		g->fillrect(XRES-20-textWidth, 12, textWidth+8, 15, 0, 0, 0, 127);
-		g->drawtext(XRES-16-textWidth, 16, sampleInfo, 255, 50, 20, 255);
+		g->drawtext(XRES-16-textWidth, 16, sampleInfo, colr, colg, colb, 255);
 	}
 	else if(showHud)
 	{

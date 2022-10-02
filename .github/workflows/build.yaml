@@ -55,6 +55,16 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: '3.10'
+      - if: matrix.bsh_build_platform == 'linux'
+        run: curl -o libwebp.tar.gz 'https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.2.4-linux-x86-64.tar.gz' && gunzip libwebp.tar.gz && tar -xf libwebp.tar && mkdir libwebp && mv libwebp-1.2.4-linux-x86-64/lib/* ./libwebp/
+      - if: matrix.bsh_build_platform == 'darwin' && matrix.bsh_host_arch == 'x86_64'
+        run: curl -o libwebp.tar.gz 'https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.2.4-mac-x86-64.tar.gz' && gunzip libwebp.tar.gz && tar -xf libwebp.tar && mkdir libwebp && mv libwebp-1.2.4-mac-x86-64/lib/* ./libwebp/
+      - if: matrix.bsh_build_platform == 'darwin' && matrix.bsh_host_arch == 'aarch64'
+        run: curl -o libwebp.tar.gz 'https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.2.4-mac-arm64.tar.gz' && gunzip libwebp.tar.gz && tar -xf libwebp.tar && mkdir libwebp && mv libwebp-1.2.4-mac-arm64/lib/* ./libwebp/
+      - if: matrix.bsh_build_platform == 'windows' && matrix.bsh_host_arch == 'x86'
+        run: curl.exe -o libwebp.zip 'https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.0.3-windows-x86.zip' && Expand-Archive libwebp.zip && move libwebp\libwebp-1.0.3-windows-x86\lib\* libwebp\
+      - if: matrix.bsh_build_platform == 'windows' && matrix.bsh_host_arch == 'x86_64'
+        run: curl.exe -o libwebp.zip 'https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.2.4-windows-x64.zip' && Expand-Archive libwebp.zip && move libwebp\libwebp-1.2.4-windows-x64\lib\* libwebp\
       - run: python -m pip install meson ninja
       - if: matrix.bsh_build_platform == 'darwin'
         run: brew install pkg-config coreutils binutils bash

@@ -21,6 +21,7 @@ class SaveFile;
 class Notification;
 class GameModel;
 class GameView;
+struct RecordState;
 class Snapshot;
 class OptionsController;
 class LocalBrowserController;
@@ -168,7 +169,9 @@ public:
 	bool IsValidElement(int type);
 	String WallName(int type);
 	ByteString TakeScreenshot(int captureUI, int fileType);
+	void ShowRecord();
 	int Record(bool record);
+	RecordState* GetRecordState();
 
 	void ResetAir();
 	void ResetSpark();

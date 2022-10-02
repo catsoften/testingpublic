@@ -1,3 +1,26 @@
+TPT Record Mod - v1.0+snapshot-241
+==========================
+
+This mod replaces the (undocumented) vanilla tpt.record() lua function with a customizable recording GUI. The menu can be access by clicking the R button below the console button, or by using the R shortcut key.
+
+Supported Formats
+
+* Gif
+* WebP
+* Old (same as original .ppm spam recordings)
+
+Other Features:
+* Selectable recording area
+* Adjustable FPS
+* Pixel scaling + zoom window imitation
+* Buffering to ram or disk to improve game performance
+* Multithreaded writing
+* Pausing
+* Built-in help menu
+* Lua API for controlling all settings
+
+**Begin default TPT readme**
+
 The Powder Toy - July 2021
 ==========================
 
@@ -52,6 +75,8 @@ Libraries and other assets used
 * [mbedtls](https://www.trustedfirmware.org/projects/mbed-tls/)
 * [SDL](https://libsdl.org/)
 * [zlib](https://www.zlib.net/)
+* [msf_gif (Record Mod)](https://github.com/notnullnotvoid/msf_gif)
+* [libwebp (Record Mod)](https://developers.google.com/speed/webp/download)
 
 Instructions
 ===========================================================================
@@ -106,7 +131,8 @@ Controls
 | Shift + Mouse scroll    | Change horizontal brush size                                    |
 | Shift + R               | Horizontal mirror for selected area when pasting stamps         |
 | Ctrl + Shift + R        | Vertical mirror for selected area when pasting stamps           |
-| R                       | Rotate selected area counterclockwise when pasting stamps       |
+| R (pasting stamp)       | Rotate selected area counterclockwise when pasting stamps       |
+| R                       | Open record menu                                                |
 
 Command Line
 ---------------------------------------------------------------------------

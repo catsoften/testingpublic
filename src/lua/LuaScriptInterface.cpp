@@ -49,6 +49,7 @@
 #include "gui/game/GameModel.h"
 #include "gui/game/Tool.h"
 #include "gui/game/Brush.h"
+#include "gui/game/record/RecordController.h"
 
 #ifndef WIN
 #include <unistd.h>
@@ -156,6 +157,7 @@ LuaScriptInterface::LuaScriptInterface(GameController * c, GameModel * m):
 	initRendererAPI();
 	initElementsAPI();
 	initGraphicsAPI();
+	initRecordAPI();
 	initFileSystemAPI();
 	initPlatformAPI();
 	initEventAPI();
@@ -215,7 +217,6 @@ LuaScriptInterface::LuaScriptInterface(GameController * c, GameModel * m):
 		{"setwindowsize",&luatpt_setwindowsize},
 		{"watertest",&luatpt_togglewater},
 		{"screenshot",&luatpt_screenshot},
-		{"record",&luatpt_record},
 		{"element",&luatpt_getelement},
 		{"get_clipboard", &platform_clipboardCopy},
 		{"set_clipboard", &platform_clipboardPaste},
@@ -3756,6 +3757,312 @@ int LuaScriptInterface::graphics_getHexColor(lua_State * l)
 
 	lua_pushinteger(l, color);
 	return 1;
+}
+
+void LuaScriptInterface::initRecordAPI()
+{
+	//Methods
+	struct luaL_Reg recordAPIMethods [] = {
+		{"record", record_record},
+		{"pause", record_pause},
+		{"area", record_area},
+		{"fps", record_fps},
+		{"scale", record_scale},
+		{"format", record_format},
+		{"buffer", record_buffer},
+		{"writeThread", record_writeThread},
+		{"compression", record_quality},
+		{NULL, NULL}
+	};
+	luaL_register(l, "record", recordAPIMethods);
+
+	//rec shortcut
+	lua_getglobal(l, "record");
+	lua_setglobal(l, "rec");
+}
+
+int LuaScriptInterface::record_record(lua_State* l)
+{
+	auto& rs = *luacon_controller->GetRecordState();
+	bool newRecording = lua_toboolean(l, -1);
+	if (lua_gettop(l))
+	{
+		if (!lua_isboolean(l, -1))
+		{
+			return luaL_typerror(l, 1, lua_typename(l, LUA_TBOOLEAN));
+		}
+		else if (!rs.CanStopStart())
+		{
+			return luaL_error(l, "Cannot start recording until writing is complete");
+		}
+		else if (newRecording && rs.IsActive())
+		{
+			return luaL_error(l, "Recording is already active");
+		}
+		else if (!newRecording && !rs.IsActive())
+		{
+			return luaL_error(l, "Recording is not active");
+		}
+		else
+		{
+			luacon_controller->Record(newRecording);
+			return 0;
+		}
+	}
+	else
+	{
+		lua_pushboolean(l, rs.IsActive());
+		return 1;
+	}
+}
+
+int LuaScriptInterface::record_pause(lua_State* l)
+{
+	auto& rs = *luacon_controller->GetRecordState();
+	if (lua_gettop(l))
+	{
+		if (!lua_isboolean(l, -1))
+		{
+			return luaL_typerror(l, 1, lua_typename(l, LUA_TBOOLEAN));
+		}
+		else if (!rs.IsActive())
+		{
+			return luaL_error(l, "Recording is not active");
+		}
+		else
+		{
+			rs.stage = lua_toboolean(l, -1) ? RecordStage::Paused : RecordStage::Recording;
+			return 0;
+		}
+	}
+	else
+	{
+		lua_pushboolean(l, rs.stage == RecordStage::Paused);
+		return 1;
+	}
+}
+
+int LuaScriptInterface::record_area(lua_State* l)
+{
+	auto& rs = *luacon_controller->GetRecordState();
+	int argCount = lua_gettop(l);
+	if (!rs.CanEdit())
+	{
+		return luaL_error(l, "Cannot change settings while recording or writing");
+	}
+	else if (rs.format == RecordFormat::Old)
+	{
+		return luaL_error(l, "Record area cannot be used with current format");
+	}
+	else if (argCount >= 4)
+	{
+		int x1 = luaL_checkinteger(l, 1);
+		int y1 = luaL_checkinteger(l, 2);
+		int x2 = luaL_checkinteger(l, 3);
+		int y2 = luaL_checkinteger(l, 4);
+		rs.x1 = x1;
+		rs.y1 = y1;
+		rs.x2 = x2;
+		rs.y2 = y2;
+		rs.RecalcPos();
+		return 0;
+	}
+	else if (argCount == 0)
+	{
+		lua_pushinteger(l, rs.x1);
+		lua_pushinteger(l, rs.y1);
+		lua_pushinteger(l, rs.x2);
+		lua_pushinteger(l, rs.y2);
+		return 4;
+	}
+	else
+	{
+		return luaL_error(l, "Not enough arguments");
+	}
+}
+
+int LuaScriptInterface::record_fps(lua_State* l)
+{
+	auto& rs = *luacon_controller->GetRecordState();
+	if (lua_gettop(l))
+	{
+		int newFPS = luaL_checkinteger(l, 1);
+		if (!rs.CanEdit())
+		{
+			return luaL_error(l, "Cannot change settings while recording or writing");
+		}
+		else if (newFPS < 1 || newFPS > 60)
+		{
+			return luaL_error(l, "Invalid record FPS (must be from 1 to 60)");
+		}
+		else
+		{
+			rs.fps = newFPS;
+			return 0;
+		}
+	}
+	else
+	{
+		lua_pushinteger(l, rs.fps);
+		return 1;
+	}
+}
+
+int LuaScriptInterface::record_scale(lua_State* l)
+{
+	auto& rs = *luacon_controller->GetRecordState();
+	if (lua_gettop(l))
+	{
+		int newScale = luaL_checkinteger(l, 1);
+		if (!rs.CanEdit())
+		{
+			return luaL_error(l, "Cannot change settings while recording or writing");
+		}
+		else if (rs.format == RecordFormat::Old)
+		{
+			return luaL_error(l, "Scale cannot be used with current format");
+		}
+		else if (newScale == 1 || newScale == 2 || newScale == 4 || newScale == 8)
+		{
+			rs.scale = newScale;
+			rs.spacing = false;
+			return 0;
+		}
+		else if (newScale == -8)
+		{
+			rs.scale = 8;
+			rs.spacing = true;
+			return 0;
+		}
+		else
+		{
+			return luaL_error(l, "Invalid record scale");
+		}
+	}
+	else
+	{
+		lua_pushinteger(l, (rs.spacing ? -1 : 1) * rs.scale);
+		return 1;
+	}
+}
+
+int LuaScriptInterface::record_format(lua_State* l)
+{
+	auto& rs = *luacon_controller->GetRecordState();
+	if (lua_gettop(l))
+	{
+		int newFormat = luaL_checkinteger(l, 1);
+		if (!rs.CanEdit())
+		{
+			return luaL_error(l, "Cannot change settings while recording or writing");
+		}
+		else if (newFormat < 0 || newFormat > 2)
+		{
+			return luaL_error(l, "Invalid record format");
+		}
+		else
+		{
+			rs.format = RecordFormat(newFormat);
+			return 0;
+		}
+	}
+	else
+	{
+		lua_pushinteger(l, (int)rs.format);
+		return 1;
+	}
+}
+
+int LuaScriptInterface::record_buffer(lua_State* l)
+{
+	auto& rs = *luacon_controller->GetRecordState();
+	if (lua_gettop(l))
+	{
+		int newBuffer = luaL_checkinteger(l, 1);
+		if (!rs.CanEdit())
+		{
+			return luaL_error(l, "Cannot change settings while recording or writing");
+		}
+		else if (newBuffer < 0 || newBuffer > 2)
+		{
+			return luaL_error(l, "Invalid record buffer mode");
+		}
+		else if (rs.format == RecordFormat::Old)
+		{
+			return luaL_error(l, "Buffer cannot be used with current format");
+		}
+		else
+		{
+			rs.buffer = RecordBuffer(newBuffer);
+			return 0;
+		}
+	}
+	else
+	{
+		lua_pushinteger(l, (int)rs.buffer);
+		return 1;
+	}
+}
+
+int LuaScriptInterface::record_writeThread(lua_State* l)
+{
+	auto& rs = *luacon_controller->GetRecordState();
+	if (lua_gettop(l))
+	{
+		if (!lua_isboolean(l, -1))
+		{
+			return luaL_typerror(l, 1, lua_typename(l, LUA_TBOOLEAN));
+		}
+		else if (!rs.CanEdit())
+		{
+			return luaL_error(l, "Cannot change settings while recording or writing");
+		}
+		else if (rs.buffer == RecordBuffer::Off)
+		{
+			return luaL_error(l, "Cannot use write thread with buffer disabled");
+		}
+		else
+		{
+			rs.writeThread = lua_toboolean(l, -1);
+			return 0;
+		}
+	}
+	else
+	{
+		lua_pushboolean(l, rs.writeThread);
+		return 1;
+	}
+}
+
+int LuaScriptInterface::record_quality(lua_State* l)
+{
+	auto& rs = *luacon_controller->GetRecordState();
+	if (lua_gettop(l))
+	{
+		int newQuality = luaL_checkinteger(l, 1);
+		if (!rs.CanEdit())
+		{
+			return luaL_error(l, "Cannot change settings while recording or writing");
+		}
+		else if (newQuality < 0 || newQuality > 10)
+		{
+			return luaL_error(l, "Invalid record compression value");
+		}
+		else if (rs.format != RecordFormat::WebP)
+		{
+			return luaL_error(l, "Compression settings cannot be used with current format");
+		}
+		else
+		{
+			rs.quality = newQuality;
+			return 0;
+		}
+	}
+	else
+	{
+		lua_pushinteger(l, rs.quality);
+		return 1;
+	}
 }
 
 void LuaScriptInterface::initFileSystemAPI()

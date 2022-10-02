@@ -98,3 +98,17 @@ void ConsoleShowOption::perform()
 {
 	c->ShowConsole();
 }
+
+RecordShowOption::RecordShowOption(GameModel * m, GameController * c_):
+QuickOption("R", "Show Record Menu \bg(r)", m, Toggle)
+{
+	c = c_;
+}
+bool RecordShowOption::GetToggle()
+{
+	return 0;
+}
+void RecordShowOption::perform()
+{
+	c->ShowRecord();
+}
