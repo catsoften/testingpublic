@@ -2176,7 +2176,12 @@ void GameView::OnDraw()
 		auto& rs = recordState;
 		if(rs.stage == RecordStage::Recording && !rs.halt)
 		{
-			if (++rs.ratioFrame >= rs.ratio)
+			if (rs.bufferLimit != 0 && rs.BufferSize() > rs.bufferLimit)
+			{
+				recordCon.StopRecording();
+				new InformationMessage("Buffer Limit Reached", "Recording automatically stopped", false);
+			}
+			else if (++rs.ratioFrame >= rs.ratio)
 			{
 				recordCon.WriteFrame(ren);
 				rs.ratioFrame = 0;
@@ -2422,6 +2427,8 @@ void GameView::OnDraw()
 				fpsInfo << " Parts: " << ren->foundElements << "/" << sample.NumParts;
 			else
 				fpsInfo << " Parts: " << sample.NumParts;
+			if (rs.buffer != RecordBuffer::Off && (rs.IsActive() || rs.stage == RecordStage::Writing))
+				fpsInfo << " Buffer: " << rs.BufferSize() << " MB";
 		}
 		if (c->GetReplaceModeFlags()&REPLACE_MODE)
 			fpsInfo << " [REPLACE MODE]";

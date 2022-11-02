@@ -153,7 +153,7 @@ void FileBrowserActivity::DeleteSave(SaveFile * file)
 
 void FileBrowserActivity::RenameSave(SaveFile * file)
 {
-	ByteString newName = TextPrompt::Blocking("Rename", "Change save name", file->GetDisplayName(), "", 0).ToUtf8();
+	ByteString newName = TextPrompt::Blocking("Rename", "Change save name", file->GetDisplayName(), ui::Textbox::ValidInput::All, "", 0).ToUtf8();
 	if (newName.length())
 	{
 		newName = directory + PATH_SEP + newName + ".cps";

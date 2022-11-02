@@ -3770,6 +3770,7 @@ void LuaScriptInterface::initRecordAPI()
 		{"scale", record_scale},
 		{"format", record_format},
 		{"buffer", record_buffer},
+		{"bufferLimit", record_bufferLimit},
 		{"writeThread", record_writeThread},
 		{"compression", record_quality},
 		{NULL, NULL}
@@ -4000,6 +4001,33 @@ int LuaScriptInterface::record_buffer(lua_State* l)
 	else
 	{
 		lua_pushinteger(l, (int)rs.buffer);
+		return 1;
+	}
+}
+
+int LuaScriptInterface::record_bufferLimit(lua_State* l)
+{
+	auto& rs = *luacon_controller->GetRecordState();
+	if (lua_gettop(l))
+	{
+		int newLimit = luaL_checkinteger(l, 1);
+		if (!rs.CanEdit())
+		{
+			return luaL_error(l, "Cannot change settings while recording or writing");
+		}
+		else if (newLimit < 0)
+		{
+			return luaL_error(l, "Invalid buffer limit (must be zero or greater)");
+		}
+		else
+		{
+			rs.bufferLimit = std::min(newLimit, 32768);
+			return 0;
+		}
+	}
+	else
+	{
+		lua_pushinteger(l, rs.bufferLimit);
 		return 1;
 	}
 }

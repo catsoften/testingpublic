@@ -18,6 +18,11 @@ bool RecordState::CanEdit()
 	return stage == RecordStage::Stopped;
 }
 
+int RecordState::BufferSize()
+{
+	return ((x2 - x1) * scale * (y2 - y1) * scale * 4 * (nextFrame - frame + 1)) / 1048576;
+}
+
 void RecordState::TogglePause()
 {
 	if (stage == RecordStage::Paused)
@@ -53,6 +58,7 @@ void RecordState::Clear()
 {
 	format = RecordFormat::Gif;
 	buffer = RecordBuffer::Ram;
+	bufferLimit = 0;
 	writeThread = false; // Dont trust that enough to be on by default
 	quality = 7;
 	fps = 60;

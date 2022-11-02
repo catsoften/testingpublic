@@ -15,6 +15,7 @@
 #include "gui/dialogues/InformationMessage.h"
 #include "gui/dialogues/ErrorMessage.h"
 #include "gui/dialogues/ConfirmPrompt.h"
+#include "gui/dialogues/TextPrompt.h"
 
 #include <cmath>
 #include <algorithm>
@@ -78,7 +79,7 @@ void RecordMenu::StateChanged()
 		rs.RecalcPos();
 	}
 	bool positionChanged = rs.x1 != 0 || rs.y1 != 0 || rs.x2 != XRES || rs.y2 != YRES;
-	selectButton->Enabled = comEn && rs.format != RecordFormat::Old;
+	selectButton->Enabled = rs.format != RecordFormat::Old && comEn;
 	selectButton->Appearance.BackgroundInactive = positionChanged ? ui::Colour(47, 47, 23) : ui::Colour(0, 0, 0);
 	selectButton->Appearance.BackgroundHover = positionChanged ? ui::Colour(63, 63, 31) : ui::Colour(20, 20, 20);
 
@@ -123,6 +124,24 @@ void RecordMenu::StateChanged()
 	bufferDropdown->Enabled = comEn && allowScaleBuffer;
 	bufferDropdown->SetOption(rs.buffer);
 	bufferDropdown->Appearance = allowScaleBuffer ? dropApp : dropdownDisabled;
+
+	// Buffer Usage Label
+	if (rs.buffer == RecordBuffer::Off)
+	{
+		bufferUsageLabel->SetText("Buffer not enabled");
+		bufferUsageLabel->SetTextColour(ui::Colour(100, 100, 100));
+	}
+	else
+	{
+		int usage = ((rs.x2 - rs.x1) * rs.scale * (rs.y2 - rs.y1) * rs.scale * rs.fps * 4) / 1048576; // MB/sec;
+		bufferUsageLabel->SetText(usage ? String::Build("Usage: ", usage, " MB/sec") : "Usage: <1 MB/sec");
+		bufferUsageLabel->SetTextColour(usage > 100 && comEn ? ui::Colour(255, 63, 63) : comCl);
+	}
+
+	// Buffer Usage Button
+	bufferUsageButton->Enabled = rs.buffer != RecordBuffer::Off && comEn;
+	bufferUsageButton->Appearance.BackgroundInactive = rs.bufferLimit ? ui::Colour(47, 47, 23) : ui::Colour(0, 0, 0);
+	bufferUsageButton->Appearance.BackgroundHover = rs.bufferLimit ? ui::Colour(63, 63, 31) : ui::Colour(20, 20, 20);
 
 	// Write Thread Label
 	writeThreadLabel->SetTextColour(rs.buffer == RecordBuffer::Off ? ui::Colour(100, 100, 100) : comCl);
@@ -195,10 +214,7 @@ void RecordMenu::ExitSetRecord()
 		{
 			con.StartRecording();
 		}
-		else
-		{
-			rs.stage = newStage;
-		}
+		rs.stage = newStage;
 	}
 	con.SetCallback(nullptr);
 	rs.halt = false;
@@ -219,7 +235,7 @@ void RecordMenu::OnDraw()
 }
 
 RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
-	ui::Window(ui::Point(-1, -1), ui::Point(160, 186)),
+	ui::Window(ui::Point(-1, -1), ui::Point(160, 206)),
 	con(recordCon),
 	state(recordState)
 {
@@ -247,6 +263,9 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 			"Output image format. WebP is much slower at processing frames with long recordings. Gif framerate may be incorrect due to precision limitations (10ms increments). Old disables all settings except FPS.\n\bo",
 			"Buffer:\n\bw\t",
 			"Stores image data before processing to improve performance while recording. Final image created after recording stops. Ram stores data in memory and is fast, but may use large amounts of ram, especially with the scale option. Disk temporarily stores data in the recordings folder. Size depends on area and scale options.\n\bo",
+			"Buffer Usage/Limit:\n\bl\t",
+			"*** Limiter does not account for memory usage of other programs ***\n\bw\t",
+			"Usage shows amount of memory or disk space used for each second of recording with the current settings. Limiter will automatically stop the recording if the buffer is about to exceed this size.\n\bo",
 			"Write Thread:\n\bw\t",
 			"Start writing frames to final recording on a separate thread immediately. Can reduce write time with similar game performance if multiple cores are available.\n\bo"
 			"Compression Strength (WebP only):\n\bw\t",
@@ -261,8 +280,10 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 			), true);
 	} });
 
+	int currentY = 25;
+
 	// Select Button
-	selectButton = new ui::Button(ui::Point(8, 25), ui::Point(67, 16), "Select Area");
+	selectButton = new ui::Button(ui::Point(8, currentY), ui::Point(67, 16), "Select Area");
 	selectButton->SetActionCallback({ [this]() {
 		state.select = 1;
 		con.SetCallback(nullptr);
@@ -271,18 +292,18 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 	} });
 
 	// FPS Label
-	fpsLabel = new ui::Label(ui::Point(85, 25), ui::Point(27, 16), "FPS:");
+	fpsLabel = new ui::Label(ui::Point(85, currentY), ui::Point(27, 16), "FPS:");
 	fpsLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 
 	// FPS Textbox
-	fpsTextbox = new ui::Textbox(ui::Point(112, 25), ui::Point(40, 16), "60", "[fps]");
+	fpsTextbox = new ui::Textbox(ui::Point(112, currentY), ui::Point(40, 16), "60", "[fps]");
 	fpsTextbox->SetInputType(ui::Textbox::ValidInput::Number);
 	fpsTextbox->SetLimit(4);
 	fpsTextbox->SetActionCallback({ [this]() {
 		try {
 			if (fpsTextbox->GetText().size() > 0)
 			{
-				state.fps = std::min(fpsTextbox->GetText().ToNumber<int>(), 60);
+				state.fps = std::max(std::min(fpsTextbox->GetText().ToNumber<int>(), 60), 1);
 				StateChanged();
 			}
 		}
@@ -292,12 +313,14 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 		}
 	} });
 
+	currentY += 20;
+
 	// Scale Label
-	scaleLabel = new ui::Label(ui::Point(8, 45), ui::Point(67, 16), "Scale:");
+	scaleLabel = new ui::Label(ui::Point(8, currentY), ui::Point(67, 16), "Scale:");
 	scaleLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 
 	// Scale Dropdown
-	scaleDropdown = new ui::DropDown(ui::Point(85, 45), ui::Point(67, 16));
+	scaleDropdown = new ui::DropDown(ui::Point(85, currentY), ui::Point(67, 16));
 	scaleDropdown->AddOption(std::pair<String, int>("1", 1));
 	scaleDropdown->AddOption(std::pair<String, int>("2", 2));
 	scaleDropdown->AddOption(std::pair<String, int>("4", 4));
@@ -310,12 +333,14 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 		StateChanged();
 	} });
 
+	currentY += 20;
+
 	// Format Label
-	formatLabel = new ui::Label(ui::Point(8, 65), ui::Point(67, 16), "Format:");
+	formatLabel = new ui::Label(ui::Point(8, currentY), ui::Point(67, 16), "Format:");
 	formatLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 
 	// Format Dropdown
-	formatDropdown = new ui::DropDown(ui::Point(85, 65), ui::Point(67, 16));
+	formatDropdown = new ui::DropDown(ui::Point(85, currentY), ui::Point(67, 16));
 	formatDropdown->AddOption(std::pair<String, int>("Gif", RecordFormat::Gif));
 	formatDropdown->AddOption(std::pair<String, int>("WebP", RecordFormat::WebP));
 	formatDropdown->AddOption(std::pair<String, int>("Old", RecordFormat::Old));
@@ -324,12 +349,14 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 		StateChanged();
 	} });
 
+	currentY += 20;
+
 	// Buffer Label
-	bufferLabel = new ui::Label(ui::Point(8, 85), ui::Point(67, 16), "Buffer:");
+	bufferLabel = new ui::Label(ui::Point(8, currentY), ui::Point(67, 16), "Buffer:");
 	bufferLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 
 	// Buffer Dropdown
-	bufferDropdown = new ui::DropDown(ui::Point(85, 85), ui::Point(67, 16));
+	bufferDropdown = new ui::DropDown(ui::Point(85, currentY), ui::Point(67, 16));
 	bufferDropdown->AddOption(std::pair<String, int>("Off", RecordBuffer::Off));
 	bufferDropdown->AddOption(std::pair<String, int>("Ram", RecordBuffer::Ram));
 	bufferDropdown->AddOption(std::pair<String, int>("Disk", RecordBuffer::Disk));
@@ -338,12 +365,36 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 		StateChanged();
 	} });
 
+	currentY += 20;
+
+	// Buffer Usage Label
+	bufferUsageLabel = new ui::Label(ui::Point(12, currentY), ui::Point(100, 16), "");
+
+	// Buffer Usage Button
+	bufferUsageButton = new ui::Button(ui::Point(Size.X - 40 , currentY), ui::Point(32, 16), "Limit");
+	bufferUsageButton->SetActionCallback({ [this]() {
+		String output = TextPrompt::Blocking("Buffer Usage Limit", "Limit for record buffer in MB.\nSet to 0 for none. Max 32GB.", String::Build(state.bufferLimit), ui::Textbox::ValidInput::Number, "", false);
+		try {
+			if (output.size() > 0)
+			{
+				state.bufferLimit  = std::min(output.ToNumber<int>(), 32768);
+			}
+			StateChanged();
+		}
+		catch (const std::exception& e)
+		{
+			new ErrorMessage("Could not set buffer limit", "Invalid value provided.");
+		}
+	} });
+
+	currentY += 20;
+
 	// Write Thread Label
-	writeThreadLabel = new ui::Label(ui::Point(8, 105), ui::Point(67, 16), "Write Thread:");
+	writeThreadLabel = new ui::Label(ui::Point(8, currentY), ui::Point(67, 16), "Write Thread:");
 	writeThreadLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 
 	// Write Thread Checkbox
-	writeThreadCheckbox = new ui::Checkbox(ui::Point(85, 105), ui::Point(16, 16), "", "");
+	writeThreadCheckbox = new ui::Checkbox(ui::Point(85, currentY), ui::Point(16, 16), "", "");
 	writeThreadCheckbox->SetActionCallback({ [this]() {
 		if (writeThreadCheckbox->Enabled)
 		{
@@ -356,12 +407,14 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 		}
 	} });
 
+	currentY += 20;
+
 	// Quality Label (Actually compression strength in lossless mode)
-	qualityLabel = new ui::Label(ui::Point(8, 125), ui::Point(67, 16), "Compres. (-):");
+	qualityLabel = new ui::Label(ui::Point(8, currentY), ui::Point(67, 16), "Compres. (-):");
 	qualityLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 
 	// Quality Slider
-	qualitySlider = new ui::Slider(ui::Point(85, 125), ui::Point(67, 16), 10);
+	qualitySlider = new ui::Slider(ui::Point(85, currentY), ui::Point(67, 16), 10);
 	qualitySlider->SetActionCallback({ [this]() {
 		if (qualitySlider->Enabled)
 		{
@@ -374,15 +427,17 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 		}
 	} });
 
+	currentY += 20;
+
 	// Reset Button
-	resetButton = new ui::Button(ui::Point(8, 145), ui::Point(67, 16), "Reset");
+	resetButton = new ui::Button(ui::Point(8, currentY), ui::Point(67, 16), "Reset");
 	resetButton->SetActionCallback({ [this]() {
 		state.Clear();
 		StateChanged();
 	} });
 
 	// Pause Button
-	pauseButton = new ui::Button(ui::Point(85, 145), ui::Point(67, 16), "Pause");
+	pauseButton = new ui::Button(ui::Point(85, currentY), ui::Point(67, 16), "Pause");
 	pauseButton->Appearance.BackgroundHover = ui::Colour(63, 63, 127);
 	pauseButton->SetActionCallback({ [this]() {
 		newStage = newStage == RecordStage::Recording ? RecordStage::Paused : RecordStage::Recording;
@@ -402,6 +457,10 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 	startButton->SetActionCallback({ [this]() {
 		if (state.stage == RecordStage::Writing)
 		{
+			if (!ConfirmPrompt::Blocking("Cancel Recording", "The remaining unprocessed frames will be lost."))
+			{
+				return;
+			}
 			con.CancelWrite();
 		}
 		else if (RecordingActive(state.stage) && RecordingActive(newStage))
@@ -433,6 +492,8 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 	AddComponent(formatDropdown);
 	AddComponent(bufferLabel);
 	AddComponent(bufferDropdown);
+	AddComponent(bufferUsageLabel);
+	AddComponent(bufferUsageButton);
 	AddComponent(writeThreadLabel);
 	AddComponent(writeThreadCheckbox);
 	AddComponent(qualityLabel);

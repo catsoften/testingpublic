@@ -32,6 +32,8 @@ class RecordMenu : public ui::Window
 	ui::DropDown* formatDropdown;
 	ui::Label* bufferLabel;
 	ui::DropDown* bufferDropdown;
+	ui::Label* bufferUsageLabel;
+	ui::Button* bufferUsageButton;
 	ui::Label* writeThreadLabel;
 	ui::Checkbox* writeThreadCheckbox;
 	ui::Label* qualityLabel;

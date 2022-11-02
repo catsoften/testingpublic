@@ -31,6 +31,7 @@ struct RecordState
 	bool CanStopStart();
 	bool IsActive();
 	bool CanEdit();
+	int BufferSize();
 
 	void TogglePause();
 	void RecalcPos(bool inclusive = false);
@@ -48,6 +49,7 @@ struct RecordState
 	// Settings
 	RecordFormat format;
 	RecordBuffer buffer;
+	int bufferLimit;
 	bool writeThread;
 	int quality;
 	int fps;

@@ -3,14 +3,13 @@
 #include "gui/interface/Label.h"
 #include "gui/interface/Button.h"
 #include "gui/interface/Engine.h"
-#include "gui/interface/Textbox.h"
 
 #include "gui/Style.h"
 #include "PowderToy.h"
 
 #include "graphics/Graphics.h"
 
-TextPrompt::TextPrompt(String title, String message, String text, String placeholder, bool multiline, TextDialogueCallback callback_):
+TextPrompt::TextPrompt(String title, String message, String text, ui::Textbox::ValidInput inputType, String placeholder, bool multiline, TextDialogueCallback callback_):
 	ui::Window(ui::Point(-1, -1), ui::Point(200, 65)),
 	callback(callback_)
 {
@@ -32,6 +31,7 @@ TextPrompt::TextPrompt(String title, String message, String text, String placeho
 	Size.Y += messageLabel->Size.Y+4;
 
 	textField = new ui::Textbox(ui::Point(4, messageLabel->Position.Y + messageLabel->Size.Y + 7), ui::Point(Size.X-8, 16), text, placeholder);
+	textField->SetInputType(inputType);
 	if(multiline)
 	{
 		textField->SetMultiline(true);
@@ -76,10 +76,10 @@ TextPrompt::TextPrompt(String title, String message, String text, String placeho
 	MakeActiveWindow();
 }
 
-String TextPrompt::Blocking(String title, String message, String text, String placeholder, bool multiline)
+String TextPrompt::Blocking(String title, String message, String text, ui::Textbox::ValidInput inputType, String placeholder, bool multiline)
 {
 	String outputString;
-	new TextPrompt(title, message, text, placeholder, multiline, { [&outputString](String const &resultText) {
+	new TextPrompt(title, message, text, inputType, placeholder, multiline, { [&outputString](String const &resultText) {
 		outputString = resultText;
 		ui::Engine::Ref().Break();
 	}, [](){

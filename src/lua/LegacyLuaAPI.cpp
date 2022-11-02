@@ -1004,7 +1004,7 @@ int luatpt_input(lua_State* l)
 	String text = tpt_lua_optString(l, 3, "");
 	String shadow = tpt_lua_optString(l, 4, "");
 
-	String result = TextPrompt::Blocking(title, prompt, text, shadow, false);
+	String result = TextPrompt::Blocking(title, prompt, text, ui::Textbox::ValidInput::All, shadow, false);
 
 	tpt_lua_pushString(l, result);
 	return 1;
