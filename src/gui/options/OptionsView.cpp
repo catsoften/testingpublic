@@ -8,7 +8,6 @@
 #include "OptionsController.h"
 #include "OptionsModel.h"
 
-#include "client/Client.h"
 #include "common/Platform.h"
 #include "graphics/Graphics.h"
 #include "gui/Style.h"
@@ -149,13 +148,13 @@ OptionsView::OptionsView():
 
 	class GravityWindow : public ui::Window
 	{
-		void OnTryExit(ExitMethod method)
+		void OnTryExit(ExitMethod method) override
 		{
 			CloseActiveWindow();
 			SelfDestruct();
 		}
 
-		void OnDraw()
+		void OnDraw() override
 		{
 			Graphics * g = GetGraphics();
 
@@ -477,7 +476,7 @@ void OptionsView::UpdateAirTemp(String temp, bool isDefocus)
 		ambientAirTemp->SetText(sb.Build());
 	}
 	// Out of range temperatures are invalid, preview should go away
-	else if (airTemp < MIN_TEMP || airTemp > MAX_TEMP)
+	else if (isValid && (airTemp < MIN_TEMP || airTemp > MAX_TEMP))
 		isValid = false;
 
 	// If valid, set temp

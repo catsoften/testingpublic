@@ -36,6 +36,7 @@
 #include "gui/interface/Engine.h"
 
 #include <cstring>
+#include <iostream>
 
 #ifdef GetUserName
 # undef GetUserName // dammit windows
@@ -574,6 +575,11 @@ void GameView::NotifyToolListChanged(GameModel * sender)
 		else
 			tempButton = new ToolButton(ui::Point(currentX, YRES+1), ui::Point(30, 18), tool->GetName(), tool->GetIdentifier(), tool->GetDescription());
 
+		tempButton->clipRectX = 1;
+		tempButton->clipRectY = YRES + 1;
+		tempButton->clipRectW = XRES - 1;
+		tempButton->clipRectH = 18;
+
 		//currentY -= 17;
 		currentX -= 31;
 		tempButton->tool = tool;
@@ -891,49 +897,67 @@ void GameView::NotifyBrushChanged(GameModel * sender)
 
 ByteString GameView::TakeScreenshot(int captureUI, int fileType)
 {
-	VideoBuffer *screenshot;
-	std::vector<char> data;
-	time_t screenshotTime = time(nullptr);
-	std::string extension;
-
+	std::unique_ptr<VideoBuffer> screenshot;
 	if (captureUI)
-		screenshot = new VideoBuffer(ren->DumpFrame());
+	{
+		screenshot = std::make_unique<VideoBuffer>(ren->DumpFrame());
+	}
 	else
-		screenshot = new VideoBuffer(ui::Engine::Ref().g->DumpFrame());
+	{
+		screenshot = std::make_unique<VideoBuffer>(ui::Engine::Ref().g->DumpFrame());
+	}
+
+	ByteString filename;
+	{
+		// Optional suffix to distinguish screenshots taken at the exact same time
+		ByteString suffix = "";
+		time_t screenshotTime = time(nullptr);
+		if (screenshotTime == lastScreenshotTime)
+		{
+			screenshotIndex++;
+			suffix = ByteString::Build(" (", screenshotIndex, ")");
+		}
+		else
+		{
+			screenshotIndex = 1;
+		}
+		lastScreenshotTime = screenshotTime;
+		std::string date = format::UnixtimeToDate(screenshotTime, "%Y-%m-%d %H.%M.%S");
+		filename = ByteString::Build("screenshot ", date, suffix);
+	}
 
 	if (fileType == 1)
 	{
-		data = format::VideoBufferToBMP(screenshot);
-		extension = ".bmp";
+		filename += ".bmp";
+		// We should be able to simply use SDL_PIXELFORMAT_XRGB8888 here with a bit depth of 32 to convert RGBA data to RGB data,
+		// and save the resulting surface directly. However, ubuntu-18.04 ships SDL2 so old that it doesn't have
+		// SDL_PIXELFORMAT_XRGB8888, so we first create an RGBA surface and then convert it.
+		auto *rgbaSurface = SDL_CreateRGBSurfaceWithFormatFrom(screenshot->Buffer, screenshot->Width, screenshot->Height, 32, screenshot->Width * sizeof(pixel), SDL_PIXELFORMAT_ARGB8888);
+		auto *rgbSurface = SDL_ConvertSurfaceFormat(rgbaSurface, SDL_PIXELFORMAT_RGB888, 0);
+		if (!rgbSurface || SDL_SaveBMP(rgbSurface, filename.c_str()))
+		{
+			std::cerr << "SDL_SaveBMP failed: " << SDL_GetError() << std::endl;
+			filename = "";
+		}
+		SDL_FreeSurface(rgbSurface);
+		SDL_FreeSurface(rgbaSurface);
 	}
 	else if (fileType == 2)
 	{
-		data = format::VideoBufferToPPM(screenshot);
-		extension = ".ppm";
+		filename += ".ppm";
+		if (!Platform::WriteFile(format::VideoBufferToPPM(*screenshot), filename))
+		{
+			filename = "";
+		}
 	}
 	else
 	{
-		data = format::VideoBufferToPNG(screenshot);
-		extension = ".png";
+		filename += ".png";
+		if (!screenshot->WritePNG(filename))
+		{
+			filename = "";
+		}
 	}
-
-	// Optional suffix to distinguish screenshots taken at the exact same time
-	ByteString suffix = "";
-	if (screenshotTime == lastScreenshotTime)
-	{
-		screenshotIndex++;
-		suffix = ByteString::Build(" (", screenshotIndex, ")");
-	}
-	else
-	{
-		screenshotIndex = 1;
-	}
-	std::string date = format::UnixtimeToDate(screenshotTime, "%Y-%m-%d %H.%M.%S");
-	ByteString filename = ByteString::Build("screenshot ", date, suffix, extension);
-
-	Client::Ref().WriteFile(data, filename);
-	doScreenshot = false;
-	lastScreenshotTime = screenshotTime;
 
 	return filename;
 }
@@ -1018,10 +1042,6 @@ void GameView::updateToolButtonScroll()
 		for (auto *button : toolButtons)
 		{
 			button->Position.X -= offsetDelta;
-			if (button->Position.X + button->Size.X <= 0 || (button->Position.X + button->Size.X) > XRES - 2)
-				button->Visible = false;
-			else
-				button->Visible = true;
 		}
 
 		// Ensure that mouseLeave events are make their way to the buttons should they move from underneath the mouse pointer
@@ -1836,7 +1856,24 @@ void GameView::DoExit()
 void GameView::DoDraw()
 {
 	Window::DoDraw();
+	constexpr std::array<int, 9> fadeout = { { // * Gamma-corrected.
+		255, 195, 145, 103, 69, 42, 23, 10, 3
+	} };
+	auto *g = GetGraphics();
+	for (auto x = 0U; x < fadeout.size(); ++x)
+	{
+		g->draw_line(x, YRES + 1, x, YRES + 18, 0, 0, 0, fadeout[x]);
+		g->draw_line(XRES - x, YRES + 1, XRES - x, YRES + 18, 0, 0, 0, fadeout[x]);
+	}
+
 	c->Tick();
+	{
+		int x = 0;
+		int y = 0;
+		int w = WINDOWW;
+		int h = WINDOWH;
+		g->SetClipRect(x, y, w, h); // reset any nonsense cliprect Lua left configured
+	}
 }
 
 void GameView::NotifyNotificationsChanged(GameModel * sender)
@@ -2170,6 +2207,7 @@ void GameView::OnDraw()
 
 		if (doScreenshot)
 		{
+			doScreenshot = false;
 			TakeScreenshot(0, 0);
 		}
 
@@ -2356,7 +2394,6 @@ void GameView::OnDraw()
 		g->fillrect(XRES-20-textWidth, 12, textWidth+8, 15, 0, 0, 0, int(alpha*0.5f));
 		g->drawtext(XRES-16-textWidth, 16, sampleInfo.Build(), 255, 255, 255, int(alpha*0.75f));
 
-#ifndef OGLI
 		if (wavelengthGfx)
 		{
 			int i, cr, cg, cb, j, h = 3, x = XRES-19-textWidth, y = 10;
@@ -2391,7 +2428,6 @@ void GameView::OnDraw()
 				}
 			}
 		}
-#endif
 
 		if (showDebug)
 		{

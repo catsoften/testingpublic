@@ -22,7 +22,6 @@
 #include "webp/mux.h"
 
 // Old
-#include "client/Client.h"
 #include "Format.h"
 
 // TODO: Error handling...
@@ -314,7 +313,7 @@ void RecordController::WriteFrame(Renderer* ren)
 				std::vector<char> data = format::VideoBufferToPPM(screenshot);
 				int tempFrame = rs.frame;
 				ByteString filename = ByteString::Build("recordings", PATH_SEP, rs.file, PATH_SEP, "frame_", Format::Width(tempFrame, 6), ".ppm");
-				Client::Ref().WriteFile(data, filename);
+				Platform::WriteFile(data, filename);
 			}
 			rs.frame++;
 			rs.nextFrame++;
