@@ -1,4 +1,4 @@
-TPT Record Mod - v2.0+snapshot-243
+TPT Record Mod - v2.1+snapshot-247
 ==========================
 
 This mod replaces the vanilla tpt.record() lua function with a customizable recording GUI. The menu can be accessed by clicking the R button below the console button, or by using the R shortcut key.
