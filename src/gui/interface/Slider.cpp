@@ -18,26 +18,29 @@ Slider::Slider(Point position, Point size, int steps):
 
 void Slider::updatePosition(int position)
 {
-	if(position < 3)
-		position = 3;
-	if(position > Size.X-3)
-		position = Size.X-3;
-
-	auto fPosition = float(position-3);
-	auto fSize = float(Size.X-6);
-
-	float fSliderPosition = (fPosition/fSize)*sliderSteps;//position;//((x-3)/(Size.X-6))*sliderSteps;
-
-	auto newSliderPosition = int(fSliderPosition);
-
-	if(newSliderPosition == sliderPosition)
-		return;
-
-	sliderPosition = newSliderPosition;
-
-	if (actionCallback.change)
+	if (Enabled)
 	{
-		actionCallback.change();
+		if(position < 3)
+			position = 3;
+		if(position > Size.X-3)
+			position = Size.X-3;
+
+		auto fPosition = float(position-3);
+		auto fSize = float(Size.X-6);
+
+		float fSliderPosition = (fPosition/fSize)*sliderSteps;//position;//((x-3)/(Size.X-6))*sliderSteps;
+
+		auto newSliderPosition = int(fSliderPosition);
+
+		if(newSliderPosition == sliderPosition)
+			return;
+
+		sliderPosition = newSliderPosition;
+
+		if (actionCallback.change)
+		{
+			actionCallback.change();
+		}
 	}
 }
 

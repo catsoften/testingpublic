@@ -51,21 +51,6 @@ void RecordMenu::StateChanged()
 	bool comEn = !rec && rs.stage != RecordStage::Writing;
 	ui::Colour comCl = comEn ? ui::Colour(255, 255, 255) : ui::Colour(100, 100, 100);
 
-	ui::Appearance dropdownEnabled;
-	dropdownEnabled.BackgroundHover = ui::Colour(20, 20, 20);
-	dropdownEnabled.BackgroundInactive = ui::Colour(0, 0, 0);
-	dropdownEnabled.BorderHover = comCl;
-	dropdownEnabled.TextInactive = comCl;
-	dropdownEnabled.TextHover = comCl;
-	dropdownEnabled.BorderInactive = ui::Colour(200, 200, 200) ;
-
-	ui::Appearance dropdownDisabled = dropdownEnabled;
-	dropdownDisabled.BackgroundHover = ui::Colour(10, 10, 10);
-	dropdownDisabled.BackgroundInactive = ui::Colour(10, 10, 10);
-	dropdownDisabled.BorderInactive = ui::Colour(100, 100, 100);
-
-	ui::Appearance dropApp = comEn ? dropdownEnabled : dropdownDisabled;
-
 	// Title Label
 	UpdateTitle();
 
@@ -103,7 +88,6 @@ void RecordMenu::StateChanged()
 	}
 	scaleDropdown->Enabled = comEn && allowScaleBuffer;
 	scaleDropdown->SetOption(rs.spacing ? -8 : rs.scale);
-	scaleDropdown->Appearance = allowScaleBuffer ? dropApp : dropdownDisabled;
 
 	// Format Label
 	formatLabel->SetTextColour(comCl);
@@ -111,7 +95,6 @@ void RecordMenu::StateChanged()
 	// Format Dropdown
 	formatDropdown->Enabled = comEn;
 	formatDropdown->SetOption(rs.format);
-	formatDropdown->Appearance = dropApp;
 
 	// Buffer Label
 	bufferLabel->SetTextColour(comCl);
@@ -123,7 +106,6 @@ void RecordMenu::StateChanged()
 	}
 	bufferDropdown->Enabled = comEn && allowScaleBuffer;
 	bufferDropdown->SetOption(rs.buffer);
-	bufferDropdown->Appearance = allowScaleBuffer ? dropApp : dropdownDisabled;
 
 	// Buffer Usage Label
 	if (rs.buffer == RecordBuffer::Off)
@@ -396,15 +378,8 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 	// Write Thread Checkbox
 	writeThreadCheckbox = new ui::Checkbox(ui::Point(85, currentY), ui::Point(16, 16), "", "");
 	writeThreadCheckbox->SetActionCallback({ [this]() {
-		if (writeThreadCheckbox->Enabled)
-		{
-			state.writeThread = writeThreadCheckbox->GetChecked();
-			StateChanged();
-		}
-		else
-		{
-			writeThreadCheckbox->SetChecked(state.writeThread);
-		}
+		state.writeThread = writeThreadCheckbox->GetChecked();
+		StateChanged();
 	} });
 
 	currentY += 20;
@@ -416,15 +391,8 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 	// Quality Slider
 	qualitySlider = new ui::Slider(ui::Point(85, currentY), ui::Point(67, 16), 10);
 	qualitySlider->SetActionCallback({ [this]() {
-		if (qualitySlider->Enabled)
-		{
-			state.quality = qualitySlider->GetValue();
-			StateChanged();
-		}
-		else
-		{
-			qualitySlider->SetValue(state.quality);
-		}
+		state.quality = qualitySlider->GetValue();
+		StateChanged();
 	} });
 
 	currentY += 20;

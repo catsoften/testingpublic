@@ -52,6 +52,10 @@ namespace ui
 		VideoBuffer * GetTexture();
 		void SetTexture(VideoBuffer * texture);
 
+		ui::Colour GetBackgroundColour(bool enabled, bool active, bool hover);
+		ui::Colour GetTextColour(bool enabled, bool active, bool hover);
+		ui::Colour GetBorderColour(bool enabled, bool active, bool hover);
+
 		Appearance();
 		~Appearance();
 	};

@@ -35,16 +35,19 @@ void Checkbox::SetIcon(Icon icon)
 
 void Checkbox::OnMouseClick(int x, int y, unsigned int button)
 {
-	if(checked)
+	if (Enabled)
 	{
-		checked = false;
+		if(checked)
+		{
+			checked = false;
+		}
+		else
+		{
+			checked = true;
+		}
+		if (actionCallback.action)
+			actionCallback.action();
 	}
-	else
-	{
-		checked = true;
-	}
-	if (actionCallback.action)
-		actionCallback.action();
 }
 
 void Checkbox::OnMouseUp(int x, int y, unsigned int button)
@@ -78,7 +81,7 @@ void Checkbox::Draw(const Point& screenPos)
 	{
 		g->fillrect(screenPos.X+5, screenPos.Y+5, 6, 6, 255, 255, 255, 255);
 	}
-	if(isMouseOver)
+	if(isMouseOver && Enabled)
 	{
 		g->drawrect(screenPos.X+2, screenPos.Y+2, 12, 12, 255, 255, 255, 255);
 		g->fillrect(screenPos.X+5, screenPos.Y+5, 6, 6, 255, 255, 255, 170);

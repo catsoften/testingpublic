@@ -81,22 +81,9 @@ void DropDown::Draw(const Point& screenPos)
 	Graphics * g = GetGraphics();
 	Point Position = screenPos;
 
-	ui::Colour textColour = Appearance.TextInactive;
-	ui::Colour borderColour = Appearance.BorderInactive;
-	ui::Colour backgroundColour = Appearance.BackgroundInactive;
-
-	if (isMouseInside)
-	{
-		textColour = Appearance.TextHover;
-		borderColour = Appearance.BorderHover;
-		backgroundColour = Appearance.BackgroundHover;
-	}
-	else
-	{
-		textColour = Appearance.TextInactive;
-		borderColour = Appearance.BorderInactive;
-		backgroundColour = Appearance.BackgroundInactive;
-	}
+	ui::Colour backgroundColour = Appearance.GetBackgroundColour(Enabled, false, isMouseInside);
+	ui::Colour textColour = Appearance.GetTextColour(Enabled, false, isMouseInside);
+	ui::Colour borderColour = Appearance.GetBorderColour(Enabled, false, isMouseInside);
 
 	g->fillrect(Position.X-1, Position.Y-1, Size.X+2, Size.Y+2, backgroundColour.Red, backgroundColour.Green, backgroundColour.Blue, backgroundColour.Alpha);
 	g->drawrect(Position.X, Position.Y, Size.X, Size.Y, borderColour.Red, borderColour.Green, borderColour.Blue, borderColour.Alpha);

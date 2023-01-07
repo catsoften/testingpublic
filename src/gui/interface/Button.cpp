@@ -78,41 +78,12 @@ void Button::Draw(const Point& screenPos)
 	}
 	Graphics * g = GetGraphics();
 	Point Position = screenPos;
-	ui::Colour bgColour(0, 0, 0);
 
-	ui::Colour textColour = Appearance.TextInactive;
-	ui::Colour borderColour = Appearance.BorderInactive;
-	ui::Colour backgroundColour = Appearance.BackgroundInactive;
+	bool active = isButtonDown || (isTogglable && toggle);
+	ui::Colour textColour = Appearance.GetTextColour(Enabled, active, isMouseInside);
+	ui::Colour borderColour = Appearance.GetBorderColour(Enabled, active, isMouseInside);
+	ui::Colour backgroundColour = Appearance.GetBackgroundColour(Enabled, active, isMouseInside);
 
-	if (Enabled)
-	{
-		if (isButtonDown || (isTogglable && toggle))
-		{
-			textColour = Appearance.TextActive;
-			borderColour = Appearance.BorderActive;
-			backgroundColour = Appearance.BackgroundActive;
-		}
-		else if (isMouseInside)
-		{
-			textColour = Appearance.TextHover;
-			borderColour = Appearance.BorderHover;
-			backgroundColour = Appearance.BackgroundHover;
-		}
-		else
-		{
-			textColour = Appearance.TextInactive;
-			borderColour = Appearance.BorderInactive;
-			backgroundColour = Appearance.BackgroundInactive;
-		}
-	}
-	else
-	{
-		textColour = Appearance.TextDisabled;
-		borderColour = Appearance.BorderDisabled;
-		backgroundColour = Appearance.BackgroundDisabled;
-	}
-
-	bgColour = Appearance.BackgroundInactive;
 	g->fillrect(Position.X+1, Position.Y+1, Size.X-2, Size.Y-2, backgroundColour.Red, backgroundColour.Green, backgroundColour.Blue, backgroundColour.Alpha);
 	if(Appearance.Border == 1)
 		g->drawrect(Position.X, Position.Y, Size.X, Size.Y, borderColour.Red, borderColour.Green, borderColour.Blue, borderColour.Alpha);

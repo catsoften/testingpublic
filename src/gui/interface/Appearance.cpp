@@ -45,6 +45,45 @@ namespace ui
 			this->texture = NULL;
 	}
 
+	ui::Colour Appearance::GetBackgroundColour(bool enabled, bool active, bool hover)
+	{
+		if (!enabled)
+		{
+			return BackgroundDisabled;
+		}
+		if (active)
+		{
+			return BackgroundActive;
+		}
+		return hover ? BackgroundHover : BackgroundInactive;
+	}
+
+	ui::Colour Appearance::GetTextColour(bool enabled, bool active, bool hover)
+	{
+		if (!enabled)
+		{
+			return TextDisabled;
+		}
+		if (active)
+		{
+			return TextActive;
+		}
+		return hover ? TextHover : TextInactive;
+	}
+
+	ui::Colour Appearance::GetBorderColour(bool enabled, bool active, bool hover)
+	{
+		if (!enabled)
+		{
+			return BorderDisabled;
+		}
+		if (active)
+		{
+			return BorderActive;
+		}
+		return hover ? BorderHover : BorderInactive;
+	}
+
 	Appearance::~Appearance()
 	{
 		delete texture;
