@@ -2,6 +2,8 @@
 #define RECORDCONTROLLER_H
 #include "Config.h"
 
+#include "common/Singleton.h"
+
 #include "RecordState.h"
 
 #include <cstdint>
@@ -15,10 +17,8 @@ struct WebPAnimEncoder;
 
 class Renderer;
 
-class RecordController
+class RecordController : public Singleton<RecordController>
 {
-	RecordState& state;
-	RecordState& rs = state;
 	WebPAnimEncoder* enc;
 	MsfGifState* gifState;
 
@@ -43,7 +43,7 @@ class RecordController
 	void FreeRemaining();
 
 public:
-	RecordController(RecordState& state);
+	RecordState rs;
 
 	void StartRecording();
 	void WriteFrame(Renderer* ren);

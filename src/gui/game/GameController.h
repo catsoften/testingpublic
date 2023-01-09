@@ -171,7 +171,6 @@ public:
 	ByteString TakeScreenshot(int captureUI, int fileType);
 	void ShowRecord();
 	int Record(bool record);
-	RecordState* GetRecordState();
 
 	void ResetAir();
 	void ResetSpark();

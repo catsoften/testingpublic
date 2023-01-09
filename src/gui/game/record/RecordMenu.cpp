@@ -1,5 +1,7 @@
 #include "RecordMenu.h"
 
+#include "RecordController.h"
+
 #include "common/String.h"
 #include "common/Platform.h"
 #include "graphics/Graphics.h"
@@ -33,9 +35,9 @@ void RecordMenu::ToggleRecording()
 
 void RecordMenu::UpdateTitle()
 {
-	if (state.writing)
+	if (rs.writing)
 	{
-		titleLabel->SetText(String::Build("Record Menu - ", ((int)state.frame) + 1, "/", (int)state.nextFrame));
+		titleLabel->SetText(String::Build("Record Menu - ", ((int)rs.frame) + 1, "/", (int)rs.nextFrame));
 	}
 	else
 	{
@@ -45,7 +47,6 @@ void RecordMenu::UpdateTitle()
 
 void RecordMenu::StateChanged()
 {
-	auto& rs = state;
 	bool rec = RecordingActive(newStage);
 	bool pas = newStage == RecordStage::Paused;
 	bool comEn = !rec && rs.stage != RecordStage::Writing;
@@ -189,16 +190,16 @@ void RecordMenu::StateChanged()
 
 void RecordMenu::ExitSetRecord()
 {
-	auto& rs = state;
+	auto& rc = RecordController::Ref();
 	if (rs.stage != RecordStage::Writing)
 	{
 		if (!RecordingActive(rs.stage) && RecordingActive(newStage))
 		{
-			con.StartRecording();
+			rc.StartRecording();
 		}
 		rs.stage = newStage;
 	}
-	con.SetCallback(nullptr);
+	rc.SetCallback(nullptr);
 	rs.halt = false;
 	CloseActiveWindow();
 	SelfDestruct();
@@ -216,12 +217,11 @@ void RecordMenu::OnDraw()
 	g->drawrect(Position.X, Position.Y, Size.X, Size.Y, 200, 200, 200, 255);
 }
 
-RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
+RecordMenu::RecordMenu() :
 	ui::Window(ui::Point(-1, -1), ui::Point(160, 206)),
-	con(recordCon),
-	state(recordState)
+	rs(RecordController::Ref().rs)
 {
-	auto& rs = state;
+	auto& rc = RecordController::Ref();
 	newStage = rs.stage;
 	rs.halt = true;
 
@@ -267,8 +267,8 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 	// Select Button
 	selectButton = new ui::Button(ui::Point(8, currentY), ui::Point(67, 16), "Select Area");
 	selectButton->SetActionCallback({ [this]() {
-		state.select = 1;
-		con.SetCallback(nullptr);
+		rs.select = 1;
+		RecordController::Ref().SetCallback(nullptr);
 		CloseActiveWindow();
 		SelfDestruct();
 	} });
@@ -285,7 +285,7 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 		try {
 			if (fpsTextbox->GetText().size() > 0)
 			{
-				state.fps = std::max(std::min(fpsTextbox->GetText().ToNumber<int>(), 60), 1);
+				rs.fps = std::max(std::min(fpsTextbox->GetText().ToNumber<int>(), 60), 1);
 				StateChanged();
 			}
 		}
@@ -310,8 +310,8 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 	scaleDropdown->AddOption(std::pair<String, int>("8+Spacing", -8));
 	scaleDropdown->SetActionCallback({ [this]() {
 		int option = scaleDropdown->GetOption().second;
-		state.scale = std::abs(option);
-		state.spacing = option < 0;
+		rs.scale = std::abs(option);
+		rs.spacing = option < 0;
 		StateChanged();
 	} });
 
@@ -327,7 +327,7 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 	formatDropdown->AddOption(std::pair<String, int>("WebP", RecordFormat::WebP));
 	formatDropdown->AddOption(std::pair<String, int>("Old", RecordFormat::Old));
 	formatDropdown->SetActionCallback({ [this]() {
-		state.format = RecordFormat(formatDropdown->GetOption().second);
+		rs.format = RecordFormat(formatDropdown->GetOption().second);
 		StateChanged();
 	} });
 
@@ -343,7 +343,7 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 	bufferDropdown->AddOption(std::pair<String, int>("Ram", RecordBuffer::Ram));
 	bufferDropdown->AddOption(std::pair<String, int>("Disk", RecordBuffer::Disk));
 	bufferDropdown->SetActionCallback({ [this]() {
-		state.buffer = RecordBuffer(bufferDropdown->GetOption().second);
+		rs.buffer = RecordBuffer(bufferDropdown->GetOption().second);
 		StateChanged();
 	} });
 
@@ -355,11 +355,11 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 	// Buffer Usage Button
 	bufferUsageButton = new ui::Button(ui::Point(Size.X - 40 , currentY), ui::Point(32, 16), "Limit");
 	bufferUsageButton->SetActionCallback({ [this]() {
-		String output = TextPrompt::Blocking("Buffer Usage Limit", "Limit for record buffer in MB.\nSet to 0 for none. Max 32GB.", String::Build(state.bufferLimit), ui::Textbox::ValidInput::Number, "", false);
+		String output = TextPrompt::Blocking("Buffer Usage Limit", "Limit for record buffer in MB.\nSet to 0 for none. Max 32GB.", String::Build(rs.bufferLimit), ui::Textbox::ValidInput::Number, "", false);
 		try {
 			if (output.size() > 0)
 			{
-				state.bufferLimit  = std::min(output.ToNumber<int>(), 32768);
+				rs.bufferLimit  = std::min(output.ToNumber<int>(), 32768);
 			}
 			StateChanged();
 		}
@@ -378,7 +378,7 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 	// Write Thread Checkbox
 	writeThreadCheckbox = new ui::Checkbox(ui::Point(85, currentY), ui::Point(16, 16), "", "");
 	writeThreadCheckbox->SetActionCallback({ [this]() {
-		state.writeThread = writeThreadCheckbox->GetChecked();
+		rs.writeThread = writeThreadCheckbox->GetChecked();
 		StateChanged();
 	} });
 
@@ -391,7 +391,7 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 	// Quality Slider
 	qualitySlider = new ui::Slider(ui::Point(85, currentY), ui::Point(67, 16), 10);
 	qualitySlider->SetActionCallback({ [this]() {
-		state.quality = qualitySlider->GetValue();
+		rs.quality = qualitySlider->GetValue();
 		StateChanged();
 	} });
 
@@ -400,7 +400,7 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 	// Reset Button
 	resetButton = new ui::Button(ui::Point(8, currentY), ui::Point(67, 16), "Reset");
 	resetButton->SetActionCallback({ [this]() {
-		state.Clear();
+		rs.Clear();
 		StateChanged();
 	} });
 
@@ -423,22 +423,23 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 	startButton = new ui::Button(ui::Point(Size.X / 2, Size.Y - 17), ui::Point(Size.X / 2, 17), "Start");
 	startButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
 	startButton->SetActionCallback({ [this]() {
-		if (state.stage == RecordStage::Writing)
+		auto& rc = RecordController::Ref();
+		if (rs.stage == RecordStage::Writing)
 		{
 			if (!ConfirmPrompt::Blocking("Cancel Recording", "The remaining unprocessed frames will be lost."))
 			{
 				return;
 			}
-			con.CancelWrite();
+			rc.CancelWrite();
 		}
-		else if (RecordingActive(state.stage) && RecordingActive(newStage))
+		else if (RecordingActive(rs.stage) && RecordingActive(newStage))
 		{
 			if (!ConfirmPrompt::Blocking("Stop Recording", "This will immediately end the recording."))
 			{
 				return;
 			}
-			con.StopRecording();
-			newStage = state.stage;
+			rc.StopRecording();
+			newStage = rs.stage;
 		}
 		else
 		{
@@ -473,10 +474,10 @@ RecordMenu::RecordMenu(RecordState& recordState, RecordController& recordCon) :
 
 	SetOkayButton(closeButton);
 	MakeActiveWindow();
-	con.SetCallback([this]() {
-		if (state.stage == RecordStage::Stopped)
+	rc.SetCallback([this]() {
+		if (rs.stage == RecordStage::Stopped)
 		{
-			newStage = state.stage;
+			newStage = rs.stage;
 			StateChanged();
 		}
 		else

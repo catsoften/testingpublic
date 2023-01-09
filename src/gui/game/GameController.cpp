@@ -1561,11 +1561,6 @@ int GameController::Record(bool record)
 	return gameView->Record(record);
 }
 
-RecordState* GameController::GetRecordState()
-{
-	return gameView->GetRecordState();
-}
-
 void GameController::NotifyAuthUserChanged(Client * sender)
 {
 	User newUser = sender->GetAuthUser();

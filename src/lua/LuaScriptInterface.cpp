@@ -3818,7 +3818,7 @@ void LuaScriptInterface::initRecordAPI()
 
 int LuaScriptInterface::record_record(lua_State* l)
 {
-	auto& rs = *luacon_controller->GetRecordState();
+	auto& rs = RecordController::Ref().rs;
 	bool newRecording = lua_toboolean(l, -1);
 	if (lua_gettop(l))
 	{
@@ -3853,7 +3853,7 @@ int LuaScriptInterface::record_record(lua_State* l)
 
 int LuaScriptInterface::record_pause(lua_State* l)
 {
-	auto& rs = *luacon_controller->GetRecordState();
+	auto& rs = RecordController::Ref().rs;
 	if (lua_gettop(l))
 	{
 		if (!lua_isboolean(l, -1))
@@ -3879,7 +3879,7 @@ int LuaScriptInterface::record_pause(lua_State* l)
 
 int LuaScriptInterface::record_area(lua_State* l)
 {
-	auto& rs = *luacon_controller->GetRecordState();
+	auto& rs = RecordController::Ref().rs;
 	int argCount = lua_gettop(l);
 	if (!rs.CanEdit())
 	{
@@ -3918,7 +3918,7 @@ int LuaScriptInterface::record_area(lua_State* l)
 
 int LuaScriptInterface::record_fps(lua_State* l)
 {
-	auto& rs = *luacon_controller->GetRecordState();
+	auto& rs = RecordController::Ref().rs;
 	if (lua_gettop(l))
 	{
 		int newFPS = luaL_checkinteger(l, 1);
@@ -3945,7 +3945,7 @@ int LuaScriptInterface::record_fps(lua_State* l)
 
 int LuaScriptInterface::record_scale(lua_State* l)
 {
-	auto& rs = *luacon_controller->GetRecordState();
+	auto& rs = RecordController::Ref().rs;
 	if (lua_gettop(l))
 	{
 		int newScale = luaL_checkinteger(l, 1);
@@ -3983,7 +3983,7 @@ int LuaScriptInterface::record_scale(lua_State* l)
 
 int LuaScriptInterface::record_format(lua_State* l)
 {
-	auto& rs = *luacon_controller->GetRecordState();
+	auto& rs = RecordController::Ref().rs;
 	if (lua_gettop(l))
 	{
 		int newFormat = luaL_checkinteger(l, 1);
@@ -4010,7 +4010,7 @@ int LuaScriptInterface::record_format(lua_State* l)
 
 int LuaScriptInterface::record_buffer(lua_State* l)
 {
-	auto& rs = *luacon_controller->GetRecordState();
+	auto& rs = RecordController::Ref().rs;
 	if (lua_gettop(l))
 	{
 		int newBuffer = luaL_checkinteger(l, 1);
@@ -4041,7 +4041,7 @@ int LuaScriptInterface::record_buffer(lua_State* l)
 
 int LuaScriptInterface::record_bufferLimit(lua_State* l)
 {
-	auto& rs = *luacon_controller->GetRecordState();
+	auto& rs = RecordController::Ref().rs;
 	if (lua_gettop(l))
 	{
 		int newLimit = luaL_checkinteger(l, 1);
@@ -4068,7 +4068,7 @@ int LuaScriptInterface::record_bufferLimit(lua_State* l)
 
 int LuaScriptInterface::record_writeThread(lua_State* l)
 {
-	auto& rs = *luacon_controller->GetRecordState();
+	auto& rs = RecordController::Ref().rs;
 	if (lua_gettop(l))
 	{
 		if (!lua_isboolean(l, -1))
@@ -4098,7 +4098,7 @@ int LuaScriptInterface::record_writeThread(lua_State* l)
 
 int LuaScriptInterface::record_quality(lua_State* l)
 {
-	auto& rs = *luacon_controller->GetRecordState();
+	auto& rs = RecordController::Ref().rs;
 	if (lua_gettop(l))
 	{
 		int newQuality = luaL_checkinteger(l, 1);

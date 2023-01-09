@@ -7,8 +7,6 @@
 #include "common/String.h"
 #include "gui/interface/Window.h"
 #include "simulation/Sample.h"
-#include "record/RecordController.h"
-#include "record/RecordMenu.h"
 
 enum DrawMode
 {
@@ -75,8 +73,6 @@ private:
 	bool doScreenshot;
 	int screenshotIndex;
 	time_t lastScreenshotTime;
-	RecordState recordState;
-	RecordController recordCon;
 
 	ui::Point currentPoint, lastPoint;
 	GameController * c;
@@ -162,7 +158,6 @@ public:
 	ByteString TakeScreenshot(int captureUI, int fileType);
 	void ShowRecord();
 	int Record(bool record);
-	RecordState* GetRecordState();
 
 	//all of these are only here for one debug lines
 	bool GetMouseDown() { return isMouseDown; }

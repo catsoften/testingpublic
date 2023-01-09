@@ -15,6 +15,9 @@
 #include "ToolButton.h"
 #include "QuickOptions.h"
 
+#include "record/RecordController.h"
+#include "record/RecordMenu.h"
+
 #include "client/SaveInfo.h"
 #include "client/SaveFile.h"
 #include "client/Client.h"
@@ -196,7 +199,6 @@ GameView::GameView():
 	doScreenshot(false),
 	screenshotIndex(1),
 	lastScreenshotTime(0),
-	recordCon(recordState),
 	currentPoint(ui::Point(0, 0)),
 	lastPoint(ui::Point(0, 0)),
 	ren(NULL),
@@ -964,32 +966,28 @@ ByteString GameView::TakeScreenshot(int captureUI, int fileType)
 
 void GameView::ShowRecord()
 {
-	new RecordMenu(recordState, recordCon);
+	new RecordMenu();
 }
 
 int GameView::Record(bool record)
 {
-	auto& rs = recordState;
+	auto& rc = RecordController::Ref();
+	auto& rs = rc.rs;
 	if (rs.CanStopStart())
 	{
 		if (!record)
 		{
 			if (rs.IsActive())
 			{
-				recordCon.StopRecording();
+				rc.StopRecording();
 			}
 		}
 		else if (!rs.IsActive())
 		{
-			recordCon.StartRecording();
+			rc.StartRecording();
 		}
 	}
 	return rs.file;
-}
-
-RecordState* GameView::GetRecordState()
-{
-	return &recordState;
 }
 
 void GameView::updateToolButtonScroll()
@@ -1174,7 +1172,7 @@ void GameView::OnMouseUp(int x, int y, unsigned button)
 		isMouseDown = false;
 		if (selectMode != SelectNone)
 		{
-			auto& rs = recordState;
+			auto& rs = RecordController::Ref().rs;
 			if (button == SDL_BUTTON_LEFT && selectPoint1.X != -1 && selectPoint1.Y != -1 && selectPoint2.X != -1 && selectPoint2.Y != -1)
 			{
 				if (selectMode == PlaceSave)
@@ -1767,19 +1765,20 @@ void GameView::OnTick(float dt)
 		if(toolTipPresence<0)
 			toolTipPresence = 0;
 	}
-	if (recordState.select == 1)
+	auto& rs = RecordController::Ref().rs;
+	if (rs.select == 1)
 	{
 		selectPoint1 = selectPoint2 = ui::Point(-1, -1);
 		selectMode = SelectRecord;
 		isMouseDown = false;
 		buttonTip = "\x0F\xEF\xEF\020Click-and-drag to specify an area to record (right click = cancel)";
 		buttonTipShow = 120;
-		recordState.select = 2;
+		rs.select = 2;
 	}
-	else if (recordState.select == 3)
+	else if (rs.select == 3)
 	{
 		ShowRecord();
-		recordState.select = 0;
+		rs.select = 0;
 	}
 	c->Update();
 }
@@ -2081,6 +2080,8 @@ void GameView::SetSaveButtonTooltips()
 void GameView::OnDraw()
 {
 	Graphics * g = GetGraphics();
+	auto& rc = RecordController::Ref();
+	auto& rs = rc.rs;
 	if (ren)
 	{
 		ren->clearScreen(1.0f);
@@ -2211,17 +2212,16 @@ void GameView::OnDraw()
 			TakeScreenshot(0, 0);
 		}
 
-		auto& rs = recordState;
-		if(rs.stage == RecordStage::Recording && !rs.halt)
+		if (rs.stage == RecordStage::Recording && !rs.halt)
 		{
 			if (rs.bufferLimit != 0 && rs.BufferSize() > rs.bufferLimit)
 			{
-				recordCon.StopRecording();
+				rc.StopRecording();
 				new InformationMessage("Buffer Limit Reached", "Recording automatically stopped", false);
 			}
 			else if (++rs.ratioFrame >= rs.ratio)
 			{
-				recordCon.WriteFrame(ren);
+				rc.WriteFrame(ren);
 				rs.ratioFrame = 0;
 			}
 		}
@@ -2248,7 +2248,6 @@ void GameView::OnDraw()
 		}
 	}
 
-	auto& rs = recordState;
 	if (rs.stage != RecordStage::Stopped)
 	{
 		int symbol;

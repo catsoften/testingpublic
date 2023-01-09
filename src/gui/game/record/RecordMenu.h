@@ -2,7 +2,7 @@
 #define RECORDMENU_H
 #include "Config.h"
 
-#include "RecordController.h"
+#include "RecordState.h"
 
 #include "gui/interface/Window.h"
 
@@ -18,8 +18,7 @@ namespace ui
 
 class RecordMenu : public ui::Window
 {
-	RecordController& con;
-	RecordState& state;
+	RecordState& rs;
 	RecordStage newStage; // Writing does not exist here
 
 	ui::Label* titleLabel;
@@ -54,7 +53,7 @@ class RecordMenu : public ui::Window
 	void OnDraw();
 
 public:
-	RecordMenu(RecordState& state, RecordController& con);
+	RecordMenu();
 };
 
 #endif /* RECORDMENU_H */

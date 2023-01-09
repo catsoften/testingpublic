@@ -268,10 +268,6 @@ void RecordController::FreeRemaining()
 	rs.nextFrame = oldFrame + 1;
 }
 
-RecordController::RecordController(RecordState& state) :
-	state(state)
-{ }
-
 void RecordController::StartRecording()
 {
 	xs = (rs.x2 - rs.x1) * rs.scale;
