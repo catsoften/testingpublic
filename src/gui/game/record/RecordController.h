@@ -22,8 +22,8 @@ class RecordController : public Singleton<RecordController>
 	WebPAnimEncoder* enc;
 	MsfGifState* gifState;
 
-	int xs, ys;
-	int bufs;
+	int xs, ys, sxs, sys;
+	int bufs, sbufs;
 	std::vector<uint32_t*> bufferData;
 	std::mutex bufferDataMutex;
 

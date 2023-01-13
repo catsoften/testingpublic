@@ -116,7 +116,7 @@ void RecordMenu::StateChanged()
 	}
 	else
 	{
-		int usage = ((rs.x2 - rs.x1) * rs.scale * (rs.y2 - rs.y1) * rs.scale * rs.fps * 4) / 1048576; // MB/sec;
+		int usage = ((rs.x2 - rs.x1) * (rs.y2 - rs.y1) * rs.fps * 4) / 1048576; // MB/sec;
 		bufferUsageLabel->SetText(usage ? String::Build("Usage: ", usage, " MB/sec") : "Usage: <1 MB/sec");
 		bufferUsageLabel->SetTextColour(usage > 100 && comEn ? ui::Colour(255, 63, 63) : comCl);
 	}
@@ -239,26 +239,26 @@ RecordMenu::RecordMenu() :
 			"FPS (Max 60):\n\bw\t",
 			"Framerate of final recording, dropping frames if necessary. Not affected by lag, but assumes game should be running at 60fps (Ignores tpt.setfpscap).\n\bo",
 			"Scale:\n\bl\t",
-			"*** Causes extreme lag and memory usage with large areas ***\n\bw\t",
+			"*** Slows write performance with large areas ***\n\bw\t",
 			"Duplicates pixels to make recording larger. Useful if blurry when being upscaled. \"8+Spacing\" adds black areas between pixels (like zoom window).\n\bo",
 			"Format:\n\bw\t",
-			"Output image format. WebP is much slower at processing frames with long recordings. Gif framerate may be incorrect due to precision limitations (10ms increments). Old disables all settings except FPS.\n\bo",
+			"Output image format. WebP is much slower at processing frames with long recordings but is lossless. Gif framerate may be incorrect due to precision limitations (10ms increments). Old disables all settings except FPS.\n\bo",
 			"Buffer:\n\bw\t",
-			"Stores image data before processing to improve performance while recording. Final image created after recording stops. Ram stores data in memory and is fast, but may use large amounts of ram, especially with the scale option. Disk temporarily stores data in the recordings folder. Size depends on area and scale options.\n\bo",
+			"Stores image data before processing to improve performance while recording. Final image is created after recording stops. Ram stores data in memory and is fast, but may use large amounts of ram. Disk stores data in the recordings folder temporarily. Size depends on area.\n\bo",
 			"Buffer Usage/Limit:\n\bl\t",
 			"*** Limiter does not account for memory usage of other programs ***\n\bw\t",
 			"Usage shows amount of memory or disk space used for each second of recording with the current settings. Limiter will automatically stop the recording if the buffer is about to exceed this size.\n\bo",
 			"Write Thread:\n\bw\t",
-			"Start writing frames to final recording on a separate thread immediately. Can reduce write time with similar game performance if multiple cores are available.\n\bo"
+			"Start processing frames on a separate thread immediately. Can reduce write time with similar game performance if multiple cores are available.\n\bo"
 			"Compression Strength (WebP only):\n\bw\t",
-			"Amount of effort put into compression. Larger values result in smaller files at the cost of time. Max value (M) enables additional size reduction. \n\bu\t",
+			"Amount of effort put into compression. Larger values result in smaller files at the cost of write time. Max value (M) enables additional size reduction. \n\bu\t",
 			"Note: WebP images are always stored with lossless compression.\n\bo",
 			"Reset:\n\bw\t"
 			"Reset all settings (including record area) to defaults.\n\bo",
 			"Pause:\n\bw\t",
 			"Temporarily stops recording.\n\bo",
 			"\uE06B:\n\bw\t",
-			"Bagel"
+			"Bagel."
 			), true);
 	} });
 
@@ -356,7 +356,8 @@ RecordMenu::RecordMenu() :
 	bufferUsageButton = new ui::Button(ui::Point(Size.X - 40 , currentY), ui::Point(32, 16), "Limit");
 	bufferUsageButton->SetActionCallback({ [this]() {
 		String output = TextPrompt::Blocking("Buffer Usage Limit", "Limit for record buffer in MB.\nSet to 0 for none. Max 32GB.", String::Build(rs.bufferLimit), ui::Textbox::ValidInput::Number, "", false);
-		try {
+		try
+		{
 			if (output.size() > 0)
 			{
 				rs.bufferLimit  = std::min(output.ToNumber<int>(), 32768);

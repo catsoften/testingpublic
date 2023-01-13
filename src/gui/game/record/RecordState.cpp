@@ -20,7 +20,7 @@ bool RecordState::CanEdit()
 
 int RecordState::BufferSize()
 {
-	return ((x2 - x1) * scale * (y2 - y1) * scale * 4 * (nextFrame - frame + 1)) / 1048576;
+	return ((x2 - x1) * (y2 - y1) * 4 * (nextFrame - frame + 1)) / 1048576;
 }
 
 void RecordState::TogglePause()
@@ -59,7 +59,7 @@ void RecordState::Clear()
 	format = RecordFormat::Gif;
 	buffer = RecordBuffer::Ram;
 	bufferLimit = 0;
-	writeThread = false; // Dont trust that enough to be on by default
+	writeThread = true;
 	quality = 7;
 	fps = 60;
 	x1 = 0;

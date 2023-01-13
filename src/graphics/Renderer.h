@@ -124,8 +124,8 @@ public:
 	void draw_image(const VideoBuffer * vidBuf, int w, int h, int a);
 
 	VideoBuffer DumpFrame();
-	uint32_t* DumpFrameARGB32(int x1, int y1, int x2, int y2, int scale, bool spacing);
-	uint8_t* DumpFrameRGBA8(int x1, int y1, int x2, int y2, int scale, bool spacing);
+	uint32_t* DumpFrameARGB32(int x1, int y1, int x2, int y2);
+	uint8_t* DumpFrameRGBA8(int x1, int y1, int x2, int y2);
 
 	void drawblob(int x, int y, unsigned char cr, unsigned char cg, unsigned char cb);
 

@@ -32,7 +32,7 @@ void RecordController::StartRecordingCurrent()
 	{
 		case RecordFormat::Gif:
 			gifState = new MsfGifState;
-			msf_gif_begin(gifState, xs, ys);
+			msf_gif_begin(gifState, sxs, sys);
 			break;
 
 		case RecordFormat::WebP:
@@ -42,7 +42,7 @@ void RecordController::StartRecordingCurrent()
 				enc_options.anim_params.bgcolor = 0xFF000000;
 				enc_options.anim_params.loop_count = 0;
 				enc_options.minimize_size = rs.quality == 10;
-				enc = WebPAnimEncoderNew(xs, ys, &enc_options);
+				enc = WebPAnimEncoderNew(sxs, sys, &enc_options);
 			}
 			break;
 
@@ -54,10 +54,37 @@ void RecordController::StartRecordingCurrent()
 
 void RecordController::WriteFrameCurrent(uint32_t* buffer)
 {
+	if (rs.scale != 1)
+	{
+		uint32_t* oldBuffer = buffer;
+		buffer = new uint32_t[sbufs];
+		int index = 0;
+		for (int y = 0; y < ys; y++)
+		{
+			for (int s1 = 0; s1 < rs.scale; s1++)
+			{
+				for (int x = 0; x < xs; x++)
+				{
+					for (int s2 = 0; s2 < rs.scale; s2++)
+					{
+						if (rs.spacing && (s1 == 7 || s2 == 7))
+						{
+							buffer[index++] = 0xFF000000;
+						}
+						else
+						{
+							buffer[index++] = oldBuffer[y * xs + x];
+						}
+					}
+				}
+			}
+		}
+		delete[] oldBuffer;
+	}
 	switch (rs.format)
 	{
 		case RecordFormat::Gif:
-			msf_gif_frame(gifState, (uint8_t*)buffer, (int)rs.delay, 16, xs * 4);
+			msf_gif_frame(gifState, (uint8_t*)buffer, (int)rs.delay, 16, sxs * 4);
 			break;
 
 		case RecordFormat::WebP:
@@ -69,10 +96,10 @@ void RecordController::WriteFrameCurrent(uint32_t* buffer)
 				WebPPicture pic;
 				WebPPictureInit(&pic);
 				pic.use_argb = true;
-				pic.width = xs;
-				pic.height = ys;
+				pic.width = sxs;
+				pic.height = sys;
 				pic.argb = buffer;
-				pic.argb_stride = xs;
+				pic.argb_stride = sxs;
 				WebPAnimEncoderAdd(enc, &pic, rs.frame * (int)rs.delay, &config);
 				WebPPictureFree(&pic);
 			}
@@ -219,11 +246,15 @@ void RecordController::StartWriteThread()
 		}
 ABORT:
 		StopRecordingCurrent();
-		if (!rs.writeThread)
+		if (rs.writeThread)
+		{
+			std::cout << "Wrote " << rs.nextFrame << " frames" << std::endl;
+		}
+		else
 		{
 			auto tp2 = std::chrono::high_resolution_clock::now();
 			int ms = std::chrono::duration_cast<std::chrono::milliseconds>(tp2 - tp1).count();
-			std::cout << "Wrote " << rs.nextFrame << " frames in " << ms << "ms (avg " << std::round((float)ms / (float)rs.nextFrame) << "ms/frame" << ")" << std::endl;
+			std::cout << "Wrote " << rs.nextFrame << " frames in " << ms << "ms (avg " << (std::round(((float)ms / (float)rs.nextFrame) * 100) / 100) << "ms/frame" << ")" << std::endl;
 		}
 		rs.stage = RecordStage::Stopped;
 		rs.writing = false;
@@ -270,9 +301,12 @@ void RecordController::FreeRemaining()
 
 void RecordController::StartRecording()
 {
-	xs = (rs.x2 - rs.x1) * rs.scale;
-	ys = (rs.y2 - rs.y1) * rs.scale;
+	xs = rs.x2 - rs.x1;
+	ys = rs.y2 - rs.y1;
 	bufs = xs * ys;
+	sxs = xs * rs.scale;
+	sys = ys * rs.scale;
+	sbufs = sxs * sys;
 	rs.delay = 1000.0f / (float)rs.fps;
 	rs.delay = rs.format == RecordFormat::Gif ? std::round(rs.delay / 10.0f) : rs.delay;
 	rs.ratio = (int)std::round(60.0f / (float)rs.fps);
@@ -296,11 +330,11 @@ void RecordController::WriteFrame(Renderer* ren)
 	switch (rs.format)
 	{
 		case RecordFormat::Gif:
-			buffer = (uint32_t*)ren->DumpFrameRGBA8(rs.x1, rs.y1, rs.x2, rs.y2, rs.scale, rs.spacing);
+			buffer = (uint32_t*)ren->DumpFrameRGBA8(rs.x1, rs.y1, rs.x2, rs.y2);
 			break;
 
 		case RecordFormat::WebP:
-			buffer = ren->DumpFrameARGB32(rs.x1, rs.y1, rs.x2, rs.y2, rs.scale, rs.spacing);
+			buffer = ren->DumpFrameARGB32(rs.x1, rs.y1, rs.x2, rs.y2);
 			break;
 
 		case RecordFormat::Old:

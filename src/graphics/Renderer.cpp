@@ -1704,63 +1704,33 @@ VideoBuffer Renderer::DumpFrame()
 	return newBuffer;
 }
 
-uint32_t* Renderer::DumpFrameARGB32(int x1, int y1, int x2, int y2, int scale, bool spacing)
+uint32_t* Renderer::DumpFrameARGB32(int x1, int y1, int x2, int y2)
 {
-	uint32_t* buffer = new uint32_t[(x2 - x1) * (y2 - y1) * scale * scale];
+	uint32_t* buffer = new uint32_t[(x2 - x1) * (y2 - y1)];
 	int index = 0;
 	for (int y = y1; y < y2; y++)
 	{
-		for (int s1 = 0; s1 < scale; s1++)
+		for (int x = x1; x < x2; x++)
 		{
-			for (int x = x1; x < x2; x++)
-			{
-				int val = (vid[(y * VIDXRES) + x] & 0x00FFFFFF) | 0xFF000000;
-				for (int s2 = 0; s2 < scale; s2++)
-				{
-					if (spacing && (s1 == 7 || s2 == 7))
-					{
-						buffer[index++] = 0xFF000000;
-					}
-					else
-					{
-						buffer[index++] = val;
-					}
-				}
-			}
+			buffer[index++] = (vid[y * VIDXRES + x] & 0x00FFFFFF) | 0xFF000000;
 		}
 	}
 	return buffer;
 }
 
-uint8_t* Renderer::DumpFrameRGBA8(int x1, int y1, int x2, int y2, int scale, bool spacing)
+uint8_t* Renderer::DumpFrameRGBA8(int x1, int y1, int x2, int y2)
 {
-	uint8_t* buffer = new uint8_t[(x2 - x1) * (y2 - y1) * 4 * scale * scale];
+	uint8_t* buffer = new uint8_t[(x2 - x1) * (y2 - y1) * 4];
 	int index = 0;
 	for (int y = y1; y < y2; y++)
 	{
-		for (int s1 = 0; s1 < scale; s1++)
+		for (int x = x1; x < x2; x++)
 		{
-			for (int x = x1; x < x2; x++)
-			{
-				int val = vid[(y * VIDXRES) + x];
-				for (int s2 = 0; s2 < scale; s2++)
-				{
-					if (spacing && (s1 == 7 || s2 == 7))
-					{
-						buffer[index++] = 0;
-						buffer[index++] = 0;
-						buffer[index++] = 0;
-						buffer[index++] = 255;
-					}
-					else
-					{
-						buffer[index++] = PIXR(val);
-						buffer[index++] = PIXG(val);
-						buffer[index++] = PIXB(val);
-						buffer[index++] = 255;
-					}
-				}
-			}
+			int val = vid[y * VIDXRES + x];
+			buffer[index++] = PIXR(val);
+			buffer[index++] = PIXG(val);
+			buffer[index++] = PIXB(val);
+			buffer[index++] = 255;
 		}
 	}
 	return buffer;
