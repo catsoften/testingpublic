@@ -1,4 +1,4 @@
-TPT Record Mod - v2.1+snapshot-247
+TPT Record Mod - v3.0+v97.0
 ==========================
 
 This mod replaces the vanilla tpt.record() lua function with a customizable recording GUI. The menu can be accessed by clicking the R button below the console button, or by using the R shortcut key.
@@ -18,7 +18,7 @@ Other Features:
 * Built-in help menu
 * Lua API for controlling all settings
 
-For download links, screenshots, and other information see the [forum post](https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=26366).
+For download links, screenshots, and other information see the [forum post](https://tpt.io/.323236).
 
 Additional build instructions
 ===========================================================================
