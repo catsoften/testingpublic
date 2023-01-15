@@ -53,17 +53,6 @@ int Simulation::Load(const GameSave * originalSave, bool includePressure, int fu
 	if (!originalSave)
 		return 1;
 	auto save = std::unique_ptr<GameSave>(new GameSave(*originalSave));
-	try
-	{
-		save->Expand();
-	}
-	catch (const ParseException &e)
-	{
-#ifdef LUACONSOLE
-		luacon_ci->SetLastError(ByteString(e.what()).FromUtf8());
-#endif
-		return 1;
-	}
 
 	//Align to blockMap
 	int blockX = (fullX + CELL/2)/CELL;
@@ -116,7 +105,7 @@ int Simulation::Load(const GameSave * originalSave, bool includePressure, int fu
 		}
 
 		int type = tempPart->type;
-		if (type < 0 && type >= PT_NUM)
+		if (type < 0 || type >= PT_NUM)
 		{
 			tempPart->type = 0;
 			continue;
@@ -1926,6 +1915,11 @@ int Simulation::FloodParts(int x, int y, int fullc, int cm, int flags)
 	int coord_stack_size = 0;
 	int created_something = 0;
 
+	// Bitmap for checking where we've already looked
+	auto bitmapPtr = std::unique_ptr<char[]>(new char[XRES * YRES]);
+	char *bitmap = bitmapPtr.get();
+	std::fill(&bitmap[0], &bitmap[XRES * YRES], 0);
+
 	if (cm==-1)
 	{
 		//if initial flood point is out of bounds, do nothing
@@ -1973,7 +1967,7 @@ int Simulation::FloodParts(int x, int y, int fullc, int cm, int flags)
 		// go left as far as possible
 		while (c?x1>CELL:x1>0)
 		{
-			if (!FloodFillPmapCheck(x1-1, y, cm) || (c != 0 && IsWallBlocking(x1-1, y, c)))
+			if (bitmap[(y * XRES) + x1 - 1] || !FloodFillPmapCheck(x1-1, y, cm) || (c != 0 && IsWallBlocking(x1-1, y, c)))
 			{
 				break;
 			}
@@ -1982,7 +1976,7 @@ int Simulation::FloodParts(int x, int y, int fullc, int cm, int flags)
 		// go right as far as possible
 		while (c?x2<XRES-CELL-1:x2<XRES-1)
 		{
-			if (!FloodFillPmapCheck(x2+1, y, cm) || (c != 0 && IsWallBlocking(x2+1, y, c)))
+			if (bitmap[(y * XRES) + x2 + 1] || !FloodFillPmapCheck(x2+1, y, cm) || (c != 0 && IsWallBlocking(x2+1, y, c)))
 			{
 				break;
 			}
@@ -2009,11 +2003,12 @@ int Simulation::FloodParts(int x, int y, int fullc, int cm, int flags)
 			}
 			else if (CreateParts(x, y, 0, 0, fullc, flags))
 				created_something = 1;
+			bitmap[(y * XRES) + x] = 1;
 		}
 
 		if (c?y>=CELL+dy:y>=dy)
 			for (x=x1; x<=x2; x++)
-				if (FloodFillPmapCheck(x, y-dy, cm) && (c == 0 || !IsWallBlocking(x, y-dy, c)))
+				if (!bitmap[((y - dy) * XRES) + x] && FloodFillPmapCheck(x, y-dy, cm) && (c == 0 || !IsWallBlocking(x, y-dy, c)))
 				{
 					coord_stack[coord_stack_size][0] = x;
 					coord_stack[coord_stack_size][1] = y-dy;
@@ -2027,7 +2022,7 @@ int Simulation::FloodParts(int x, int y, int fullc, int cm, int flags)
 
 		if (c?y<YRES-CELL-dy:y<YRES-dy)
 			for (x=x1; x<=x2; x++)
-				if (FloodFillPmapCheck(x, y+dy, cm) && (c == 0 || !IsWallBlocking(x, y+dy, c)))
+				if (!bitmap[((y + dy) * XRES) + x] && FloodFillPmapCheck(x, y+dy, cm) && (c == 0 || !IsWallBlocking(x, y+dy, c)))
 				{
 					coord_stack[coord_stack_size][0] = x;
 					coord_stack[coord_stack_size][1] = y+dy;
@@ -2332,6 +2327,8 @@ bool Simulation::IsWallBlocking(int x, int y, int type)
 		else if (wall == WL_ALLOWAIR || wall == WL_WALL || wall == WL_WALLELEC)
 			return true;
 		else if (wall == WL_EWALL && !emap[y/CELL][x/CELL])
+			return true;
+		else if (wall == WL_DETECT && (elements[type].Properties&TYPE_SOLID))
 			return true;
 	}
 	return false;
@@ -2907,28 +2904,37 @@ int Simulation::do_move(int i, int x, int y, float nxf, float nyf)
 	result = try_move(i, x, y, nx, ny);
 	if (result)
 	{
-		int t = parts[i].type;
-		parts[i].x = nxf;
-		parts[i].y = nyf;
-		if (ny!=y || nx!=x)
-		{
-			if (ID(pmap[y][x]) == i)
-				pmap[y][x] = 0;
-			if (ID(photons[y][x]) == i)
-				photons[y][x] = 0;
-			// kill_part if particle is out of bounds
-			if (nx < CELL || nx >= XRES - CELL || ny < CELL || ny >= YRES - CELL)
-			{
-				kill_part(i);
-				return -1;
-			}
-			if (elements[t].Properties & TYPE_ENERGY)
-				photons[ny][nx] = PMAP(i, t);
-			else if (t)
-				pmap[ny][nx] = PMAP(i, t);
-		}
+		if (!move(i, x, y, nxf, nyf))
+			return -1;
 	}
 	return result;
+}
+
+bool Simulation::move(int i, int x, int y, float nxf, float nyf)
+{
+	int nx = (int)(nxf+0.5f), ny = (int)(nyf+0.5f);
+	int t = parts[i].type;
+	parts[i].x = nxf;
+	parts[i].y = nyf;
+	if (ny != y || nx != x)
+	{
+		if (ID(pmap[y][x]) == i)
+			pmap[y][x] = 0;
+		if (ID(photons[y][x]) == i)
+			photons[y][x] = 0;
+		// kill_part if particle is out of bounds
+		if (nx < CELL || nx >= XRES - CELL || ny < CELL || ny >= YRES - CELL)
+		{
+			kill_part(i);
+			return false;
+		}
+		if (elements[t].Properties & TYPE_ENERGY)
+			photons[ny][nx] = PMAP(i, t);
+		else if (t)
+			pmap[ny][nx] = PMAP(i, t);
+	}
+
+	return true;
 }
 
 void Simulation::photoelectric_effect(int nx, int ny)//create sparks from PHOT when hitting PSCN and NSCN
@@ -2998,25 +3004,35 @@ int Simulation::is_boundary(int pt, int x, int y)
 	return 1;
 }
 
-int Simulation::find_next_boundary(int pt, int *x, int *y, int dm, int *em)
+int Simulation::find_next_boundary(int pt, int *x, int *y, int dm, int *em, bool reverse)
 {
 	static int dx[8] = {1,1,0,-1,-1,-1,0,1};
 	static int dy[8] = {0,1,1,1,0,-1,-1,-1};
 	static int de[8] = {0x83,0x07,0x0E,0x1C,0x38,0x70,0xE0,0xC1};
-	int i, ii, i0;
 
 	if (*x <= 0 || *x >= XRES-1 || *y <= 0 || *y >= YRES-1)
+	{
 		return 0;
+	}
 
-	if (*em != -1) {
-		i0 = *em;
-		dm &= de[i0];
-	} else
-		i0 = 0;
+	if (*em != -1)
+	{
+		dm &= de[*em];
+	}
 
-	for (ii=0; ii<8; ii++) {
-		i = (ii + i0) & 7;
-		if ((dm & (1 << i)) && is_boundary(pt, *x+dx[i], *y+dy[i])) {
+	unsigned int mask = 0;
+	for (int i = 0; i < 8; ++i)
+	{
+		if ((dm & (1U << i)) && is_blocking(pt, *x + dx[i], *y + dy[i]))
+		{
+			mask |= (1U << i);
+		}
+	}
+	for (int i = 0; i < 8; ++i)
+	{
+		int n = (i + (reverse ? 1 : -1)) & 7;
+		if (((mask & (1U << i))) && !(mask & (1U << n)))
+		{
 			*x += dx[i];
 			*y += dy[i];
 			*em = i;
@@ -3050,9 +3066,9 @@ int Simulation::get_normal(int pt, int x, int y, float dx, float dy, float *nx, 
 	j = 0;
 	for (i=0; i<SURF_RANGE; i++) {
 		if (lv)
-			lv = find_next_boundary(pt, &lx, &ly, ldm, &lm);
+			lv = find_next_boundary(pt, &lx, &ly, ldm, &lm, true);
 		if (rv)
-			rv = find_next_boundary(pt, &rx, &ry, rdm, &rm);
+			rv = find_next_boundary(pt, &rx, &ry, rdm, &rm, false);
 		j += lv + rv;
 		if (!lv && !rv)
 			break;
@@ -3063,7 +3079,6 @@ int Simulation::get_normal(int pt, int x, int y, float dx, float dy, float *nx, 
 
 	if ((lx == rx) && (ly == ry))
 		return 0;
-
 	ex = float(rx - lx);
 	ey = float(ry - ly);
 	r = 1.0f/hypot(ex, ey);
@@ -3220,8 +3235,6 @@ int Simulation::create_part(int p, int x, int y, int t, int v)
 			return -1;
 		}
 		else if (IsWallBlocking(x, y, t))
-			return -1;
-		else if (bmap[y/CELL][x/CELL]==WL_DETECT && elements[t].Properties & TYPE_SOLID)
 			return -1;
 		else if (photons[y][x] && (elements[t].Properties & TYPE_ENERGY))
 			return -1;
@@ -3480,6 +3493,7 @@ void Simulation::UpdateParticles(int start, int end)
 	for (i = start; i <= end && i <= parts_lastActiveIndex; i++)
 		if (parts[i].type)
 		{
+			debug_mostRecentlyUpdated = i;
 			t = parts[i].type;
 
 			x = (int)(parts[i].x+0.5f);
@@ -3627,8 +3641,8 @@ void Simulation::UpdateParticles(int start, int end)
 					if (aheat_enable && !(elements[t].Properties&PROP_NOAMBHEAT))
 					{
 #ifdef REALISTIC
-						c_heat = parts[i].temp*96.645/elements[t].HeatConduct*gel_scale*fabs(elements[t].Weight) + hv[y/CELL][x/CELL]*100*(pv[y/CELL][x/CELL]+273.15f)/256;
-						float c_Cm = 96.645/elements[t].HeatConduct*gel_scale*fabs(elements[t].Weight)  + 100*(pv[y/CELL][x/CELL]+273.15f)/256;
+						c_heat = parts[i].temp*96.645/elements[t].HeatConduct*gel_scale*fabs(elements[t].Weight) + hv[y/CELL][x/CELL]*100*(pv[y/CELL][x/CELL]-MIN_PRESSURE)/(MAX_PRESSURE-MIN_PRESSURE)*2;
+						float c_Cm = 96.645/elements[t].HeatConduct*gel_scale*fabs(elements[t].Weight) + 100*(pv[y/CELL][x/CELL]-MIN_PRESSURE)/(MAX_PRESSURE-MIN_PRESSURE)*2;
 						pt = c_heat/c_Cm;
 						pt = restrict_flt(pt, -MAX_TEMP+MIN_TEMP, MAX_TEMP-MIN_TEMP);
 						parts[i].temp = pt;
@@ -4984,6 +4998,10 @@ void Simulation::BeforeSim()
 {
 	if (!sys_pause||framerender)
 	{
+#ifdef LUACONSOLE
+		luacon_ci->HandleEvent(LuaEvents::beforesim, new BeforeSimEvent());
+#endif
+
 		air->update_air();
 
 		if(aheat_enable)
@@ -5175,6 +5193,8 @@ void Simulation::BeforeSim()
 
 void Simulation::AfterSim()
 {
+	debug_mostRecentlyUpdated = -1;
+
 	if (emp_trigger_count)
 	{
 		// pitiful attempt at trying to keep code relating to a given element in the same file
@@ -5182,6 +5202,10 @@ void Simulation::AfterSim()
 		Element_EMP_Trigger(this, emp_trigger_count);
 		emp_trigger_count = 0;
 	}
+
+#ifdef LUACONSOLE
+	luacon_ci->HandleEvent(LuaEvents::aftersim, new AfterSimEvent());
+#endif
 }
 
 Simulation::~Simulation()

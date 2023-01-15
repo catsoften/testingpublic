@@ -2,6 +2,7 @@
 
 #include "client/http/Request.h" // includes curl.h, needs to come first to silence a warning on windows
 
+#include <cstring>
 #include <cstdlib>
 #include <vector>
 #include <map>
@@ -16,9 +17,8 @@
 #endif
 
 #ifdef LIN
-# include "cps16.png.h"
-# include "cps32.png.h"
-# include "exe48.png.h"
+# include "icon_cps.png.h"
+# include "icon_exe.png.h"
 # include "save.xml.h"
 # include "powder.desktop.h"
 #endif
@@ -496,8 +496,6 @@ User Client::GetAuthUser()
 RequestStatus Client::UploadSave(SaveInfo & save)
 {
 	lastError = "";
-	unsigned int gameDataLength;
-	char * gameData = NULL;
 	int dataStatus;
 	ByteString data;
 	ByteString userID = ByteString::Build(authUser.UserID);
@@ -511,15 +509,16 @@ RequestStatus Client::UploadSave(SaveInfo & save)
 
 		save.SetID(0);
 
-		gameData = save.GetGameSave()->Serialise(gameDataLength);
+		auto [ fromNewerVersion, gameData ] = save.GetGameSave()->Serialise();
+		(void)fromNewerVersion;
 
-		if (!gameData)
+		if (!gameData.size())
 		{
 			lastError = "Cannot serialize game save";
 			return RequestFailure;
 		}
 #if defined(SNAPSHOT) || defined(BETA) || defined(DEBUG) || MOD_ID > 0
-		else if (save.gameSave->fromNewerVersion && save.GetPublished())
+		else if (fromNewerVersion && save.GetPublished())
 		{
 			lastError = "Cannot publish save, incompatible with latest release version.";
 			return RequestFailure;
@@ -529,8 +528,9 @@ RequestStatus Client::UploadSave(SaveInfo & save)
 		data = http::Request::SimpleAuth(SCHEME SERVER "/Save.api", &dataStatus, userID, authUser.SessionID, {
 			{ "Name", save.GetName().ToUtf8() },
 			{ "Description", save.GetDescription().ToUtf8() },
-			{ "Data:save.bin", ByteString(gameData, gameData + gameDataLength) },
+			{ "Data:save.bin", ByteString(gameData.begin(), gameData.end()) },
 			{ "Publish", save.GetPublished() ? "Public" : "Private" },
+			{ "Key", authUser.SessionKey }
 		});
 	}
 	else
@@ -551,7 +551,6 @@ RequestStatus Client::UploadSave(SaveInfo & save)
 		else
 			save.SetID(saveID);
 	}
-	delete[] gameData;
 	return ret;
 }
 
@@ -623,17 +622,12 @@ ByteString Client::AddStamp(GameSave * saveData)
 	}
 	saveData->authors = stampInfo;
 
-	unsigned int gameDataLength;
-	char * gameData = saveData->Serialise(gameDataLength);
-	if (gameData == NULL)
+	auto [ fromNewerVersion, gameData ] = saveData->Serialise();
+	(void)fromNewerVersion;
+	if (!gameData.size())
 		return "";
 
-	std::ofstream stampStream;
-	stampStream.open(filename.c_str(), std::ios::binary);
-	stampStream.write((const char *)gameData, gameDataLength);
-	stampStream.close();
-
-	delete[] gameData;
+	Platform::WriteFile(gameData, filename);
 
 	stampIDs.push_front(saveID);
 
@@ -708,7 +702,8 @@ RequestStatus Client::ExecVote(int saveID, int direction)
 		ByteString userIDText = ByteString::Build(authUser.UserID);
 		data = http::Request::SimpleAuth(SCHEME SERVER "/Vote.api", &dataStatus, userIDText, authUser.SessionID, {
 			{ "ID", saveIDText },
-			{ "Action", direction == 1 ? "Up" : "Down" },
+			{ "Action", direction ? (direction == 1 ? "Up" : "Down") : "Reset" },
+			{ "Key", authUser.SessionKey }
 		});
 	}
 	else
@@ -836,6 +831,7 @@ RequestStatus Client::AddComment(int saveID, String comment)
 		ByteString userID = ByteString::Build(authUser.UserID);
 		data = http::Request::SimpleAuth(url, &dataStatus, userID, authUser.SessionID, {
 			{ "Comment", comment.ToUtf8() },
+			{ "Key", authUser.SessionKey }
 		});
 	}
 	else
@@ -1581,6 +1577,10 @@ bool Client::DoInstallation()
 
 	CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	auto exe = Platform::ExecutableName();
+#ifndef IDI_DOC_ICON
+	// make this fail so I don't remove #include "resource.h" again and get away with it
+# error where muh IDI_DOC_ICON D:
+#endif
 	auto icon = exe + ",-" MTOS(IDI_DOC_ICON);
 	auto path = Platform::GetCwd();
 	auto open = ByteString::Build("\"", exe, "\" ddir \"", path, "\" \"file://%1\"");
@@ -1671,23 +1671,16 @@ bool Client::DoInstallation()
 	}
 	if (ok)
 	{
-		ByteString file = APPVENDOR "-cps32.png";
-		ok = ok && Platform::WriteFile(std::vector<char>(cps32_png, cps32_png + cps32_png_size), file);
-		ok = ok && !system(ByteString::Build("xdg-icon-resource install --noupdate --context mimetypes --size 32 ", file, " application-vnd.powdertoy.save").c_str());
+		ByteString file = APPVENDOR "-cps.png";
+		ok = ok && Platform::WriteFile(std::vector<char>(icon_cps_png, icon_cps_png + icon_cps_png_size), file);
+		ok = ok && !system(ByteString::Build("xdg-icon-resource install --noupdate --context mimetypes --size 64 ", file, " application-vnd.powdertoy.save").c_str());
 		Platform::RemoveFile(file);
 	}
 	if (ok)
 	{
-		ByteString file = APPVENDOR "-cps16.png";
-		ok = ok && Platform::WriteFile(std::vector<char>(cps16_png, cps16_png + cps16_png_size), file);
-		ok = ok && !system(ByteString::Build("xdg-icon-resource install --noupdate --context mimetypes --size 16 ", file, " application-vnd.powdertoy.save").c_str());
-		Platform::RemoveFile(file);
-	}
-	if (ok)
-	{
-		ByteString file = APPVENDOR "-exe48.png";
-		ok = ok && Platform::WriteFile(std::vector<char>(exe48_png, exe48_png + exe48_png_size), file);
-		ok = ok && !system(ByteString::Build("xdg-icon-resource install --noupdate --size 48 ", file, " " APPVENDOR "-" APPEXE).c_str());
+		ByteString file = APPVENDOR "-exe.png";
+		ok = ok && Platform::WriteFile(std::vector<char>(icon_exe_png, icon_exe_png + icon_exe_png_size), file);
+		ok = ok && !system(ByteString::Build("xdg-icon-resource install --noupdate --size 64 ", file, " " APPVENDOR "-" APPEXE).c_str());
 		Platform::RemoveFile(file);
 	}
 	if (ok)

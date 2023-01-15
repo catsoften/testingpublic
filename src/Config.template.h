@@ -46,9 +46,9 @@
 #endif
 
 //VersionInfoStart
-#define SAVE_VERSION 96
-#define MINOR_VERSION 2
-#define BUILD_NUM 350
+#define SAVE_VERSION 97
+#define MINOR_VERSION 0
+#define BUILD_NUM 352
 #mesondefine SNAPSHOT_ID
 #mesondefine MOD_ID
 #define FUTURE_SAVE_VERSION 97
@@ -153,5 +153,6 @@
 #define GLASS_DISP		0.07
 
 #define SDEUT
+#define R_TEMP 22
 
 #endif /* CONFIG_H */
