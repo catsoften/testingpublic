@@ -3802,6 +3802,7 @@ void LuaScriptInterface::initRecordAPI()
 		{"area", record_area},
 		{"fps", record_fps},
 		{"scale", record_scale},
+		{"includeUI", record_includeUI},
 		{"format", record_format},
 		{"buffer", record_buffer},
 		{"bufferLimit", record_bufferLimit},
@@ -3977,6 +3978,36 @@ int LuaScriptInterface::record_scale(lua_State* l)
 	else
 	{
 		lua_pushinteger(l, (rs.spacing ? -1 : 1) * rs.scale);
+		return 1;
+	}
+}
+
+int LuaScriptInterface::record_includeUI(lua_State* l)
+{
+	auto& rs = RecordController::Ref().rs;
+	if (lua_gettop(l))
+	{
+		if (!lua_isboolean(l, -1))
+		{
+			return luaL_typerror(l, 1, lua_typename(l, LUA_TBOOLEAN));
+		}
+		else if (!rs.CanEdit())
+		{
+			return luaL_error(l, "Cannot change settings while recording or writing");
+		}
+		else if (rs.format == RecordFormat::Old)
+		{
+			return luaL_error(l, "Cannot use include UI with current format");
+		}
+		else
+		{
+			rs.includeUI = lua_toboolean(l, -1);
+			return 0;
+		}
+	}
+	else
+	{
+		lua_pushboolean(l, rs.includeUI);
 		return 1;
 	}
 }

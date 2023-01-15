@@ -1704,38 +1704,6 @@ VideoBuffer Renderer::DumpFrame()
 	return newBuffer;
 }
 
-uint32_t* Renderer::DumpFrameARGB32(int x1, int y1, int x2, int y2)
-{
-	uint32_t* buffer = new uint32_t[(x2 - x1) * (y2 - y1)];
-	int index = 0;
-	for (int y = y1; y < y2; y++)
-	{
-		for (int x = x1; x < x2; x++)
-		{
-			buffer[index++] = (vid[y * VIDXRES + x] & 0x00FFFFFF) | 0xFF000000;
-		}
-	}
-	return buffer;
-}
-
-uint8_t* Renderer::DumpFrameRGBA8(int x1, int y1, int x2, int y2)
-{
-	uint8_t* buffer = new uint8_t[(x2 - x1) * (y2 - y1) * 4];
-	int index = 0;
-	for (int y = y1; y < y2; y++)
-	{
-		for (int x = x1; x < x2; x++)
-		{
-			int val = vid[y * VIDXRES + x];
-			buffer[index++] = PIXR(val);
-			buffer[index++] = PIXG(val);
-			buffer[index++] = PIXB(val);
-			buffer[index++] = 255;
-		}
-	}
-	return buffer;
-}
-
 Renderer::~Renderer()
 {
 	delete[] persistentVid;

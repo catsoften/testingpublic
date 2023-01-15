@@ -47,16 +47,23 @@ void RecordMenu::UpdateTitle()
 
 void RecordMenu::StateChanged()
 {
+	auto col = [](bool en) {
+		return en ? ui::Colour(255, 255, 255) : ui::Colour(100, 100, 100);
+	};
+
 	bool rec = RecordingActive(newStage);
 	bool pas = newStage == RecordStage::Paused;
+	bool old = rs.format == RecordFormat::Old;
 	bool comEn = !rec && rs.stage != RecordStage::Writing;
-	ui::Colour comCl = comEn ? ui::Colour(255, 255, 255) : ui::Colour(100, 100, 100);
+	bool oldEn = comEn && !old;
+
+	bool fullscreen = rs.x1 == 0 && rs.y1 == 0 && rs.x2 == WINDOWW && rs.y2 == WINDOWH;
 
 	// Title Label
 	UpdateTitle();
 
 	// Select Button
-	if (rs.format == RecordFormat::Old && comEn)
+	if (old)
 	{
 		rs.x1 = 0;
 		rs.y1 = 0;
@@ -65,47 +72,68 @@ void RecordMenu::StateChanged()
 		rs.RecalcPos();
 	}
 	bool positionChanged = rs.x1 != 0 || rs.y1 != 0 || rs.x2 != XRES || rs.y2 != YRES;
-	selectButton->Enabled = rs.format != RecordFormat::Old && comEn;
+	selectButton->Enabled = !fullscreen && oldEn;
 	selectButton->Appearance.BackgroundInactive = positionChanged ? ui::Colour(47, 47, 23) : ui::Colour(0, 0, 0);
 	selectButton->Appearance.BackgroundHover = positionChanged ? ui::Colour(63, 63, 31) : ui::Colour(20, 20, 20);
 
 	// FPS Label
-	fpsLabel->SetTextColour(comCl);
+	fpsLabel->SetTextColour(col(comEn));
 
 	// FPS Textbox
 	fpsTextbox->Enabled = comEn;
 	fpsTextbox->ReadOnly = !comEn;
 	fpsTextbox->SetText(String::Build(rs.fps));
-	fpsTextbox->SetTextColour(comCl);
+	fpsTextbox->SetTextColour(col(comEn));
+
+	// Fullscreen Label
+	fullscreenLabel->SetTextColour(col(oldEn));
+
+	// Fullscreen Checkbox
+	fullscreenCheckbox->Enabled = oldEn;
+	fullscreenCheckbox->SetChecked(fullscreen && !old);
+
+	// Include UI Label
+	includeUILabel->SetTextColour(col(oldEn && !fullscreen));
+
+	// Include UI Checkbox
+	if (old)
+	{
+		rs.includeUI = false;
+	}
+	else if (fullscreen)
+	{
+		rs.includeUI = true;
+	}
+	includeUICheckbox->Enabled = oldEn && !fullscreen;
+	includeUICheckbox->SetChecked(rs.includeUI);
 
 	// Scale Label
-	scaleLabel->SetTextColour(comCl);
+	scaleLabel->SetTextColour(col(oldEn));
 
 	// Scale Dropdown
-	bool allowScaleBuffer = rs.format != RecordFormat::Old;
-	if (!allowScaleBuffer && comEn)
+	if (old)
 	{
 		rs.scale = 1;
 	}
-	scaleDropdown->Enabled = comEn && allowScaleBuffer;
+	scaleDropdown->Enabled = oldEn;
 	scaleDropdown->SetOption(rs.spacing ? -8 : rs.scale);
 
 	// Format Label
-	formatLabel->SetTextColour(comCl);
+	formatLabel->SetTextColour(col(comEn));
 
 	// Format Dropdown
 	formatDropdown->Enabled = comEn;
 	formatDropdown->SetOption(rs.format);
 
 	// Buffer Label
-	bufferLabel->SetTextColour(comCl);
+	bufferLabel->SetTextColour(col(oldEn));
 
 	// Buffer Dropdown
-	if (!allowScaleBuffer && comEn)
+	if (old)
 	{
 		rs.buffer = RecordBuffer::Off;
 	}
-	bufferDropdown->Enabled = comEn && allowScaleBuffer;
+	bufferDropdown->Enabled = oldEn;
 	bufferDropdown->SetOption(rs.buffer);
 
 	// Buffer Usage Label
@@ -118,24 +146,24 @@ void RecordMenu::StateChanged()
 	{
 		int usage = ((rs.x2 - rs.x1) * (rs.y2 - rs.y1) * rs.fps * 4) / 1048576; // MB/sec;
 		bufferUsageLabel->SetText(usage ? String::Build("Usage: ", usage, " MB/sec") : "Usage: <1 MB/sec");
-		bufferUsageLabel->SetTextColour(usage > 100 && comEn ? ui::Colour(255, 63, 63) : comCl);
+		bufferUsageLabel->SetTextColour(usage > 100 && oldEn ? ui::Colour(255, 63, 63) : col(comEn));
 	}
 
 	// Buffer Usage Button
-	bufferUsageButton->Enabled = rs.buffer != RecordBuffer::Off && comEn;
+	bufferUsageButton->Enabled = rs.buffer != RecordBuffer::Off && oldEn;
 	bufferUsageButton->Appearance.BackgroundInactive = rs.bufferLimit ? ui::Colour(47, 47, 23) : ui::Colour(0, 0, 0);
 	bufferUsageButton->Appearance.BackgroundHover = rs.bufferLimit ? ui::Colour(63, 63, 31) : ui::Colour(20, 20, 20);
 
 	// Write Thread Label
-	writeThreadLabel->SetTextColour(rs.buffer == RecordBuffer::Off ? ui::Colour(100, 100, 100) : comCl);
+	writeThreadLabel->SetTextColour(rs.buffer == RecordBuffer::Off ? ui::Colour(100, 100, 100) : col(oldEn));
 
 	// Write Thread Checkbox
 	bool allowWT = rs.buffer != RecordBuffer::Off;
-	if (!allowWT && comEn)
+	if (!allowWT)
 	{
 		rs.writeThread = false;
 	}
-	writeThreadCheckbox->Enabled = allowWT ? comEn : false;
+	writeThreadCheckbox->Enabled = allowWT ? oldEn : false;
 	writeThreadCheckbox->SetChecked(rs.writeThread);
 
 	// Quality Label
@@ -147,10 +175,10 @@ void RecordMenu::StateChanged()
 	{
 		qualityLabel->SetText("Compres. (-):");
 	}
-	qualityLabel->SetTextColour(comEn && rs.format == RecordFormat::WebP ? ui::Colour(255, 255, 255) : ui::Colour(100, 100, 100));
+	qualityLabel->SetTextColour(oldEn && rs.format == RecordFormat::WebP ? ui::Colour(255, 255, 255) : ui::Colour(100, 100, 100));
 
 	// Quality Slider
-	qualitySlider->Enabled = comEn && rs.format == RecordFormat::WebP;
+	qualitySlider->Enabled = oldEn && rs.format == RecordFormat::WebP;
 	qualitySlider->SetValue(rs.format == RecordFormat::WebP ? rs.quality : 10);
 	if (qualitySlider->Enabled)
 	{
@@ -218,7 +246,7 @@ void RecordMenu::OnDraw()
 }
 
 RecordMenu::RecordMenu() :
-	ui::Window(ui::Point(-1, -1), ui::Point(160, 206)),
+	ui::Window(ui::Point(-1, -1), ui::Point(160, 246)),
 	rs(RecordController::Ref().rs)
 {
 	auto& rc = RecordController::Ref();
@@ -238,6 +266,10 @@ RecordMenu::RecordMenu() :
 			"Select the area of the screen to record (inclusive).\n\bo",
 			"FPS (Max 60):\n\bw\t",
 			"Framerate of final recording, dropping frames if necessary. Not affected by lag, but assumes game should be running at 60fps (Ignores tpt.setfpscap).\n\bo",
+			"Fullscreen:\n\bw\t",
+			"Records the entire window, including the UI. Overrides area selection.\n\bo",
+			"Include UI:\n\bw\t",
+			"Includes the HUD in recordings.\n\bo",
 			"Scale:\n\bl\t",
 			"*** Slows write performance with large areas ***\n\bw\t",
 			"Duplicates pixels to make recording larger. Useful if blurry when being upscaled. \"8+Spacing\" adds black areas between pixels (like zoom window).\n\bo",
@@ -293,6 +325,37 @@ RecordMenu::RecordMenu() :
 		{
 			new ErrorMessage("Could not set FPS", "Invalid value provided.");
 		}
+	} });
+
+	currentY += 20;
+
+	// Fullscreen Label
+	fullscreenLabel = new ui::Label(ui::Point(8, currentY), ui::Point(67, 16), "Fullscreen:");
+	fullscreenLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+
+	// Fullscreen Checkbox
+	fullscreenCheckbox = new ui::Checkbox(ui::Point(85, currentY), ui::Point(16, 16), "", "");
+	fullscreenCheckbox->SetActionCallback({ [this]() {
+		rs.x1 = 0;
+		rs.y1 = 0;
+		bool checked = fullscreenCheckbox->GetChecked();
+		rs.x2 = checked ? WINDOWW : XRES;
+		rs.y2 = checked ? WINDOWH : YRES;
+		rs.RecalcPos();
+		StateChanged();
+	} });
+
+	currentY += 20;
+
+	// Include UI Label
+	includeUILabel = new ui::Label(ui::Point(8, currentY), ui::Point(67, 16), "Include UI:");
+	includeUILabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+
+	// Include UI Checkbox
+	includeUICheckbox = new ui::Checkbox(ui::Point(85, currentY), ui::Point(16, 16), "", "");
+	includeUICheckbox->SetActionCallback({ [this]() {
+		rs.includeUI = includeUICheckbox->GetChecked();
+		StateChanged();
 	} });
 
 	currentY += 20;
@@ -456,6 +519,10 @@ RecordMenu::RecordMenu() :
 	AddComponent(selectButton);
 	AddComponent(fpsLabel);
 	AddComponent(fpsTextbox);
+	AddComponent(fullscreenLabel);
+	AddComponent(fullscreenCheckbox);
+	AddComponent(includeUILabel);
+	AddComponent(includeUICheckbox);
 	AddComponent(scaleLabel);
 	AddComponent(scaleDropdown);
 	AddComponent(formatLabel);

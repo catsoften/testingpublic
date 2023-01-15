@@ -872,6 +872,38 @@ VideoBuffer Graphics::DumpFrame()
 	return newBuffer;
 }
 
+uint32_t* Graphics::DumpFrameARGB32(int x1, int y1, int x2, int y2)
+{
+	uint32_t* buffer = new uint32_t[(x2 - x1) * (y2 - y1)];
+	int index = 0;
+	for (int y = y1; y < y2; y++)
+	{
+		for (int x = x1; x < x2; x++)
+		{
+			buffer[index++] = (vid[y * WINDOWW + x] & 0x00FFFFFF) | 0xFF000000;
+		}
+	}
+	return buffer;
+}
+
+uint8_t* Graphics::DumpFrameRGBA8(int x1, int y1, int x2, int y2)
+{
+	uint8_t* buffer = new uint8_t[(x2 - x1) * (y2 - y1) * 4];
+	int index = 0;
+	for (int y = y1; y < y2; y++)
+	{
+		for (int x = x1; x < x2; x++)
+		{
+			int val = vid[y * WINDOWW + x];
+			buffer[index++] = PIXR(val);
+			buffer[index++] = PIXG(val);
+			buffer[index++] = PIXB(val);
+			buffer[index++] = 255;
+		}
+	}
+	return buffer;
+}
+
 void Graphics::SetClipRect(int &x, int &y, int &w, int &h)
 {
 	int newX = x;

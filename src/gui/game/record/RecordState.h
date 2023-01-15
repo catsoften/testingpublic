@@ -59,6 +59,7 @@ struct RecordState
 	int y2;
 	int scale;
 	bool spacing;
+	bool includeUI;
 
 	// Recording State
 	float delay; // Calculated from FPS, delay value for format (Gif uses 1/100 sec)

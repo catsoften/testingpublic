@@ -175,6 +175,7 @@ class LuaScriptInterface: public CommandInterface
 	static int record_area(lua_State * l);
 	static int record_fps(lua_State * l);
 	static int record_scale(lua_State * l);
+	static int record_includeUI(lua_State * l);
 	static int record_format(lua_State * l);
 	static int record_buffer(lua_State * l);
 	static int record_bufferLimit(lua_State * l);

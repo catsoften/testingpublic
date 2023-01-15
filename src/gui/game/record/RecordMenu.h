@@ -25,6 +25,10 @@ class RecordMenu : public ui::Window
 	ui::Button* selectButton;
 	ui::Label* fpsLabel;
 	ui::Textbox* fpsTextbox;
+	ui::Label* fullscreenLabel;
+	ui::Checkbox* fullscreenCheckbox;
+	ui::Label* includeUILabel;
+	ui::Checkbox* includeUICheckbox;
 	ui::Label* scaleLabel;
 	ui::DropDown* scaleDropdown;
 	ui::Label* formatLabel;

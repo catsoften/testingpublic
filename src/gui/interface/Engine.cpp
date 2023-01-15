@@ -10,7 +10,10 @@
 #include "common/Platform.h"
 #include "graphics/Graphics.h"
 
+#include "gui/dialogues/InformationMessage.h"
 #include "gui/dialogues/ConfirmPrompt.h"
+
+#include "gui/game/record/RecordController.h"
 
 using namespace ui;
 
@@ -225,6 +228,24 @@ void Engine::Draw()
 	}
 	if(state_)
 		state_->DoDraw();
+
+#ifndef FONTEDITOR
+	RecordController& rc = RecordController::Ref();
+	RecordState& rs = rc.rs;
+	if (rs.stage == RecordStage::Recording && !rs.halt)
+	{
+		if (rs.bufferLimit != 0 && rs.BufferSize() > rs.bufferLimit)
+		{
+			rc.StopRecording();
+			new InformationMessage("Buffer Limit Reached", "Recording automatically stopped", false);
+		}
+		else if (rs.includeUI && ++rs.ratioFrame >= rs.ratio)
+		{
+			rc.WriteFrame(g);
+			rs.ratioFrame = 0;
+		}
+	}
+#endif
 
 	g->Finalise();
 	FrameIndex++;

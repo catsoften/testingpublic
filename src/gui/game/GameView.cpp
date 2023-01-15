@@ -2212,18 +2212,10 @@ void GameView::OnDraw()
 			TakeScreenshot(0, 0);
 		}
 
-		if (rs.stage == RecordStage::Recording && !rs.halt)
+		if (rs.stage == RecordStage::Recording && !rs.halt && !rs.includeUI && (rs.bufferLimit == 0 || rs.BufferSize() <= rs.bufferLimit) && ++rs.ratioFrame >= rs.ratio)
 		{
-			if (rs.bufferLimit != 0 && rs.BufferSize() > rs.bufferLimit)
-			{
-				rc.StopRecording();
-				new InformationMessage("Buffer Limit Reached", "Recording automatically stopped", false);
-			}
-			else if (++rs.ratioFrame >= rs.ratio)
-			{
-				rc.WriteFrame(ren);
-				rs.ratioFrame = 0;
-			}
+			rc.WriteFrame(g);
+			rs.ratioFrame = 0;
 		}
 
 		if (logEntries.size())

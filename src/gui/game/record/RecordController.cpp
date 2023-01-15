@@ -9,7 +9,7 @@
 
 #include "common/String.h"
 #include "common/Platform.h"
-#include "graphics/Renderer.h"
+#include "graphics/Graphics.h"
 
 // Gif
 #define MSF_GIF_IMPL
@@ -324,22 +324,22 @@ void RecordController::StartRecording()
 	}
 }
 
-void RecordController::WriteFrame(Renderer* ren)
+void RecordController::WriteFrame(Graphics* g)
 {
 	uint32_t* buffer = nullptr;
 	switch (rs.format)
 	{
 		case RecordFormat::Gif:
-			buffer = (uint32_t*)ren->DumpFrameRGBA8(rs.x1, rs.y1, rs.x2, rs.y2);
+			buffer = (uint32_t*)g->DumpFrameRGBA8(rs.x1, rs.y1, rs.x2, rs.y2);
 			break;
 
 		case RecordFormat::WebP:
-			buffer = ren->DumpFrameARGB32(rs.x1, rs.y1, rs.x2, rs.y2);
+			buffer = g->DumpFrameARGB32(rs.x1, rs.y1, rs.x2, rs.y2);
 			break;
 
 		case RecordFormat::Old:
 			{
-				VideoBuffer screenshot(ren->DumpFrame());
+				VideoBuffer screenshot(g->DumpFrame());
 				std::vector<char> data = format::VideoBufferToPPM(screenshot);
 				int tempFrame = rs.frame;
 				ByteString filename = ByteString::Build("recordings", PATH_SEP, rs.file, PATH_SEP, "frame_", Format::Width(tempFrame, 6), ".ppm");

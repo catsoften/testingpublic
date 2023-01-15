@@ -39,12 +39,12 @@ void RecordState::RecalcPos(bool inclusive)
 {
 	int ox1 = x1 == -1 ? 0 : x1;
 	int oy1 = y1 == -1 ? 0 : y1;
-	int ox2 = x2 == -1 ? XRES : x2;
-	int oy2 = y2 == -1 ? YRES : y2;
-	x1 = std::min(std::max(ox2 > ox1 ? ox1 : ox2, 0), XRES);
-	x2 = std::min(std::max(ox2 > ox1 ? ox2 : ox1, x1 + 1), XRES) + (inclusive ? 1 : 0);
-	y1 = std::min(std::max(oy2 > oy1 ? oy1 : oy2, 0), YRES);
-	y2 = std::min(std::max(oy2 > oy1 ? oy2 : oy1, y1 + 1), YRES) + (inclusive ? 1 : 0);
+	int ox2 = x2 == -1 ? WINDOWW : x2;
+	int oy2 = y2 == -1 ? WINDOWH : y2;
+	x1 = std::min(std::max(ox2 > ox1 ? ox1 : ox2, 0), WINDOWW);
+	x2 = std::min(std::max(ox2 > ox1 ? ox2 : ox1, x1 + 1), WINDOWW) + (inclusive ? 1 : 0);
+	y1 = std::min(std::max(oy2 > oy1 ? oy1 : oy2, 0), WINDOWH);
+	y2 = std::min(std::max(oy2 > oy1 ? oy2 : oy1, y1 + 1), WINDOWH) + (inclusive ? 1 : 0);
 }
 
 void RecordState::ClearCounters()
@@ -69,6 +69,7 @@ void RecordState::Clear()
 	RecalcPos();
 	scale = 1;
 	spacing = false;
+	includeUI = false;
 	ClearCounters();
 }
 

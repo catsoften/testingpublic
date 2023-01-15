@@ -15,7 +15,7 @@
 
 struct WebPAnimEncoder;
 
-class Renderer;
+class Graphics;
 
 class RecordController : public Singleton<RecordController>
 {
@@ -46,7 +46,7 @@ public:
 	RecordState rs;
 
 	void StartRecording();
-	void WriteFrame(Renderer* ren);
+	void WriteFrame(Graphics* g);
 	void StopRecording();
 
 	void SetCallback(RecordProgressCallback newCallback);
