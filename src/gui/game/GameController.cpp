@@ -157,12 +157,6 @@ GameController::~GameController()
 	{
 		delete *iter;
 	}
-	//deleted here because it refuses to be deleted when deleted from gameModel even with the same code
-	std::deque<Snapshot*> history = gameModel->GetHistory();
-	for(std::deque<Snapshot*>::iterator iter = history.begin(), end = history.end(); iter != end; ++iter)
-	{
-		delete *iter;
-	}
 	std::vector<QuickOption*> quickOptions = gameModel->GetQuickOptions();
 	for(std::vector<QuickOption*>::iterator iter = quickOptions.begin(), end = quickOptions.end(); iter != end; ++iter)
 	{
@@ -181,77 +175,54 @@ GameController::~GameController()
 	}
 }
 
-void GameController::HistoryRestore()
+bool GameController::HistoryRestore()
 {
-	std::deque<Snapshot*> history = gameModel->GetHistory();
-	if (!history.size())
-		return;
-	unsigned int historyPosition = gameModel->GetHistoryPosition();
-	unsigned int newHistoryPosition = std::max((int)historyPosition-1, 0);
-	// When undoing, save the current state as a final redo
-	// This way ctrl+y will always bring you back to the point right before your last ctrl+z
-	if (historyPosition == history.size())
+	if (!gameModel->HistoryCanRestore())
 	{
-		Snapshot * newSnap = gameModel->GetSimulation()->CreateSnapshot();
-		if (newSnap)
-			newSnap->Authors = Client::Ref().GetAuthorInfo();
-		delete gameModel->GetRedoHistory();
-		gameModel->SetRedoHistory(newSnap);
+		return false;
 	}
-	Snapshot * snap = history[newHistoryPosition];
-	gameModel->GetSimulation()->Restore(*snap);
-	Client::Ref().OverwriteAuthorInfo(snap->Authors);
-	gameModel->SetHistory(history);
-	gameModel->SetHistoryPosition(newHistoryPosition);
+	// * When undoing for the first time since the last call to HistorySnapshot, save the current state.
+	//   Ctrl+Y needs this in order to bring you back to the point right before your last Ctrl+Z, because
+	//   the last history entry is what this Ctrl+Z brings you back to, not the current state.
+	if (!beforeRestore)
+	{
+		beforeRestore = gameModel->GetSimulation()->CreateSnapshot();
+		beforeRestore->Authors = Client::Ref().GetAuthorInfo();
+	}
+	gameModel->HistoryRestore();
+	auto &current = *gameModel->HistoryCurrent();
+	gameModel->GetSimulation()->Restore(current);
+	Client::Ref().OverwriteAuthorInfo(current.Authors);
+
+	return true;
 }
 
 void GameController::HistorySnapshot()
 {
-	std::deque<Snapshot*> history = gameModel->GetHistory();
-	unsigned int historyPosition = gameModel->GetHistoryPosition();
-	Snapshot * newSnap = gameModel->GetSimulation()->CreateSnapshot();
-	if (newSnap)
-	{
-		newSnap->Authors = Client::Ref().GetAuthorInfo();
-		while (historyPosition < history.size())
-		{
-			Snapshot * snap = history.back();
-			history.pop_back();
-			delete snap;
-		}
-		if (history.size() >= gameModel->GetUndoHistoryLimit())
-		{
-			Snapshot * snap = history.front();
-			history.pop_front();
-			delete snap;
-			if (historyPosition > history.size())
-				historyPosition--;
-		}
-		history.push_back(newSnap);
-		gameModel->SetHistory(history);
-		gameModel->SetHistoryPosition(std::min((size_t)historyPosition+1, history.size()));
-		delete gameModel->GetRedoHistory();
-		gameModel->SetRedoHistory(NULL);
-	}
+	// * Calling HistorySnapshot means the user decided to use the current state and
+	//   forfeit the option to go back to whatever they Ctrl+Z'd their way back from.
+	beforeRestore.reset();
+	gameModel->HistoryPush(gameModel->GetSimulation()->CreateSnapshot());
 }
 
-void GameController::HistoryForward()
+bool GameController::HistoryForward()
 {
-	std::deque<Snapshot*> history = gameModel->GetHistory();
-	if (!history.size())
-		return;
-	unsigned int historyPosition = gameModel->GetHistoryPosition();
-	unsigned int newHistoryPosition = std::min((size_t)historyPosition+1, history.size());
-	Snapshot *snap;
-	if (newHistoryPosition == history.size())
-		snap = gameModel->GetRedoHistory();
-	else
-		snap = history[newHistoryPosition];
-	if (!snap)
-		return;
-	gameModel->GetSimulation()->Restore(*snap);
-	Client::Ref().OverwriteAuthorInfo(snap->Authors);
-	gameModel->SetHistoryPosition(newHistoryPosition);
+	if (!gameModel->HistoryCanForward())
+	{
+		return false;
+	}
+	gameModel->HistoryForward();
+	// * If gameModel has nothing more to give, we've Ctrl+Y'd our way back to the original
+	//   state; restore this instead, then get rid of it.
+	auto &current = gameModel->HistoryCurrent() ? *gameModel->HistoryCurrent() : *beforeRestore;
+	gameModel->GetSimulation()->Restore(current);
+	Client::Ref().OverwriteAuthorInfo(current.Authors);
+	if (&current == beforeRestore.get())
+	{
+		beforeRestore.reset();
+	}
+
+	return true;
 }
 
 GameView * GameController::GetView()
@@ -300,9 +271,9 @@ void GameController::PlaceSave(ui::Point position)
 void GameController::Install()
 {
 #if defined(MACOSX)
-	new InformationMessage("No installation necessary", "You don't need to install The Powder Toy on OS X", false);
+	new InformationMessage("No installation necessary", "You don't need to install " APPNAME " on OS X", false);
 #elif defined(WIN) || defined(LIN)
-	new ConfirmPrompt("Install The Powder Toy", "Do you wish to install The Powder Toy on this computer?\nThis allows you to open save files and saves directly from the website.", { [this] {
+	new ConfirmPrompt("Install " APPNAME, "Do you wish to install " APPNAME " on this computer?\nThis allows you to open save files and saves directly from the website.", { [] {
 		if (Client::Ref().DoInstallation())
 		{
 			new InformationMessage("Success", "Installation completed", false);
@@ -313,7 +284,7 @@ void GameController::Install()
 		}
 	} });
 #else
-	new ErrorMessage("Cannot install", "You cannot install The Powder Toy on this platform");
+	new ErrorMessage("Cannot install", "You cannot install " APPNAME " on this platform");
 #endif
 }
 
@@ -476,16 +447,12 @@ bool GameController::LoadClipboard()
 	if (!clip)
 		return false;
 	gameModel->SetPlaceSave(clip);
-	if (gameModel->GetPlaceSave() && gameModel->GetPlaceSave()->Collapsed())
-		gameModel->GetPlaceSave()->Expand();
 	return true;
 }
 
 void GameController::LoadStamp(GameSave *stamp)
 {
 	gameModel->SetPlaceSave(stamp);
-	if(gameModel->GetPlaceSave() && gameModel->GetPlaceSave()->Collapsed())
-		gameModel->GetPlaceSave()->Expand();
 }
 
 void GameController::TranslateSave(ui::Point point)
@@ -588,11 +555,11 @@ bool GameController::MouseDown(int x, int y, unsigned button)
 	return ret;
 }
 
-bool GameController::MouseUp(int x, int y, unsigned button, char type)
+bool GameController::MouseUp(int x, int y, unsigned button, MouseupReason reason)
 {
-	MouseUpEvent ev(x, y, button, type);
+	MouseUpEvent ev(x, y, button, reason);
 	bool ret = commandInterface->HandleEvent(LuaEvents::mouseup, &ev);
-	if (type)
+	if (reason != mouseUpNormal)
 		return ret;
 	if (ret && foundSignID != -1 && y<YRES && x<XRES && !gameView->GetPlacingSave())
 	{
@@ -808,7 +775,7 @@ void GameController::Tick()
 void GameController::Blur()
 {
 	// Tell lua that mouse is up (even if it really isn't)
-	MouseUp(0, 0, 0, 1);
+	MouseUp(0, 0, 0, mouseUpBlur);
 	BlurEvent ev;
 	commandInterface->HandleEvent(LuaEvents::blur, &ev);
 }
@@ -828,9 +795,9 @@ void GameController::ResetAir()
 	sim->air->Clear();
 	for (int i = 0; i < NPART; i++)
 	{
-		if (sim->parts[i].type == PT_QRTZ || sim->parts[i].type == PT_GLAS || sim->parts[i].type == PT_TUNG)
+		if (GameSave::PressureInTmp3(sim->parts[i].type))
 		{
-			sim->parts[i].pavg[0] = sim->parts[i].pavg[1] = 0;
+			sim->parts[i].tmp3 = 0;
 		}
 	}
 }
@@ -854,7 +821,7 @@ void GameController::ResetSpark()
 
 void GameController::SwitchGravity()
 {
-	gameModel->GetSimulation()->gravityMode = (gameModel->GetSimulation()->gravityMode+1)%3;
+	gameModel->GetSimulation()->gravityMode = (gameModel->GetSimulation()->gravityMode+1)%4;
 
 	switch (gameModel->GetSimulation()->gravityMode)
 	{
@@ -866,6 +833,9 @@ void GameController::SwitchGravity()
 		break;
 	case 2:
 		gameModel->SetInfoTip("Gravity: Radial");
+		break;
+	case 3:
+		gameModel->SetInfoTip("Gravity: Custom");
 		break;
 	}
 }
@@ -937,7 +907,7 @@ void GameController::Update()
 	sim->BeforeSim();
 	if (!sim->sys_pause || sim->framerender)
 	{
-		sim->UpdateParticles(0, NPART);
+		sim->UpdateParticles(0, NPART - 1);
 		sim->AfterSim();
 	}
 
@@ -1077,6 +1047,16 @@ bool GameController::GetDebugHUD()
 	return gameView->GetDebugHUD();
 }
 
+void GameController::SetTemperatureScale(int temperatureScale)
+{
+	gameModel->SetTemperatureScale(temperatureScale);
+}
+
+int GameController::GetTemperatureScale()
+{
+	return gameModel->GetTemperatureScale();
+}
+
 void GameController::SetActiveColourPreset(int preset)
 {
 	gameModel->SetActiveColourPreset(preset);
@@ -1127,7 +1107,8 @@ Tool * GameController::GetActiveTool(int selection)
 	return gameModel->GetActiveTool(selection);
 }
 
-void GameController::SetActiveTool(int toolSelection, Tool * tool) {
+void GameController::SetActiveTool(int toolSelection, Tool * tool)
+{
 	if (gameModel->GetActiveMenu() == SC_DECO && toolSelection == 2)
 		toolSelection = 0;
 
@@ -1295,10 +1276,11 @@ void GameController::OpenLocalSaveWindow(bool asCurrent)
 
 			gameModel->SetSaveFile(&tempSave, gameView->ShiftBehaviour());
 			Platform::MakeDirectory(LOCAL_SAVE_DIR);
-			std::vector<char> saveData = gameSave->Serialise();
+			auto [ fromNewerVersion, saveData ] = gameSave->Serialise();
+			(void)fromNewerVersion;
 			if (saveData.size() == 0)
 				new ErrorMessage("Error", "Unable to serialize game data.");
-			else if (Client::Ref().WriteFile(saveData, gameModel->GetSaveFile()->GetName()))
+			else if (!Platform::WriteFile(saveData, gameModel->GetSaveFile()->GetName()))
 				new ErrorMessage("Error", "Unable to write save file.");
 			else
 				gameModel->SetInfoTip("Saved Successfully");
@@ -1562,7 +1544,7 @@ void GameController::FrameStep()
 
 void GameController::Vote(int direction)
 {
-	if(gameModel->GetSave() && gameModel->GetUser().UserID && gameModel->GetSave()->GetID() && gameModel->GetSave()->GetVote()==0)
+	if(gameModel->GetSave() && gameModel->GetUser().UserID && gameModel->GetSave()->GetID())
 	{
 		try
 		{
@@ -1598,7 +1580,7 @@ String GameController::ElementResolve(int type, int ctype)
 	{
 		return gameModel->GetSimulation()->ElementResolve(type, ctype);
 	}
-	return String("");
+	return "";
 }
 
 String GameController::BasicParticleInfo(Particle const &sample_part)
@@ -1607,7 +1589,7 @@ String GameController::BasicParticleInfo(Particle const &sample_part)
 	{
 		return gameModel->GetSimulation()->BasicParticleInfo(sample_part);
 	}
-	return String("");
+	return "";
 }
 
 void GameController::ReloadSim()
@@ -1640,6 +1622,11 @@ String GameController::WallName(int type)
 		return gameModel->GetSimulation()->wtypes[type].name;
 	else
 		return String();
+}
+
+ByteString GameController::TakeScreenshot(int captureUI, int fileType)
+{
+	return gameView->TakeScreenshot(captureUI, fileType);
 }
 
 int GameController::Record(bool record)

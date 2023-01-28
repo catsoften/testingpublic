@@ -49,14 +49,14 @@ void Element::Element_BJEL() {
 static int update(UPDATE_FUNC_ARGS) {
 	// Record max pressure magnitude
 	float max = fabs(sim->pv[y / CELL][x / CELL]);
-	if (parts[i].pavg[0] < max)
-		parts[i].pavg[0] = max;
+	if (parts[i].tmp3 < max)
+		parts[i].tmp3 = max;
 	return 0;
 }
 
 static int graphics(GRAPHICS_FUNC_ARGS) {
 	// Brighten under high pressure
-	float multi = 1.0f + (cpart->pavg[0] / 256.0f) * 1.3f;
+	float multi = 1.0f + (cpart->tmp3 / 256.0f) * 1.3f;
 	*colr *= multi;
 	*colg *= multi;
 	*colb *= multi;

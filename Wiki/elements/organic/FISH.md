@@ -13,6 +13,6 @@ If fish temperature is greater than 90 C, or after a random amount of time that 
 ## Technical
 
 #### Properties
-**pavg[0]:** x velocity (-1, 0 or 1) since it moves by swapping, not normal particle movement.
+**tmp3:** x velocity (-1, 0 or 1) since it moves by swapping, not normal particle movement.
 
-**pavg[1]:** y velocity (-1, 0 or 1) since it moves by swapping, not normal particle movement.
+**tmp4:** y velocity (-1, 0 or 1) since it moves by swapping, not normal particle movement.

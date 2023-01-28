@@ -181,6 +181,7 @@ void SearchController::SelectAllSaves()
 		Client::Ref().GetAuthUser().UserElevation == User::ElevationModerator || 
 		Client::Ref().GetAuthUser().UserElevation == User::ElevationAdmin)
 		searchModel->SelectAllSaves();
+
 }
 
 void SearchController::InstantOpen(bool instant)

@@ -5,7 +5,8 @@ void Element_FILT_create(ELEMENT_CREATE_FUNC_ARGS);
 int  Element_FILT_interactWavelengths(Particle* cpart, int origWl);
 int  Element_FILT_getWavelengths(Particle* cpart);
 
-void Element::Element_FILT() {
+void Element::Element_FILT()
+{
 	Identifier = "DEFAULT_PT_FILT";
 	Name = "FILT";
 	Colour = PIXPACK(0x000056);

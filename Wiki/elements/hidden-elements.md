@@ -3,7 +3,7 @@ Like BRAY, but randomly deletes particles around it and heats everything to MAX_
 when particles hit it. JCB1 spawns this.
 
 ## MSSL (Missile)
-Guided missile, tries to accelerate to its target x, y coordinates (determined by pavg0, pavg1). If it hits a solid / powder detonates 
+Guided missile, tries to accelerate to its target x, y coordinates (determined by tmp3, tmp4). If it hits a solid / powder detonates 
 (transforms into BOMB). Can go through gas and liquid without interruption. Leaves behind a smoke trail.
 
 ## BRKN (Broken)

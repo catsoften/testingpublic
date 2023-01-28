@@ -89,8 +89,8 @@ static int update(UPDATE_FUNC_ARGS) {
 				if (!r || TYP(r) != PT_RSPK) continue;
 				auto p = parts[ID(r)];
 
-				DEBG_DATA::data[i].prev_voltages.push_back(p.pavg[0]);
-				DEBG_DATA::data[i].prev_currents.push_back(p.pavg[1]);
+				DEBG_DATA::data[i].prev_voltages.push_back(p.tmp3);
+				DEBG_DATA::data[i].prev_currents.push_back(p.tmp4);
 
 				if (DEBG_DATA::data[i].prev_voltages.size() > DEBG_DATA::MAX_CIRCUIT_DATA) {
 					DEBG_DATA::data[i].prev_voltages.erase(DEBG_DATA::data[i].prev_voltages.begin());

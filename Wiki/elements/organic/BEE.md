@@ -41,9 +41,9 @@ For example, a tmp of 2301013 means there's food 2301 pixels away from the hive 
 
 **life:** Pollen level, returns to hive when it reaches 100.
 
-**pavg[0]:** Spawn x coordinate
+**tmp3:** Spawn x coordinate
 
-**pavg[1]:** Spawn y coordinate
+**tmp4:** Spawn y coordinate
 
 **flags:** Frames to remain passive for. DOES NOT SAVE
 

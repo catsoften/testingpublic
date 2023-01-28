@@ -14,11 +14,8 @@
 #mesondefine DEBUG
 #mesondefine IGNORE_UPDATES
 #mesondefine LIN
-#mesondefine NATIVE
+#mesondefine AND
 #mesondefine NO_INSTALL_CHECK
-#mesondefine OGLI
-#mesondefine OGLR
-#mesondefine PIX32OGL
 #mesondefine SNAPSHOT
 #mesondefine WIN
 #mesondefine MACOSX
@@ -30,6 +27,15 @@
 #mesondefine SERVER
 #mesondefine STATICSERVER
 #mesondefine UPDATESERVER
+#mesondefine IDENT_PLATFORM
+#mesondefine IDENT
+#mesondefine ENFORCE_HTTPS
+#define APPNAME "@APPNAME@"
+#define APPCOMMENT "@APPCOMMENT@"
+#define APPEXE "@APPEXE@"
+#define APPID "@APPID@"
+#define APPDATA "@APPDATA@"
+#define APPVENDOR "@APPVENDOR@"
 
 #ifdef WIN
 # define PATH_SEP "\\"
@@ -40,13 +46,13 @@
 #endif
 
 //VersionInfoStart
-#define SAVE_VERSION 96
-#define MINOR_VERSION 2
-#define BUILD_NUM 350
+#define SAVE_VERSION 97
+#define MINOR_VERSION 0
+#define BUILD_NUM 352
 #mesondefine SNAPSHOT_ID
 #mesondefine MOD_ID
-#define FUTURE_SAVE_VERSION 96
-#define FUTURE_MINOR_VERSION 2
+#define FUTURE_SAVE_VERSION 97
+#define FUTURE_MINOR_VERSION 0
 
 #if !(defined(SNAPSHOT) || defined(BETA) || defined(DEBUG) || MOD_ID > 0)
 #undef FUTURE_SAVE_VERSION
@@ -66,24 +72,6 @@
 #define IDENT_RELTYPE "R"
 #endif
 
-#if defined(WIN)
-#if defined(_64BIT)
-#define IDENT_PLATFORM "WIN64"
-#else
-#define IDENT_PLATFORM "WIN32"
-#endif
-#elif defined(LIN)
-#if defined(_64BIT)
-#define IDENT_PLATFORM "LIN64"
-#else
-#define IDENT_PLATFORM "LIN32"
-#endif
-#elif defined(MACOSX)
-#define IDENT_PLATFORM "MACOSX"
-#else
-#define IDENT_PLATFORM "UNKNOWN"
-#endif
-
 #if defined(X86_SSE3)
 #define IDENT_BUILD "SSE3"
 #elif defined(X86_SSE2)
@@ -99,7 +87,6 @@
 
 #define SCHEME "https://"
 #define STATICSCHEME "https://"
-#define ENFORCE_HTTPS
 
 #define LOCAL_SAVE_DIR "Saves"
 
@@ -169,5 +156,6 @@
 #define GLASS_DISP		0.07
 
 #define SDEUT
+#define R_TEMP 22
 
 #endif /* CONFIG_H */

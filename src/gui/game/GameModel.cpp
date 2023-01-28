@@ -26,6 +26,7 @@
 #include "simulation/Gravity.h"
 #include "simulation/Simulation.h"
 #include "simulation/Snapshot.h"
+#include "simulation/SnapshotDelta.h"
 
 #include "simulation/Gravity.h"
 #include "simulation/magnetics/magnetics.h"
@@ -39,11 +40,16 @@
 #include "gui/game/DecorationTool.h"
 #include "gui/interface/Engine.h"
 
-
 #include "music/music.h"
 
 #include <iostream>
 #include <algorithm>
+
+HistoryEntry::~HistoryEntry()
+{
+	// * Needed because Snapshot and SnapshotDelta are incomplete types in GameModel.h,
+	//   so the default dtor for ~HistoryEntry cannot be generated.
+}
 
 GameModel::GameModel():
 	clipboard(NULL),
@@ -54,7 +60,6 @@ GameModel::GameModel():
 	currentFile(NULL),
 	currentUser(0, ""),
 	toolStrength(1.0f),
-	redoHistory(NULL),
 	historyPosition(0),
 	activeColourPreset(0),
 	colourSelector(false),
@@ -167,6 +172,7 @@ GameModel::GameModel():
 
 	mouseClickRequired = Client::Ref().GetPrefBool("MouseClickRequired", false);
 	includePressure = Client::Ref().GetPrefBool("Simulation.IncludePressure", true);
+	temperatureScale = Client::Ref().GetPrefInteger("Renderer.TemperatureScale", 1);
 
 	ClearSimulation();
 }
@@ -215,7 +221,6 @@ GameModel::~GameModel()
 	delete clipboard;
 	delete currentSave;
 	delete currentFile;
-	delete redoHistory;
 	//if(activeTools)
 	//	delete[] activeTools;
 }
@@ -411,9 +416,9 @@ void GameModel::BuildMenus()
 	}
 	//Add special sign and prop tools
 	menuList[SC_TOOL]->AddTool(new WindTool(0, "WIND", "Creates air movement.", 64, 64, 64, "DEFAULT_UI_WIND"));
+	menuList[SC_TOOL]->AddTool(new PropertyTool(this));
 	menuList[SC_TOOL]->AddTool(new SignTool(this));
 	menuList[SC_TOOL]->AddTool(new SampleTool(this));
-	menuList[SC_TOOL]->AddTool(new PropertyTool(this));
 	menuList[SC_LIFE]->AddTool(new GOLTool(this));
 
 	menuList[SC_TOOL]->AddTool(new TransformTool(this));
@@ -523,8 +528,8 @@ void GameModel::BuildBrushList()
 	std::vector<ByteString> brushFiles = Platform::DirectorySearch(BRUSH_DIR, "", { ".ptb" });
 	for (size_t i = 0; i < brushFiles.size(); i++)
 	{
-		std::vector<unsigned char> brushData = Client::Ref().ReadFile(BRUSH_DIR + ByteString(PATH_SEP) + brushFiles[i]);
-		if(!brushData.size())
+		std::vector<char> brushData;
+		if (!Platform::ReadFile(brushData, BRUSH_DIR + ByteString(PATH_SEP) + brushFiles[i]))
 		{
 			std::cout << "Brushes: Skipping " << brushFiles[i] << ". Could not open" << std::endl;
 			continue;
@@ -535,7 +540,7 @@ void GameModel::BuildBrushList()
 			std::cout << "Brushes: Skipping " << brushFiles[i] << ". Invalid bitmap size" << std::endl;
 			continue;
 		}
-		brushList.push_back(new BitmapBrush(brushData, ui::Point(dimension, dimension)));
+		brushList.push_back(new BitmapBrush(reinterpret_cast<unsigned char *>(&brushData[0]), ui::Point(dimension, dimension)));
 	}
 
 	if (hollowBrushes) {
@@ -588,6 +593,11 @@ int GameModel::GetEdgeMode()
 	return this->edgeMode;
 }
 
+void GameModel::SetTemperatureScale(int temperatureScale)
+{
+	this->temperatureScale = temperatureScale;
+}
+
 void GameModel::SetAmbientAirTemperature(float ambientAirTemp)
 {
 	this->ambientAirTemp = ambientAirTemp;
@@ -610,34 +620,228 @@ int GameModel::GetDecoSpace()
 	return this->decoSpace;
 }
 
-std::deque<Snapshot*> GameModel::GetHistory()
+// * SnapshotDelta d is the difference between the two Snapshots A and B (i.e. d = B - A)
+//   if auto d = SnapshotDelta::FromSnapshots(A, B). In this case, a Snapshot that is
+//   identical to B can be constructed from d and A via d.Forward(A) (i.e. B = A + d)
+//   and a Snapshot that is identical to A can be constructed from d and B via
+//   d.Restore(B) (i.e. A = B - d). SnapshotDeltas often consume less memory than Snapshots,
+//   although pathological cases of pairs of Snapshots exist, the SnapshotDelta constructed
+//   from which actually consumes more than the two snapshots combined.
+// * GameModel::history is an N-item deque of HistoryEntry structs, each of which owns either
+//   a SnapshotDelta, except for history[N-1], which always owns a Snapshot. A logical Snapshot
+//   accompanies each item in GameModel::history. This logical Snapshot may or may not be
+//   materialised (present in memory). If an item owns an actual Snapshot, the aforementioned
+//   logical Snapshot is this materialised Snapshot. If, however, an item owns a SnapshotDelta d,
+//   the accompanying logical Snapshot A is the Snapshot obtained via A = d.Restore(B), where B
+//   is the logical Snapshot accompanying the next (at an index that is one higher than the
+//   index of this item) item in history. Slightly more visually:
+//
+//      i   |    history[i]   |  the logical Snapshot   | relationships |
+//          |                 | accompanying history[i] |               |
+//   -------|-----------------|-------------------------|---------------|
+//          |                 |                         |               |
+//    N - 1 |   Snapshot A    |       Snapshot A        |            A  |
+//          |                 |                         |           /   |
+//    N - 2 | SnapshotDelta b |       Snapshot B        |  B+b=A   b-B  |
+//          |                 |                         |           /   |
+//    N - 3 | SnapshotDelta c |       Snapshot C        |  C+c=B   c-C  |
+//          |                 |                         |           /   |
+//    N - 4 | SnapshotDelta d |       Snapshot D        |  D+d=C   d-D  |
+//          |                 |                         |           /   |
+//     ...  |      ...        |          ...            |   ...    ...  |
+//
+// * GameModel::historyPosition is an integer in the closed range 0 to N, which is decremented
+//   by GameModel::HistoryRestore and incremented by GameModel::HistoryForward, by 1 at a time.
+//   GameModel::historyCurrent "follows" historyPosition such that it always holds a Snapshot
+//   that is identical to the logical Snapshot of history[historyPosition], except when
+//   historyPosition = N, in which case it's empty. This following behaviour is achieved either
+//   by "stepping" historyCurrent by Forwarding and Restoring it via the SnapshotDelta in
+//   history[historyPosition], cloning the Snapshot in history[historyPosition] into it if
+//   historyPosition = N-1, or clearing if it historyPosition = N.
+// * GameModel::historyCurrent is lost when a new Snapshot item is pushed into GameModel::history.
+//   This item appears wherever historyPosition currently points, and every other item above it
+//   is deleted. If historyPosition is below N, this gets rid of the Snapshot in history[N-1].
+//   Thus, N is set to historyPosition, after which the new Snapshot is pushed and historyPosition
+//   is incremented to the new N.
+// * Pushing a new Snapshot into the history is a bit involved:
+//   * If there are no history entries yet, the new Snapshot is simply placed into GameModel::history.
+//     From now on, we consider cases in which GameModel::history is originally not empty.
+//
+//     === after pushing Snapshot A' into the history
+//  
+//        i   |    history[i]   |  the logical Snapshot   | relationships |
+//            |                 | accompanying history[i] |               |
+//     -------|-----------------|-------------------------|---------------|
+//            |                 |                         |               |
+//        0   |   Snapshot A    |       Snapshot A        |            A  |
+//
+//   * If there were discarded history entries (i.e. the user decided to continue from some state
+//     which they arrived to via at least one Ctrl+Z), history[N-2] is a SnapshotDelta that when
+//     Forwarded with the logical Snapshot of history[N-2] yields the logical Snapshot of history[N-1]
+//     from before the new item was pushed. This is not what we want, so we replace it with a
+//     SnapshotDelta that is the difference between the logical Snapshot of history[N-2] and the
+//     Snapshot freshly placed in history[N-1].
+//
+//     === after pushing Snapshot A' into the history
+//  
+//        i   |    history[i]   |  the logical Snapshot   | relationships |
+//            |                 | accompanying history[i] |               |
+//     -------|-----------------|-------------------------|---------------|
+//            |                 |                         |               |
+//      N - 1 |   Snapshot A'   |       Snapshot A'       |            A' | b needs to be replaced with b',
+//            |                 |                         |           /   | B+b'=A'; otherwise we'd run
+//      N - 2 | SnapshotDelta b |       Snapshot B        |  B+b=A   b-B  | into problems when trying to
+//            |                 |                         |           /   | reconstruct B from A' and b
+//      N - 3 | SnapshotDelta c |       Snapshot C        |  C+c=B   c-C  | in HistoryRestore.
+//            |                 |                         |           /   |
+//      N - 4 | SnapshotDelta d |       Snapshot D        |  D+d=C   d-D  |
+//            |                 |                         |           /   |
+//       ...  |      ...        |          ...            |   ...    ...  |
+//  
+//     === after replacing b with b'
+//  
+//        i   |    history[i]   |  the logical Snapshot   | relationships |
+//            |                 | accompanying history[i] |               |
+//     -------|-----------------|-------------------------|---------------|
+//            |                 |                         |               |
+//      N - 1 |   Snapshot A'   |       Snapshot A'       |            A' |
+//            |                 |                         |           /   |
+//      N - 2 | SnapshotDelta b'|       Snapshot B        | B+b'=A' b'-B  |
+//            |                 |                         |           /   |
+//      N - 3 | SnapshotDelta c |       Snapshot C        |  C+c=B   c-C  |
+//            |                 |                         |           /   |
+//      N - 4 | SnapshotDelta d |       Snapshot D        |  D+d=C   d-D  |
+//            |                 |                         |           /   |
+//       ...  |      ...        |          ...            |   ...    ...  |
+//  
+//   * If there weren't any discarded history entries, history[N-2] is now also a Snapshot. Since
+//     the freshly pushed Snapshot in history[N-1] should be the only Snapshot in history, this is
+//     replaced with the SnapshotDelta that is the difference between history[N-2] and the Snapshot
+//     freshly placed in history[N-1].
+//
+//     === after pushing Snapshot A' into the history
+//
+//        i   |    history[i]   |  the logical Snapshot   | relationships |
+//            |                 | accompanying history[i] |               |
+//     -------|-----------------|-------------------------|---------------|
+//            |                 |                         |               |
+//      N - 1 |   Snapshot A'   |       Snapshot A'       |            A' | A needs to be converted to a,
+//            |                 |                         |               | otherwise Snapshots would litter
+//      N - 1 |   Snapshot A    |       Snapshot A        |            A  | GameModel::history, which we
+//            |                 |                         |           /   | want to avoid because they
+//      N - 2 | SnapshotDelta b |       Snapshot B        |  B+b=A   b-B  | waste a ton of memory
+//            |                 |                         |           /   |
+//      N - 3 | SnapshotDelta c |       Snapshot C        |  C+c=B   c-C  |
+//            |                 |                         |           /   |
+//      N - 4 | SnapshotDelta d |       Snapshot D        |  D+d=C   d-D  |
+//            |                 |                         |           /   |
+//       ...  |      ...        |          ...            |   ...    ...  |
+//
+//     === after replacing A with a
+//
+//        i   |    history[i]   |  the logical Snapshot   | relationships |
+//            |                 | accompanying history[i] |               |
+//     -------|-----------------|-------------------------|---------------|
+//            |                 |                         |               |
+//      N - 1 |   Snapshot A'   |       Snapshot A'       |            A' |
+//            |                 |                         |           /   |
+//      N - 1 | SnapshotDelta a |       Snapshot A        |  A+a=A'  a-A  |
+//            |                 |                         |           /   |
+//      N - 2 | SnapshotDelta b |       Snapshot B        |  B+b=A   b-B  |
+//            |                 |                         |           /   |
+//      N - 3 | SnapshotDelta c |       Snapshot C        |  C+c=B   c-C  |
+//            |                 |                         |           /   |
+//      N - 4 | SnapshotDelta d |       Snapshot D        |  D+d=C   d-D  |
+//            |                 |                         |           /   |
+//       ...  |      ...        |          ...            |   ...    ...  |
+//
+//   * After all this, the front of the deque is truncated such that there are on more than
+//     undoHistoryLimit entries left.
+
+const Snapshot *GameModel::HistoryCurrent() const
 {
-	return history;
+	return historyCurrent.get();
 }
 
-unsigned int GameModel::GetHistoryPosition()
+bool GameModel::HistoryCanRestore() const
 {
-	return historyPosition;
+	return historyPosition > 0U;
 }
 
-void GameModel::SetHistory(std::deque<Snapshot*> newHistory)
+void GameModel::HistoryRestore()
 {
-	history = newHistory;
+	if (!HistoryCanRestore())
+	{
+		return;
+	}
+	historyPosition -= 1U;
+	if (history[historyPosition].snap)
+	{
+		historyCurrent = std::make_unique<Snapshot>(*history[historyPosition].snap);
+	}
+	else
+	{
+		historyCurrent = history[historyPosition].delta->Restore(*historyCurrent);
+	}
 }
 
-void GameModel::SetHistoryPosition(unsigned int newHistoryPosition)
+bool GameModel::HistoryCanForward() const
 {
-	historyPosition = newHistoryPosition;
+	return historyPosition < history.size();
 }
 
-Snapshot * GameModel::GetRedoHistory()
+void GameModel::HistoryForward()
 {
-	return redoHistory;
+	if (!HistoryCanForward())
+	{
+		return;
+	}
+	historyPosition += 1U;
+	if (historyPosition == history.size())
+	{
+		historyCurrent = nullptr;
+	}
+	else if (history[historyPosition].snap)
+	{
+		historyCurrent = std::make_unique<Snapshot>(*history[historyPosition].snap);
+	}
+	else
+	{
+		historyCurrent = history[historyPosition - 1U].delta->Forward(*historyCurrent);
+	}
 }
 
-void GameModel::SetRedoHistory(Snapshot * redo)
+void GameModel::HistoryPush(std::unique_ptr<Snapshot> last)
 {
-	redoHistory = redo;
+	Snapshot *rebaseOnto = nullptr;
+	if (historyPosition)
+	{
+		rebaseOnto = history.back().snap.get();
+		if (historyPosition < history.size())
+		{
+			historyCurrent = history[historyPosition - 1U].delta->Restore(*historyCurrent);
+			rebaseOnto = historyCurrent.get();
+		}
+	}
+	while (historyPosition < history.size())
+	{
+		history.pop_back();
+	}
+	if (rebaseOnto)
+	{
+		auto &prev = history.back();
+		prev.delta = SnapshotDelta::FromSnapshots(*rebaseOnto, *last);
+		prev.snap.reset();
+	}
+	history.emplace_back();
+	history.back().snap = std::move(last);
+	historyPosition += 1U;
+	historyCurrent.reset();
+	while (undoHistoryLimit < history.size())
+	{
+		history.pop_front();
+		historyPosition -= 1U;
+	}
 }
 
 unsigned int GameModel::GetUndoHistoryLimit()
@@ -818,6 +1022,8 @@ void GameModel::SetSave(SaveInfo * newSave, bool invertIncludePressure)
 		GameSave * saveData = currentSave->GetGameSave();
 		SetPaused(saveData->paused | GetPaused());
 		sim->gravityMode = saveData->gravityMode;
+		sim->customGravityX = saveData->customGravityX;
+		sim->customGravityY = saveData->customGravityY;
 		sim->air->airMode = saveData->airMode;
 		sim->air->ambientAirTemp = saveData->ambientAirTemp;
 		sim->edgeMode = saveData->edgeMode;
@@ -880,6 +1086,8 @@ void GameModel::SetSaveFile(SaveFile * newSave, bool invertIncludePressure)
 		GameSave * saveData = newSave->GetGameSave();
 		SetPaused(saveData->paused | GetPaused());
 		sim->gravityMode = saveData->gravityMode;
+		sim->customGravityX = saveData->customGravityX;
+		sim->customGravityY = saveData->customGravityY;
 		sim->air->airMode = saveData->airMode;
 		sim->air->ambientAirTemp = saveData->ambientAirTemp;
 		sim->edgeMode = saveData->edgeMode;
@@ -966,7 +1174,7 @@ bool GameModel::MouseInZoom(ui::Point position)
 	ui::Point zoomWindowPosition = GetZoomWindowPosition();
 	ui::Point zoomWindowSize = ui::Point(GetZoomSize()*zoomFactor, GetZoomSize()*zoomFactor);
 
-	if (position.X >= zoomWindowPosition.X && position.Y >= zoomWindowPosition.Y && position.X <= zoomWindowPosition.X+zoomWindowSize.X && position.Y <= zoomWindowPosition.Y+zoomWindowSize.Y)
+	if (position.X >= zoomWindowPosition.X && position.Y >= zoomWindowPosition.Y && position.X < zoomWindowPosition.X+zoomWindowSize.X && position.Y < zoomWindowPosition.Y+zoomWindowSize.Y)
 		return true;
 	return false;
 }
@@ -980,7 +1188,7 @@ ui::Point GameModel::AdjustZoomCoords(ui::Point position)
 	ui::Point zoomWindowPosition = GetZoomWindowPosition();
 	ui::Point zoomWindowSize = ui::Point(GetZoomSize()*zoomFactor, GetZoomSize()*zoomFactor);
 
-	if (position.X >= zoomWindowPosition.X && position.Y >= zoomWindowPosition.Y && position.X <= zoomWindowPosition.X+zoomWindowSize.X && position.Y <= zoomWindowPosition.Y+zoomWindowSize.Y)
+	if (position.X >= zoomWindowPosition.X && position.Y >= zoomWindowPosition.Y && position.X < zoomWindowPosition.X+zoomWindowSize.X && position.Y < zoomWindowPosition.Y+zoomWindowSize.Y)
 		return ((position-zoomWindowPosition)/GetZoomFactor())+GetZoomPosition();
 	return position;
 }
@@ -1096,7 +1304,7 @@ void GameModel::SetPaused(bool pauseState)
 	if (!pauseState && sim->debug_currentParticle > 0)
 	{
 		String logmessage = String::Build("Updated particles from #", sim->debug_currentParticle, " to end due to unpause");
-		sim->UpdateParticles(sim->debug_currentParticle, NPART);
+		sim->UpdateParticles(sim->debug_currentParticle, NPART - 1);
 		sim->AfterSim();
 		sim->debug_currentParticle = 0;
 		Log(logmessage, false);
@@ -1244,6 +1452,8 @@ void GameModel::ClearSimulation()
 {
 	//Load defaults
 	sim->gravityMode = 0;
+	sim->customGravityX = 0.0f;
+	sim->customGravityY = 0.0f;
 	sim->air->airMode = 0;
 	sim->legacy_enable = false;
 	sim->water_equal_test = false;

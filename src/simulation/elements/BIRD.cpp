@@ -64,8 +64,8 @@ static void create(ELEMENT_CREATE_FUNC_ARGS) {
 	sim->parts[i].vy = sin(angle);
 
 	// Store spawn location
-	sim->parts[i].pavg[0] = sim->parts[i].x;
-	sim->parts[i].pavg[1] = sim->parts[i].y;
+	sim->parts[i].tmp3 = sim->parts[i].x;
+	sim->parts[i].tmp4 = sim->parts[i].y;
 }
 
 static int update(UPDATE_FUNC_ARGS) {
@@ -73,7 +73,7 @@ static int update(UPDATE_FUNC_ARGS) {
 	 * tmp - is perching?
 	 * tmp2 - perch timer
 	 * life - want to perch?
-	 * pavg[0] and pavg[1]: spawn location
+	 * tmp3 and tmp4: spawn location
 	 * 
 	 * Behavior:
 	 * - Birds flock
@@ -252,8 +252,8 @@ static int update(UPDATE_FUNC_ARGS) {
 	}
 
 	// Tend towards spawn location
-	// parts[i].vx += (parts[i].pavg[0] - parts[i].x) / 40000.0f;
-	// parts[i].vy += (parts[i].pavg[1] - parts[i].y) / 40000.0f;
+	// parts[i].vx += (parts[i].tmp3 - parts[i].x) / 40000.0f;
+	// parts[i].vy += (parts[i].tmp4 - parts[i].y) / 40000.0f;
 
 	// Limit velocity
 	if (fabs(parts[i].vx) > MAX_VELOCITY) parts[i].vx = isign(parts[i].vx) * MAX_VELOCITY;

@@ -61,7 +61,7 @@ static int update(UPDATE_FUNC_ARGS) {
 	}
 
 	// Align self towards target
-	float angle = atan2(parts[i].pavg[1] - y, parts[i].pavg[0] - x);
+	float angle = atan2(parts[i].tmp4 - y, parts[i].tmp3 - x);
 	parts[i].vx += 2.0f * cos(angle);
 	parts[i].vy += 2.0f * sin(angle);
 
@@ -75,7 +75,7 @@ static int update(UPDATE_FUNC_ARGS) {
 	sim->create_part(-1, px, py, PT_SMKE);
 
 	// Should it explode now?
-	int dis = (parts[i].pavg[0] - x) * (parts[i].pavg[0] - x) + (parts[i].pavg[1] - y) * (parts[i].pavg[1] - y);
+	int dis = (parts[i].tmp3 - x) * (parts[i].tmp3 - x) + (parts[i].tmp4 - y) * (parts[i].tmp4 - y);
 	if (dis <= 4) {
 		sim->part_change_type(i, x, y, PT_BOMB);
 		DETONATE

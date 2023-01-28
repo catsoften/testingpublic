@@ -217,11 +217,11 @@ int Element_FIRE_update(UPDATE_FUNC_ARGS)
 						parts[i].ctype = PT_BRNZ;
 						parts[ID(r)].ctype = PT_BRNZ;
 					}
-					// LAVA(BSMH) resets tmp and tmp2 and pavg0
+					// LAVA(BSMH) resets tmp and tmp2 and tmp3
 					else if (parts[i].ctype == PT_BSMH) {
 						parts[i].tmp = 0;
 						parts[i].tmp2 = 0;
-						parts[i].pavg[0] = 0;
+						parts[i].tmp3 = 0;
 					}
 					else if (rt == PT_O2 && parts[i].ctype == PT_SLCN)
 					{
@@ -288,6 +288,10 @@ int Element_FIRE_update(UPDATE_FUNC_ARGS)
 						parts[i].ctype = PT_GOLD;
 						if (rx > 1 || rx < -1) // Trend veins vertical
 							parts[i].tmp = 1;
+					}
+					else if (parts[i].ctype == PT_SALT && rt == PT_GLAS && parts[ID(r)].life < 234 * 120)
+					{
+						parts[ID(r)].life++;
 					}
 				}
 
@@ -387,10 +391,10 @@ static int updateLegacy(UPDATE_FUNC_ARGS)
 
 static int graphics(GRAPHICS_FUNC_ARGS)
 {
-	int caddress = int(restrict_flt(float(cpart->life), 0, 199)) * 3;
-	*colr = (unsigned char)ren->flm_data[caddress];
-	*colg = (unsigned char)ren->flm_data[caddress+1];
-	*colb = (unsigned char)ren->flm_data[caddress+2];
+	auto color = Renderer::flameTableAt(cpart->life);
+	*colr = PIXR(color);
+	*colg = PIXG(color);
+	*colb = PIXB(color);
 
 	*firea = 255;
 	if (cpart->dcolour == 0 || cpart->tmp2 == 0) {

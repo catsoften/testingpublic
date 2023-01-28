@@ -98,7 +98,7 @@ You should *reeeallllyy* not touch these, these are mostly temp variables that g
 
 **tmp2:** For multi-qbit gates, stores which input the particle is (0 = INPUT 1, 1 = INPUT 2, 2 = INPUT 3)
 
-**pavg[0]:** For multi-qbit gates, particle ID of the 2nd input if current gate is 1st input
+**tmp3:** For multi-qbit gates, particle ID of the 2nd input if current gate is 1st input
 
-**pavg[1]:** For multi-qbit gates, particle ID of the 3rd input if current gate is 1st input
+**tmp4:** For multi-qbit gates, particle ID of the 3rd input if current gate is 1st input
 

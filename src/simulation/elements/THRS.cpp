@@ -29,7 +29,7 @@ void Element::Element_THRS() {
 }
 
 static int update(UPDATE_FUNC_ARGS) {
-	// Clone pavg[0] and ship state
+	// Clone tmp3 and ship state
 	Element_HULL_update(sim, i, x, y, surround_space, nt, parts, pmap);
 	return 0;
 }

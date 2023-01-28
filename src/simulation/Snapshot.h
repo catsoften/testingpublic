@@ -6,7 +6,7 @@
 #include "simulation/circuits/circuits.h"
 #include "Sign.h"
 #include "Stickman.h"
-#include "json/json.h"
+#include <json/json.h>
 
 class Snapshot
 {
@@ -34,8 +34,9 @@ public:
 	std::vector<short> oneWayDir;
 	std::vector<Circuit> circuits;
 
-	std::vector<std::tuple<short, short, short, Particle> > PortalParticles;
-	std::vector<unsigned char> WirelessData;
+
+	std::vector<Particle> PortalParticles;
+	std::vector<int> WirelessData;
 	std::vector<playerst> stickmen;
 	std::vector<sign> signs;
 

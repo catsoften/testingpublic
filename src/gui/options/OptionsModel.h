@@ -32,8 +32,14 @@ public:
 	void SetAmbientAirTemperature(float ambientAirTemp);
 	int GetEdgeMode();
 	void SetEdgeMode(int edgeMode);
+	int GetTemperatureScale();
+	void SetTemperatureScale(int temperatureScale);
 	int GetGravityMode();
 	void SetGravityMode(int gravityMode);
+	float GetCustomGravityX();
+	void SetCustomGravityX(float x);
+	float GetCustomGravityY();
+	void SetCustomGravityY(float y);
 	int GetScale();
 	void SetScale(int scale);
 	bool GetResizable();

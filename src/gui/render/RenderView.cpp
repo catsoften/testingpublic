@@ -48,7 +48,7 @@ RenderView::RenderView():
 		renderModes.push_back(renderModeCheckbox);
 		renderModeCheckbox->mode = mode;
 		renderModeCheckbox->SetIcon(icon);
-		renderModeCheckbox->SetActionCallback({ [this, mode, renderModeCheckbox] {
+		renderModeCheckbox->SetActionCallback({ [this, renderModeCheckbox] {
 			if (renderModeCheckbox->GetChecked())
 				c->SetRenderMode(renderModeCheckbox->mode);
 			else
@@ -69,7 +69,7 @@ RenderView::RenderView():
 		displayModes.push_back(displayModeCheckbox);
 		displayModeCheckbox->mode = mode;
 		displayModeCheckbox->SetIcon(icon);
-		displayModeCheckbox->SetActionCallback({ [this, mode, displayModeCheckbox] {
+		displayModeCheckbox->SetActionCallback({ [this, displayModeCheckbox] {
 			if (displayModeCheckbox->GetChecked())
 				c->SetDisplayMode(displayModeCheckbox->mode);
 			else
@@ -84,13 +84,7 @@ RenderView::RenderView():
 	addDisplayModeCheckbox(DISPLAY_AIRH, IconHeat      , ui::Point(167, 22), "Displays the temperature of the air like heat display does");
 	line2 = 200;
 	addDisplayModeCheckbox(DISPLAY_WARP, IconWarp      , ui::Point(205, 22), "Gravity lensing, Newtonian Gravity bends light with this on");
-#ifdef OGLR
-# define TOOLTIP "Some type of OpenGL effect ... maybe"
-#else
-# define TOOLTIP "Enables moving solids, stickmen guns, and premium(tm) graphics"
-#endif
-	addDisplayModeCheckbox(DISPLAY_EFFE, IconEffect    , ui::Point(205,  4), TOOLTIP);
-#undef TOOLTIP
+	addDisplayModeCheckbox(DISPLAY_EFFE, IconEffect    , ui::Point(205,  4), "Enables moving solids, stickmen guns, and premium(tm) graphics");
 	addDisplayModeCheckbox(DISPLAY_PERS, IconPersistant, ui::Point(237,  4), "Element paths persist on the screen for a while");
 	line3 = 270;
 
@@ -99,7 +93,7 @@ RenderView::RenderView():
 		colourModes.push_back(colourModeCheckbox);
 		colourModeCheckbox->mode = mode;
 		colourModeCheckbox->SetIcon(icon);
-		colourModeCheckbox->SetActionCallback({ [this, mode, colourModeCheckbox] {
+		colourModeCheckbox->SetActionCallback({ [this, colourModeCheckbox] {
 			if(colourModeCheckbox->GetChecked())
 				c->SetColourMode(colourModeCheckbox->mode);
 			else

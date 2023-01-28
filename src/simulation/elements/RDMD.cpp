@@ -66,12 +66,12 @@ void Element_RDMD_create(ELEMENT_CREATE_FUNC_ARGS) {
 		t1++;
 	
 	// Set seed value
-	sim->parts[i].pavg[0] = (t1 * 55) % 255 / 255.0f;
+	sim->parts[i].tmp3 = (t1 * 55) % 255 / 255.0f;
 }
 
 static int update(UPDATE_FUNC_ARGS) {
 	/**
-	 * Props: pavg[0]: diamond graphics multiplier
+	 * Props: tmp3: diamond graphics multiplier
 	 * Life: on fire if > 0, dies if life == 1
 	 */
 
@@ -112,9 +112,9 @@ static int update(UPDATE_FUNC_ARGS) {
 }
 
 static int graphics(GRAPHICS_FUNC_ARGS) {
-	*colr *= 0.8 + 0.2 * cpart->pavg[0];
-	*colg *= 0.8 + 0.2 * cpart->pavg[0];
-	*colb *= 0.9 + 0.1 * cpart->pavg[0];
+	*colr *= 0.8 + 0.2 * cpart->tmp3;
+	*colg *= 0.8 + 0.2 * cpart->tmp3;
+	*colb *= 0.9 + 0.1 * cpart->tmp3;
 
 	return 0;
 }

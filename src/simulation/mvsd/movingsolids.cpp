@@ -261,8 +261,8 @@ void MOVINGSOLID::MVSDGroup::update(Particle *parts, int pmap[YRES][XRES], Simul
     // In case, for example, solid was cut
     if (particle_removed && particle_ids.size() > 0) {
         parts[particle_ids[0]].flags = 1;
-        parts[particle_ids[0]].pavg[0] = vx;
-        parts[particle_ids[0]].pavg[1] = vy;
+        parts[particle_ids[0]].tmp3 = vx;
+        parts[particle_ids[0]].tmp4 = vy;
     }
 
     // We can approximate the center of gravity update

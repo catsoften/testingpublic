@@ -26,6 +26,6 @@ Download my mod! (In red)
 #### Properties
 **tmp:** Index of the current quote he's saying
 
-**pavg[0]:** Angle, in radians, for the first laser
+**tmp3:** Angle, in radians, for the first laser
 
-**pavg[1]:** Angle, in radians, for the second laser
+**tmp4:** Angle, in radians, for the second laser

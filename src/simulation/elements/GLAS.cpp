@@ -49,17 +49,22 @@ void Element::Element_GLAS()
 
 static int update(UPDATE_FUNC_ARGS)
 {
-	parts[i].pavg[0] = parts[i].pavg[1];
-	parts[i].pavg[1] = sim->pv[y/CELL][x/CELL];
-	float diff = parts[i].pavg[1] - parts[i].pavg[0];
-	if (diff > 0.25f || diff < -0.25f)
+	auto press = int(sim->pv[y/CELL][x/CELL] * 64);
+	auto diff = press - parts[i].tmp3;
+
+	// Determine whether the GLAS is chemically strengthened via .life setting. (250 = Max., 16 = Min.)
+	int strength = (parts[i].life / 120) + 16;
+	if (strength < 16)
+		strength = 16;
+	if (diff > strength || diff < -1 * strength)
 	{
-		sim->part_change_type(i,x,y,PT_BGLA);
+		sim->part_change_type(i, x, y, PT_BGLA);
 	}
+	parts[i].tmp3 = press;
 	return 0;
 }
 
 static void create(ELEMENT_CREATE_FUNC_ARGS)
 {
-	sim->parts[i].pavg[1] = sim->pv[y/CELL][x/CELL];
+	sim->parts[i].tmp3 = int(sim->pv[y/CELL][x/CELL] * 64);
 }

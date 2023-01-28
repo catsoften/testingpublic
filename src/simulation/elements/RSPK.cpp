@@ -17,7 +17,7 @@ const int REFRESH_EVERY_FRAMES = 5;
 
 float get_power(int x, int y, Simulation *sim) {
 	int r = sim->photons[y][x];
-	float voltage = sim->parts[ID(r)].pavg[1];
+	float voltage = sim->parts[ID(r)].tmp4;
 	r = sim->pmap[y][x];
 	float resistance = get_resistance(TYP(r), sim->parts, ID(r), sim);
 	if (resistance == 0.0f)
@@ -82,8 +82,8 @@ static int update(UPDATE_FUNC_ARGS) {
 	/**
 	 * Properties:
 	 * tmp   - Current node ID, 1 = branch, 0 = not part of skeleton
-	 * pavg0 - Voltage relative to ground
-	 * pavg1 - Current through pixel
+	 * tmp3 - Voltage relative to ground
+	 * tmp4 - Current through pixel
 	 */
 	if (!circuit_map[i] || !pmap[y][x] || !valid_conductor(TYP(pmap[y][x]), sim, ID(pmap[y][x]))) {
 		sim->kill_part(i);
@@ -116,7 +116,7 @@ static int update(UPDATE_FUNC_ARGS) {
 	double resistance = get_effective_resistance(ontype, parts, ID(pmap[y][x]), sim);
 
 	// Heat up the conductor its on
-	double power = parts[i].pavg[1] * parts[i].pavg[1] * resistance; // I^2 * R
+	double power = parts[i].tmp4 * parts[i].tmp4 * resistance; // I^2 * R
 	if (ontype != PT_CAPR && ontype != PT_VOLT && ontype != PT_SWCH) {
 		if (power > MAX_TEMP)
 			parts[ID(pmap[y][x])].temp = MAX_TEMP;
@@ -142,14 +142,14 @@ static int update(UPDATE_FUNC_ARGS) {
 	parts[i].temp = parts[ID(pmap[y][x])].temp;
 	parts[i].dcolour = 10000 * res;
 
-	if (!parts[i].pavg[0] && !parts[i].pavg[1]) {
+	if (!parts[i].tmp3 && !parts[i].tmp4) {
 		for (int rx = -1; rx <= 1; rx++)
 		for (int ry = -1; ry <= 1; ry++)
 			if (rx || ry) {
 				int r = sim->photons[y + ry][x + rx];
 				if (r && TYP(r) == PT_RSPK && parts[ID(r)].tmp) {
-					parts[i].pavg[0] = parts[ID(r)].pavg[0];
-					parts[i].pavg[1] = parts[ID(r)].pavg[1];
+					parts[i].tmp3 = parts[ID(r)].tmp3;
+					parts[i].tmp4 = parts[ID(r)].tmp4;
 					parts[i].life = parts[ID(r)].life - 1;
 					if (!circuit_map[i] && circuit_map[ID(r)])
 						circuit_map[i] = circuit_map[ID(r)];
@@ -160,9 +160,9 @@ static int update(UPDATE_FUNC_ARGS) {
 		for (int ry = -1; ry <= 1; ry++)
 			if (rx || ry) {
 				int r = sim->photons[y + ry][x + rx];
-				if (r && TYP(r) == PT_RSPK && (sim->parts[ID(r)].pavg[0] || sim->parts[ID(r)].pavg[1])) {
-					parts[i].pavg[0] = parts[ID(r)].pavg[0];
-					parts[i].pavg[1] = parts[ID(r)].pavg[1];
+				if (r && TYP(r) == PT_RSPK && (sim->parts[ID(r)].tmp3 || sim->parts[ID(r)].tmp4)) {
+					parts[i].tmp3 = parts[ID(r)].tmp3;
+					parts[i].tmp4 = parts[ID(r)].tmp4;
 					parts[i].life = parts[ID(r)].life - 1;
 					if (!circuit_map[i] && circuit_map[ID(r)])
 						circuit_map[i] = circuit_map[ID(r)];
@@ -190,15 +190,15 @@ static int update(UPDATE_FUNC_ARGS) {
 	// parts[ID(r)].life = 10;
 
 	// Project electric field
-	float efield = res == 0.0f ? 0.0f : isign(parts[i].pavg[0]) * parts[i].pavg[1] / res;
+	float efield = res == 0.0f ? 0.0f : isign(parts[i].tmp3) * parts[i].tmp4 / res;
 	sim->emfield->electric[FASTXY(x / EMCELL, y / EMCELL)] += efield;
 
 	// Due to float point precision issues voltage drops are 0 when high voltages are present
 	// So the solution: we superheat metals when resistance is non-zero
 	// Electric field also doesn't exist, so we just set it to 2560
-	// if (res != 0.0f && parts[i].pavg[0] > 1000000) {
+	// if (res != 0.0f && parts[i].tmp3 > 1000000) {
 	// 	parts[ID(pmap[y][x])].temp += 9000.0f;
-	// 	sim->emfield->electric[FASTXY(x / EMCELL, y / EMCELL)] += isign(parts[i].pavg[0]) * 2560.0f;
+	// 	sim->emfield->electric[FASTXY(x / EMCELL, y / EMCELL)] += isign(parts[i].tmp3) * 2560.0f;
 	// }
 
 	if (parts[i].ctype != PT_VOLT) {
@@ -208,7 +208,7 @@ static int update(UPDATE_FUNC_ARGS) {
 				r = pmap[y + ry][x + rx];
 				if (!r && RNG::Ref().chance(1, 100)) {
 					// St elmo's fire
-					if (parts[i].pavg[0] > 100000) {
+					if (parts[i].tmp3 > 100000) {
 						int ni = sim->create_part(-1, x + rx ,y + ry, PT_PLSM);
 						if (ni > -1) {
 							parts[ni].temp = parts[i].temp;
@@ -216,7 +216,7 @@ static int update(UPDATE_FUNC_ARGS) {
 						}
 					}
 					// Thermonic emission
-					if (parts[i].pavg[0] > 1000) {
+					if (parts[i].tmp3 > 1000) {
 						// int ni = sim->create_part(-3, x + rx, y + ry, PT_ELEC);
 						// if (ni > -1) {
 						// 	parts[ni].temp = parts[i].temp;
@@ -227,7 +227,7 @@ static int update(UPDATE_FUNC_ARGS) {
 					}
 				}
 				// Ionizing gases
-				if (parts[i].pavg[0] > 1000 && sim->elements[TYP(r)].Properties & TYPE_GAS) {
+				if (parts[i].tmp3 > 1000 && sim->elements[TYP(r)].Properties & TYPE_GAS) {
 					sim->part_change_type(ID(r), x + rx, y + ry, PT_PLSM);
 					parts[ID(r)].life = RNG::Ref().between(0, 570);
 				}
@@ -238,8 +238,8 @@ static int update(UPDATE_FUNC_ARGS) {
 	while (true) {
 		r = sim->photons[y][x];
 		if (r && ID(r) != i && TYP(r) == PT_RSPK) {
-			parts[i].pavg[0] += parts[ID(r)].pavg[0];
-			parts[i].pavg[1] += parts[ID(r)].pavg[1];
+			parts[i].tmp3 += parts[ID(r)].tmp3;
+			parts[i].tmp4 += parts[ID(r)].tmp4;
 			sim->kill_part(ID(r));
 		}
 		else {
@@ -261,7 +261,7 @@ static int graphics(GRAPHICS_FUNC_ARGS) {
 		*colg = 0;
 		*colb = 255;
 		//ren->fillcircle(cpart->x - 6, cpart->y - 6, 5, 5, 255, 255, 0, 55);
-		//ren->drawtext(cpart->x, cpart->y - 10, String::Build(cpart->pavg[1]), 0,0,0, 255);
+		//ren->drawtext(cpart->x, cpart->y - 10, String::Build(cpart->tmp4), 0,0,0, 255);
 	}
 
 	return 0;

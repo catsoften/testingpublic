@@ -27,7 +27,7 @@ String strip(const String &str) {
     return s;
 }
 
-enum PropMode { set, add, subtract, multiply, divide, XOR, AND, OR };
+enum PropMode { set, add, subtract, multiply, divide, XOR, modeAND, OR };
 
 template <class T> T apply_method(T base, T modifier, int method) {
     switch (method) {
@@ -38,7 +38,7 @@ template <class T> T apply_method(T base, T modifier, int method) {
         case divide:
             if (modifier == 0.0f) return base; // Avoid division by 0
             return base / modifier;
-        case AND: return (unsigned int)base & (unsigned int)modifier;
+        case modeAND: return (unsigned int)base & (unsigned int)modifier;
         case OR:  return (unsigned int)base | (unsigned int)modifier;
         case XOR: return (unsigned int)base ^ (unsigned int)modifier;
     }
@@ -224,7 +224,7 @@ void PropertyWindow2::SetProperty() {
             }
              else if (prop.BeginsWith('&')) {
                 prop = prop.Substr(1, prop.size());
-                method = AND;
+                method = modeAND;
             }
              else if (prop.BeginsWith('^')) {
                 prop = prop.Substr(1, prop.size());

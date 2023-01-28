@@ -31,10 +31,10 @@ void Element::Element_VOLT() {
 	Weight = 100;
 
 	HeatConduct = 251;
-	Description = "Voltage source. Use PSCN/COPR and NSCN/ZINC for terminals. Set output voltage with pavg0.";
+	Description = "Voltage source. Use PSCN/COPR and NSCN/ZINC for terminals. Set output voltage with tmp3.";
 
 	Properties = TYPE_SOLID;
-	DefaultProperties.pavg[0] = 10.0f;
+	DefaultProperties.tmp3 = 10.0f;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;

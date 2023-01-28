@@ -1,5 +1,6 @@
 #include "simulation/vehicles/vehicle.h"
-#include "hmap.h"
+#include "graphics/Pixel.h"
+#include "graphics/Renderer.h"
 
 Vehicle& VehicleBuilder::Build() {
     if (vehicle) delete vehicle;
@@ -10,7 +11,6 @@ Vehicle& VehicleBuilder::Build() {
 
 void draw_px_raw(const std::vector<VehiclePixel> &img, Renderer *ren, Particle *cpart, int cx, int cy, bool flip, float rotation) {
     int x, y;
-    int caddress = restrict_flt((int)( restrict_flt((float)(cpart->temp+(-MIN_TEMP)), 0.0f, MAX_TEMP+(-MIN_TEMP)) / ((MAX_TEMP+(-MIN_TEMP))/1024) ) *3, 0.0f, (1024.0f*3)-3);
     for (auto px = img.begin(); px != img.end(); ++px) {
         x = px->x; y = px->y;
 
@@ -20,7 +20,10 @@ void draw_px_raw(const std::vector<VehiclePixel> &img, Renderer *ren, Particle *
 
         // Heat display
         if (ren->colour_mode & COLOUR_HEAT)
-            ren->drawrect(cx + x, cy + y, 1, 1, color_data[caddress],  color_data[caddress + 1],  color_data[caddress + 2], 255);
+        {
+            auto color = Renderer::heatTableAt(int((cpart->temp - MIN_TEMP) / (MAX_TEMP - MIN_TEMP) * 1024));
+            ren->drawrect(cx + x, cy + y, 1, 1, PIXR(color),  PIXG(color),  PIXB(color), 255);
+        }
         // Normal display
         else {
             ren->drawrect(cx + x, cy + y, 1, 1, px->r, px->g, px->b, 255);
@@ -37,5 +40,5 @@ void draw_px_raw(const std::vector<VehiclePixel> &img, Renderer *ren, Particle *
 }
 
 void draw_px(const std::vector<VehiclePixel> &img, Renderer *ren, Particle *cpart, float rotation) {
-    draw_px_raw(img, ren, cpart, cpart->x, cpart->y, cpart->pavg[1], rotation);
+    draw_px_raw(img, ren, cpart, cpart->x, cpart->y, cpart->tmp4, rotation);
 }

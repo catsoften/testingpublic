@@ -25,22 +25,22 @@ void Element::Element_HULL()
 }
 
 void Element_HULL_create(ELEMENT_CREATE_FUNC_ARGS) {
-	sim->parts[i].pavg[0] = -1;
+	sim->parts[i].tmp3 = -1;
 }
 
 void Element_HULL_changeType(ELEMENT_CHANGETYPE_FUNC_ARGS) {
-	if (SHIPS::is_ship(sim->parts[i].pavg[0]))
-		SHIPS::ships[sim->parts[i].pavg[0]].remove_component(i, sim->parts[i].type);
+	if (SHIPS::is_ship(sim->parts[i].tmp3))
+		SHIPS::ships[sim->parts[i].tmp3].remove_component(i, sim->parts[i].type);
 }
 
 int Element_HULL_update(UPDATE_FUNC_ARGS) {
-	// Reset pavg0 if ship disappears
-	if (!SHIPS::is_ship(parts[i].pavg[0]))
-		parts[i].pavg[0] = -1;
+	// Reset tmp3 if ship disappears
+	if (!SHIPS::is_ship(parts[i].tmp3))
+		parts[i].tmp3 = -1;
 
-	// Copy pavg[0] from nearby components
-	if (parts[i].pavg[0] < 0)
-		SHIPS::clonePAVG(sim, i, x, y);
+	// Copy tmp3 from nearby components
+	if (parts[i].tmp3 < 0)
+		SHIPS::cloneTMP34(sim, i, x, y);
 
 	return 0;
 }

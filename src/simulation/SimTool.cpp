@@ -1,4 +1,7 @@
 #include <cmath>
+
+#include "common/tpt-rand.h"
+#include "graphics/Renderer.h"
 #include "simulation/ElementGraphics.h"
 #include "simulation/Gravity.h"
 #include "Misc.h"
@@ -7,6 +10,7 @@
 #include "common/tpt-rand.h"
 #include "graphics/Renderer.h"
 
+#include "Misc.h"
 #include "ToolClasses.h"
 
 SimTool::SimTool():

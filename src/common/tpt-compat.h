@@ -16,6 +16,12 @@
 #ifndef TPT_COMPAT_H
 #define TPT_COMPAT_H
 
+
+#include <cstddef>
+#include <memory>
+#include <type_traits>
+#include <utility>
+
 //some compatibility stuff for non-standard compilers
 #if defined(WIN) && !defined(strcasecmp)
 #define strcasecmp stricmp

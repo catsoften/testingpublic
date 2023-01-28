@@ -32,6 +32,6 @@ Once the web is done, the spider freely (randomly) wanders the web, eating any c
 3 = Done web, living on the web
 ```
 
-**pavg[0]:** x target location to move to
+**tmp3:** x target location to move to
 
-**pavg[1]:** y target location to move to
+**tmp4:** y target location to move to

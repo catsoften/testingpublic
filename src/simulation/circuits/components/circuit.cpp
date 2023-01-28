@@ -425,14 +425,14 @@ void Circuit::add_branch_from_skeleton(const coord_vec &skeleton, Pos start_node
             // Inductor has no polarity checks so we just set current gain to
             // whatever the current inductor is
             else if (rt == PT_INDC)
-                data.current_gain = sim->parts[ID(r)].pavg[1];
+                data.current_gain = sim->parts[ID(r)].tmp4;
             else if (is_dynamic_resistor(TYP(r)))
                 data.dynamic_resistors.push_back(ID(r));
             else if (is_voltage_source(TYP(r))) {
-                if (TYP(r) == PT_VOLT) // Pavg0 is voltage
-                    current_voltage -= sim->parts[ID(r)].pavg[0] * current_polarity;
-                else if (TYP(r) == PT_CAPR) // Pavg1 is "effective" voltage
-                    current_voltage -= sim->parts[ID(r)].pavg[1] * current_polarity;
+                if (TYP(r) == PT_VOLT) // tmp3 is voltage
+                    current_voltage -= sim->parts[ID(r)].tmp3 * current_polarity;
+                else if (TYP(r) == PT_CAPR) // tmp4 is "effective" voltage
+                    current_voltage -= sim->parts[ID(r)].tmp4 * current_polarity;
                 source_count++;
             }
         }
@@ -849,10 +849,10 @@ void Circuit::update_sim() {
             double voltage_drop = 0.0f;
 
             // Set voltage and current at nodes
-            sim->parts[b->node1_id].pavg[0] = restrict_double_to_flt(b->V1);
-            sim->parts[b->node1_id].pavg[1] = restrict_double_to_flt(b->current);
-            sim->parts[b->node2_id].pavg[0] = restrict_double_to_flt(b->V2);
-            sim->parts[b->node2_id].pavg[1] = restrict_double_to_flt(b->current);
+            sim->parts[b->node1_id].tmp3 = restrict_double_to_flt(b->V1);
+            sim->parts[b->node1_id].tmp4 = restrict_double_to_flt(b->current);
+            sim->parts[b->node2_id].tmp3 = restrict_double_to_flt(b->V2);
+            sim->parts[b->node2_id].tmp4 = restrict_double_to_flt(b->current);
 
             for (auto id : b->rspk_ids) {
                 x = (int)(0.5f + sim->parts[id].x);
@@ -871,37 +871,37 @@ void Circuit::update_sim() {
                 if (b->obeys_ohms_law() && !(prev_type == PT_SWCH && TYP(r) == PT_SWCH))
                     voltage_drop += get_effective_resistance(TYP(r), sim->parts, ID(r), sim) * b->current;
 
-                sim->parts[id].pavg[0] = restrict_double_to_flt(b->V1 - voltage_drop);
-                sim->parts[id].pavg[1] = restrict_double_to_flt(b->current);
+                sim->parts[id].tmp3 = restrict_double_to_flt(b->V1 - voltage_drop);
+                sim->parts[id].tmp4 = restrict_double_to_flt(b->current);
 
                 // Post updates:
                 if (TYP(r) == PT_CAPR || TYP(r) == PT_INDC) {
                     double step;
                     // Assign voltages for capcaitor: i / C = dV / dt
                     if (TYP(r) == PT_CAPR) {
-                        step = INTEGRATION_TIMESTEP / sim->parts[ID(r)].pavg[0] * b->current;
-                        if (fabs(sim->parts[ID(r)].pavg[1] - step) > fabs(b->SS_voltage) &&
+                        step = INTEGRATION_TIMESTEP / sim->parts[ID(r)].tmp3 * b->current;
+                        if (fabs(sim->parts[ID(r)].tmp4 - step) > fabs(b->SS_voltage) &&
                                 b->SS_voltage != 0 &&
                                 (b->SS_voltage != std::numeric_limits<double>::max() ||
                                  b->SS_current != std::numeric_limits<double>::max()))
-                            sim->parts[ID(r)].pavg[1] = b->SS_voltage;
-                        else if (fabs(sim->parts[ID(r)].pavg[1] - b->SS_voltage) < WITHIN_STEADY_STATE)
-                            sim->parts[ID(r)].pavg[1] = b->SS_voltage;
+                            sim->parts[ID(r)].tmp4 = b->SS_voltage;
+                        else if (fabs(sim->parts[ID(r)].tmp4 - b->SS_voltage) < WITHIN_STEADY_STATE)
+                            sim->parts[ID(r)].tmp4 = b->SS_voltage;
                         else
-                            sim->parts[ID(r)].pavg[1] -= step;
+                            sim->parts[ID(r)].tmp4 -= step;
                     }
                     // Assign current for inductor: V / L =  dI/dt
                     else if (TYP(r) == PT_INDC) {
-                        step = (b->V2 - b->V1) / sim->parts[ID(r)].pavg[0] * INTEGRATION_TIMESTEP;
-                        if (fabs(sim->parts[ID(r)].pavg[1] - step) > fabs(b->SS_current) &&
+                        step = (b->V2 - b->V1) / sim->parts[ID(r)].tmp3 * INTEGRATION_TIMESTEP;
+                        if (fabs(sim->parts[ID(r)].tmp4 - step) > fabs(b->SS_current) &&
                                 b->SS_current != 0 &&
                                 (b->SS_voltage != std::numeric_limits<double>::max() ||
                                  b->SS_current != std::numeric_limits<double>::max()))
-                            sim->parts[ID(r)].pavg[1] = b->SS_current;
-                        else if (fabs(sim->parts[ID(r)].pavg[1] - b->SS_current) < WITHIN_STEADY_STATE)
-                            sim->parts[ID(r)].pavg[1] = b->SS_current;
+                            sim->parts[ID(r)].tmp4 = b->SS_current;
+                        else if (fabs(sim->parts[ID(r)].tmp4 - b->SS_current) < WITHIN_STEADY_STATE)
+                            sim->parts[ID(r)].tmp4 = b->SS_current;
                         else
-                            sim->parts[ID(r)].pavg[1] -= step;
+                            sim->parts[ID(r)].tmp4 -= step;
                     }
                 }
                 prev_type = TYP(r);
@@ -911,8 +911,8 @@ void Circuit::update_sim() {
         for (size_t i = 0; i < floating_branches[node_id->first].size(); i++) {
             for (size_t j = 0; j < floating_branches[node_id->first][i]->rspk_ids.size(); j++) {
                 int id = floating_branches[node_id->first][i]->rspk_ids[j];
-                sim->parts[id].pavg[0] = restrict_double_to_flt(floating_branches[node_id->first][i]->V2);
-                sim->parts[id].pavg[1] = restrict_double_to_flt(0.0f);
+                sim->parts[id].tmp3 = restrict_double_to_flt(floating_branches[node_id->first][i]->V2);
+                sim->parts[id].tmp4 = restrict_double_to_flt(0.0f);
             }
         }
     }

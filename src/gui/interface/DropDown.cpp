@@ -12,6 +12,7 @@ class DropDownWindow : public ui::Window
 	DropDown * dropDown;
 	Appearance appearance;
 	bool isMouseInside;
+	std::vector<Button> buttons;
 
 public:
 	DropDownWindow(DropDown * dropDown):
@@ -24,7 +25,6 @@ public:
 		{
 			Button * tempButton = new Button(Point(1, currentY), Point(Size.X-2, 16), dropDown->options[i].first);
 			tempButton->Appearance = appearance;
-
 			if (i)
 				tempButton->Appearance.Border = ui::Border(0, 1, 1, 1);
 		

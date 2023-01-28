@@ -15,12 +15,12 @@ namespace EXFN_DATA {
 	}
 
 	bool is_part_of_wave(int flags, int period, int delta, int direction_multiplier, int timer, int offset,
-			int pavg) {
+			int tmp3) {
 		float result = flags / 2;
 		result = result + result * sin(TWO_PI / period *
 			(offset + delta + direction_multiplier * timer));
 		result = int(result) + 1;
-		return result == pavg || result == flags - pavg;
+		return result == tmp3 || result == flags - tmp3;
 	}
 
 	void set_directions(int &spawndx, int &spawndy, int &initx, int &inity, int &dir, int x, int y, int tmp) {
@@ -152,13 +152,13 @@ static int update(UPDATE_FUNC_ARGS) {
 			}
 
 	/* Flags store total formation height / width
-	 * If particle is rightmost or bottommost this is the pavg[0] */
+	 * If particle is rightmost or bottommost this is the tmp3 */
 	if (parts[i].flags == 0) {
 		int tx = parts[i].x + (EXFN_DATA::is_up(dir) ? 1 : 0); // Intentionally swapped dy and dx
 		int ty = parts[i].y + (EXFN_DATA::is_up(dir) ? 0 : 1);
 		if (ty >= 0 && ty >= 0 && tx < XRES && ty < YRES && TYP(pmap[ty][tx]) != PT_EXFN) {
 			PropertyValue value;
-			value.Integer = parts[i].pavg[0];
+			value.Integer = parts[i].tmp3;
 			sim->flood_prop(parts[i].x, parts[i].y, offsetof(Particle, flags), value, StructProperty::Integer);
 		}
 	}
@@ -169,8 +169,8 @@ static int update(UPDATE_FUNC_ARGS) {
 	 * 		   particle has life = 0, it will "spread" to life = 0. Toggles with NSCN and PSCN
 	 * - tmp: 0 = left, 1 = top, 2 = right, 3 = bottom
 	 * - tmp2: reversed, 1 = reversed, 0 = not. Spreads like life, toggles with GOLD
-	 * - pavg[0]: depending on direction, if
-	 * 		particle is leftmost or topmost, it will have a pavg[0] of 1
+	 * - tmp3: depending on direction, if
+	 * 		particle is leftmost or topmost, it will have a tmp3 of 1
 	 * 		any other particle = particle to left or top + 1
 	 */
 	// Slowly decrement life and tmp2 to 1 if > 1
@@ -179,9 +179,9 @@ static int update(UPDATE_FUNC_ARGS) {
 	if (parts[i].tmp2 > 1)
 		parts[i].tmp2--;
 
-	// Count particles and set appropriate pavg[0]
+	// Count particles and set appropriate tmp3
 	// NOTE: Depends on particles being updated top->bottom, left->right
-	int initial_pavg = parts[i].pavg[0];
+	int initial_tmp3 = parts[i].tmp3;
 	int delta = 1;
 	while (delta >= 0) {
 		if (EXFN_DATA::TOP == dir || EXFN_DATA::BOTTOM == dir) // Vertical dir, go across
@@ -191,19 +191,19 @@ static int update(UPDATE_FUNC_ARGS) {
 		// Rightmost or bottom-most
 		if (!r) break;
 
-		if (parts[ID(r)].pavg[0] != 0) {
-			parts[i].pavg[0] = parts[ID(r)].pavg[0] + delta;
+		if (parts[ID(r)].tmp3 != 0) {
+			parts[i].tmp3 = parts[ID(r)].tmp3 + delta;
 			break;
 		}
 		delta--;
 	}
 
 	// Leftmost or topmost
-	if (parts[i].pavg[0] == 0)
-		parts[i].pavg[0] = 1;
+	if (parts[i].tmp3 == 0)
+		parts[i].tmp3 = 1;
 
-	// Initial pavg[0] differs, reset flags!
-	if (parts[i].pavg[0] != initial_pavg)
+	// Initial tmp3 differs, reset flags!
+	if (parts[i].tmp3 != initial_tmp3)
 		parts[i].flags = 0;
 
 	// Check for other EXFN
@@ -259,9 +259,9 @@ int Element_EXFN_draw_beam(GRAPHICS_FUNC_ARGS) {
 			ren->sim->stasis->strength[(inity) / STASIS_CELL][(initx) / STASIS_CELL] = (cpart->temp - (273.15f - 256.0f)) * 1.6f / 512;
 
 			// Beams should push gently towards center
-			if (cpart->pavg[0] < cpart->flags / 2)
+			if (cpart->tmp3 < cpart->flags / 2)
 				nudge_speed = 0.5f;
-			else if(cpart->pavg[0] == cpart->flags / 2)
+			else if(cpart->tmp3 == cpart->flags / 2)
 				nudge_speed = 0.0f;
 			else
 				nudge_speed = -0.5f;
@@ -272,8 +272,8 @@ int Element_EXFN_draw_beam(GRAPHICS_FUNC_ARGS) {
 				ren->sim->stasis->vy[(inity) / STASIS_CELL][(initx) / STASIS_CELL] += nudge_speed / 4;
 			}
 
-			/* Function to graph: pavg[0] = (flags / 2) + (flags / 2)sin(a(initx - parts[i].x - time))
-			 * where a = 2pi / period, flags is 2 * amplitude, pavg[0] is y value from 0 to flags
+			/* Function to graph: tmp3 = (flags / 2) + (flags / 2)sin(a(initx - parts[i].x - time))
+			 * where a = 2pi / period, flags is 2 * amplitude, tmp3 is y value from 0 to flags
 			 * 
 			 * The above example is for a wave going left. If the wave is going right then
 			 * direction_multiplier is *= -1.
@@ -296,16 +296,16 @@ int Element_EXFN_draw_beam(GRAPHICS_FUNC_ARGS) {
 				delta_reverse = initx - cpart->x;
 			}
 
-			if (EXFN_DATA::is_part_of_wave(cpart->flags, period, delta, direction_multiplier, ren->sim->timer, 0, cpart->pavg[0]))
+			if (EXFN_DATA::is_part_of_wave(cpart->flags, period, delta, direction_multiplier, ren->sim->timer, 0, cpart->tmp3))
 				Element_EXFN_draw_glowy_pixel(ren, initx, inity, r, g, b, 255);
 
 			// The portal 2 graphics have another 3rd wave offset
 			// about 1/3 of a period with a different color
-			if (EXFN_DATA::is_part_of_wave(cpart->flags, period, delta, direction_multiplier, ren->sim->timer, period / 3, cpart->pavg[0]))
+			if (EXFN_DATA::is_part_of_wave(cpart->flags, period, delta, direction_multiplier, ren->sim->timer, period / 3, cpart->tmp3))
 				Element_EXFN_draw_glowy_pixel(ren, initx, inity, r, g, b, 80);
 
 			// Scanning lines
-			if (EXFN_DATA::is_part_of_wave(cpart->flags, period, delta_reverse, direction_multiplier, ren->sim->timer, 0, cpart->pavg[0]))
+			if (EXFN_DATA::is_part_of_wave(cpart->flags, period, delta_reverse, direction_multiplier, ren->sim->timer, 0, cpart->tmp3))
 				Element_EXFN_draw_glowy_pixel(ren, initx, inity, r, g, b, 80);
 
 			initx += spawndx;

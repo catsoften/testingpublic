@@ -13,10 +13,10 @@ void create_crystal_at_point(Simulation *sim, int x, int y, int tmp2, float colo
 	int id = (TYP(r) == PT_BSMH && sim->parts[ID(r)].tmp <= 1) ?
 		ID(r) : sim->create_part(-1, x, y, PT_BSMH);
 	if (id > -1) {
-		sim->parts[id].pavg[0] = tmp2 % 2;
+		sim->parts[id].tmp3 = tmp2 % 2;
 		sim->parts[id].tmp = 1;
 		sim->parts[id].ctype = 0;
-		sim->parts[id].pavg[1] = color;
+		sim->parts[id].tmp4 = color;
 	}
 }
 
@@ -81,9 +81,9 @@ static int update(UPDATE_FUNC_ARGS) {
 	 * 	 0 - Not set yet
 	 * 	 1 - Inert crystal
 	 * 	 >1 - Growing crystal, max crystal size
-	 * pavg0
+	 * tmp3
 	 * 	 Used for setting "dark" color bands
-	 * pavg1
+	 * tmp4
 	 * 	 Used to store color varient
 	 * tmp2
 	 * 	 Crystal growing size, decrements as size grows
@@ -92,7 +92,7 @@ static int update(UPDATE_FUNC_ARGS) {
 	// Just cooled, set crystal growth state
 	if (parts[i].ctype == 0 && parts[i].tmp == 0) {
 		parts[i].tmp = RNG::Ref().chance(1, 30) ? RNG::Ref().between(2, 14) : 1; // 1 / 30 chance to be a grow start location
-		parts[i].pavg[1] = BSMH_COLORS[RNG::Ref().between(0, BSMH_COLORS.size() - 1)];
+		parts[i].tmp4 = BSMH_COLORS[RNG::Ref().between(0, BSMH_COLORS.size() - 1)];
 	}
 
 	// Grow crystal if hot enough and less than max size (20)
@@ -100,39 +100,39 @@ static int update(UPDATE_FUNC_ARGS) {
 		// Top line
 		if (y - parts[i].tmp2 >= 0) {
 			for (int x2 = x -parts[i].tmp2; x2 <= x + parts[i].tmp2; x2++)
-				create_crystal_at_point(sim, x2, y - parts[i].tmp2, parts[i].tmp2, parts[i].pavg[1]);
+				create_crystal_at_point(sim, x2, y - parts[i].tmp2, parts[i].tmp2, parts[i].tmp4);
 		}
 		// Bottom line
 		if (y + parts[i].tmp2 < YRES) {
 			for (int x2 = x -parts[i].tmp2; x2 <= x + parts[i].tmp2; x2++)
-				create_crystal_at_point(sim, x2, y + parts[i].tmp2, parts[i].tmp2, parts[i].pavg[1]);
+				create_crystal_at_point(sim, x2, y + parts[i].tmp2, parts[i].tmp2, parts[i].tmp4);
 		}
 		// Left line
 		if (x - parts[i].tmp2 >= 0) {
 			for (int y2 = y -parts[i].tmp2; y2 <= y + parts[i].tmp2; y2++)
-				create_crystal_at_point(sim, x - parts[i].tmp2, y2, parts[i].tmp2, parts[i].pavg[1]);
+				create_crystal_at_point(sim, x - parts[i].tmp2, y2, parts[i].tmp2, parts[i].tmp4);
 		}
 		// Right line
 		if (x + parts[i].tmp2 < XRES) {
 			for (int y2 = y -parts[i].tmp2; y2 <= y + parts[i].tmp2; y2++)
-				create_crystal_at_point(sim, x + parts[i].tmp2, y2, parts[i].tmp2, parts[i].pavg[1]);
+				create_crystal_at_point(sim, x + parts[i].tmp2, y2, parts[i].tmp2, parts[i].tmp4);
 		}
 		parts[i].tmp2++;
 
 		if (RNG::Ref().chance(1, 3)) // Randomly change color again
-			parts[i].pavg[1] = BSMH_COLORS[RNG::Ref().between(0, BSMH_COLORS.size() - 1)];
+			parts[i].tmp4 = BSMH_COLORS[RNG::Ref().between(0, BSMH_COLORS.size() - 1)];
 	}
 
 	return 0;
 }
 
 static int graphics(GRAPHICS_FUNC_ARGS) {
-	if (cpart->pavg[1]) {
-		*colr = PIXR((int)cpart->pavg[1]);
-		*colg = PIXG((int)cpart->pavg[1]);
-		*colb = PIXB((int)cpart->pavg[1]);
+	if (cpart->tmp4) {
+		*colr = PIXR((int)cpart->tmp4);
+		*colg = PIXG((int)cpart->tmp4);
+		*colb = PIXB((int)cpart->tmp4);
 	}
-	if (cpart->pavg[0]) {
+	if (cpart->tmp3) {
 		*colr *= 0.5f;
 		*colg *= 0.5f;
 		*colb *= 0.5f;

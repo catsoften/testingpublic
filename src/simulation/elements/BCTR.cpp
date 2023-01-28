@@ -375,7 +375,7 @@ static int update(UPDATE_FUNC_ARGS) {
 				// Active resistances
 				bool should_res = RNG::Ref().between(0, 15) <= resval;
 				if ((rt == PT_VRSS || rt == PT_VRSG || rt == PT_VIRS) && restype == 3 && should_res) // VIRS
-					parts[ID(r)].pavg[0] = 1;
+					parts[ID(r)].tmp3 = 1;
 				else if (rt == PT_ACID && restype == 5 && should_res) { // ACID
 					sim->kill_part(ID(r));
 					return 0;

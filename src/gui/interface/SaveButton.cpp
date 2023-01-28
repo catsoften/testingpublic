@@ -10,6 +10,7 @@
 #include "client/SaveFile.h"
 #include "client/SaveInfo.h"
 
+#include "gui/dialogues/ErrorMessage.h"
 #include "graphics/Graphics.h"
 
 namespace ui {
@@ -46,7 +47,7 @@ SaveButton::SaveButton(Point position, Point size, SaveInfo * save_) : SaveButto
 
 		String votes, icon;
 
-		votes = String::Build(save->GetVotesUp() - save->GetVotesDown());
+		votes = String::Build(save->GetVotesUp()-save->GetVotesDown());
 		icon += 0xE03B;
 		for (size_t j = 1; j < votes.length(); j++)
 			icon += 0xE03C;
@@ -126,7 +127,7 @@ void SaveButton::Tick(float dt)
 {
 	if (!thumbnail)
 	{
-		if (!triedThumbnail)
+		if (!triedThumbnail && wantsDraw && ThumbnailRendererTask::QueueSize() < 10)
 		{
 			float scaleFactor = (Size.Y-25)/((float)YRES);
 			ui::Point thumbBoxSize = ui::Point(int(XRES*scaleFactor), int(YRES*scaleFactor));
@@ -170,6 +171,11 @@ void SaveButton::Tick(float dt)
 			thumbSize = ui::Point(thumbnail->Width, thumbnail->Height);
 		}
 	}
+	if (file && !wantsDraw && !thumbnailRenderer)
+	{
+		file->LazyUnload();
+	}
+	wantsDraw = false;
 }
 
 void SaveButton::Draw(const Point& screenPos)
@@ -289,6 +295,11 @@ void SaveButton::OnMouseUnclick(int x, int y, unsigned int button)
 	if(button != 1)
 	{
 		return; //left click only!
+	}
+	if (file && !file->GetGameSave())
+	{
+		new ErrorMessage("Error loading save", file->GetError());
+		return;
 	}
 
 	if(x>=Size.X-20 && y>=6 && y<=20 && x<=Size.X-6 && selectable)

@@ -3,10 +3,12 @@
 #include "music/synth/violin.h"
 
 #include <cmath>
-#include <SDL2/SDL_audio.h>
+//#include <SDL2/SDL_audio.h> *ULTIMATA97*
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <algorithm> // VS is retarded and can't find this shit
+
+#include "common/tpt-compat.h"
 
 float interpolate(float a, float b, float i) {
     return  (a * i + b * (1 - i)) / 2;
@@ -27,7 +29,7 @@ namespace NOTE {
 
 SoundHandler::SoundHandler()
     : m_sampleFreq(44100) {
-    SDL_zero(wantSpec);
+    /*SDL_zero(wantSpec);
     wantSpec.freq = m_sampleFreq;
     wantSpec.format = AUDIO_U8;
     wantSpec.channels = 1;
@@ -40,22 +42,22 @@ SoundHandler::SoundHandler()
         m_device = SDL_OpenAudioDevice(NULL, 0, &wantSpec, &haveSpec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
     if (m_device == 0)
         std::cout << "Failed to open audio: " << SDL_GetError() << std::endl;
-    SDL_PauseAudioDevice(m_device, 0);
+    SDL_PauseAudioDevice(m_device, 0);*/ // *ULTIMATA97*
 }
 
 SoundHandler::~SoundHandler() {
     this->stop();
-    SDL_CloseAudioDevice(m_device);
+    //SDL_CloseAudioDevice(m_device); *ULTIMATA97*
 }
 
 void SoundHandler::play() {
     if (!NOTE::enabled) return;
-    SDL_PauseAudioDevice(m_device, 0);
+    //SDL_PauseAudioDevice(m_device, 0); *ULTIMATA97*
 }
 
 void SoundHandler::stop() {
     this->callbacks = 0;
-    SDL_PauseAudioDevice(m_device, 1);
+    //SDL_PauseAudioDevice(m_device, 1); *ULTIMATA97*
 }
 
 void SoundHandler::add_sound(float freq, int length, InstrumentType instrument) {

@@ -67,8 +67,8 @@ static int update(UPDATE_FUNC_ARGS) {
 	/**
 	 * Properties
 	 * tmp     - Quote to display
-	 * pavg[0] - Laser 1 angle
-	 * pavg[1] - Laser 2 angle
+	 * tmp3 - Laser 1 angle
+	 * tmp4 - Laser 2 angle
 	 */
 
 	// Update quote
@@ -89,21 +89,21 @@ static int update(UPDATE_FUNC_ARGS) {
 		
 		if (count == 0) { // Laser 1
 			// Ease angle1 towards the FIGH
-			parts[i].pavg[0] += (atan2(ydiff, xdiff) - parts[i].pavg[0]) / 20.0f;
-			Element_SPDR_intersect_line(sim, x, y, cos(parts[i].pavg[0]), sin(parts[i].pavg[0]), tx, ty, 9);
+			parts[i].tmp3 += (atan2(ydiff, xdiff) - parts[i].tmp3) / 20.0f;
+			Element_SPDR_intersect_line(sim, x, y, cos(parts[i].tmp3), sin(parts[i].tmp3), tx, ty, 9);
 			sim->CreateLine(x, y, tx, ty, PT_LASR);
 		}
 		else if (count == 0 || count == 1) { // Laser 2
 			// Ease angle2 towards the FIGH
-			parts[i].pavg[1] += (atan2(ydiff, xdiff) - parts[i].pavg[1]) / 20.0f;
-			Element_SPDR_intersect_line(sim, x, y, cos(parts[i].pavg[1]), sin(parts[i].pavg[1]), tx, ty, 9);
+			parts[i].tmp4 += (atan2(ydiff, xdiff) - parts[i].tmp4) / 20.0f;
+			Element_SPDR_intersect_line(sim, x, y, cos(parts[i].tmp4), sin(parts[i].tmp4), tx, ty, 9);
 			sim->CreateLine(x, y, tx, ty, PT_LASR);
 		}
 		if (RNG::Ref().chance(1, 50)) { // Guided missile
 			int ni = sim->create_part(-1, x, y + (RNG::Ref().chance(1, 2) ? -2 : 2), PT_MSSL);
 			if (ni > -1) {
-				parts[ni].pavg[0] = parts[sim->fighters[j].stkmID].x;
-				parts[ni].pavg[1] = parts[sim->fighters[j].stkmID].y;
+				parts[ni].tmp3 = parts[sim->fighters[j].stkmID].x;
+				parts[ni].tmp4 = parts[sim->fighters[j].stkmID].y;
 				parts[ni].life = 0;
 			}
 		}

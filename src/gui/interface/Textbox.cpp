@@ -523,7 +523,6 @@ void Textbox::InsertText(String text)
 			}
 			cursor += text.length();
 		}
-
 		ClearSelection();
 		AfterTextChange(true);
 	}

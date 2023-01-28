@@ -1,7 +1,8 @@
+#include "client/http/Request.h" // includes curl.h, needs to come first to silence a warning on windows
+
 #include "PreviewModel.h"
 
 #include <cmath>
-#include <ctime>
 #include <iostream>
 
 #include "Format.h"
@@ -9,7 +10,6 @@
 #include "client/Client.h"
 #include "client/GameSave.h"
 #include "client/SaveInfo.h"
-#include "client/http/Request.h"
 
 #include "gui/dialogues/ErrorMessage.h"
 #include "gui/preview/Comment.h"
@@ -207,7 +207,7 @@ bool PreviewModel::ParseSaveInfo(ByteString &saveInfoResponse)
 {
 	delete saveInfo;
 
-	try
+	try // how does this differ from Client::GetSave?
 	{
 		std::istringstream dataStream(saveInfoResponse);
 		Json::Value objDocument;
@@ -321,7 +321,7 @@ void PreviewModel::Update()
 		if (status == 200 && ret.size())
 		{
 			delete saveData;
-			saveData = new std::vector<unsigned char>(ret.begin(), ret.end());
+			saveData = new std::vector<char>(ret.begin(), ret.end());
 			if (saveInfo && saveData)
 				OnSaveReady();
 		}

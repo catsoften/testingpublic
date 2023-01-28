@@ -44,9 +44,9 @@ double get_resistance(ElementType type, Particle *parts, ParticleId i, Simulatio
     if (is_dynamic_resistor(type))
         return 0.0;
 
-    // RSTR stores resistance in pavg0
+    // RSTR stores resistance in tmp3
     if (type == PT_RSTR)
-        return parts[i].pavg[0];
+        return parts[i].tmp3;
 
     auto itr = circuit_data.find(type);
     if (itr != circuit_data.end())
@@ -89,7 +89,7 @@ double get_effective_resistance(ElementType type, Particle *parts, ParticleId i,
 
         // Thermoresistor
         case PT_TRST:
-            return std::max(1e-7, (double)(parts[i].pavg[0] + parts[i].temp * parts[i].pavg[1]));
+            return std::max(1e-7, (double)(parts[i].tmp3 + parts[i].temp * parts[i].tmp4));
     }
 
     // Negative resistance conductors
@@ -99,7 +99,7 @@ double get_effective_resistance(ElementType type, Particle *parts, ParticleId i,
         int r = sim->photons[(int)(parts[i].y + 0.5f)][(int)(parts[i].x + 0.5f)];
 
         if (r && TYP(r) == PT_RSPK)
-            current = 1000 * fabs(parts[ID(r)].pavg[1]);
+            current = 1000 * fabs(parts[ID(r)].tmp4);
         return base_resistance / (1 + current);
     }
 

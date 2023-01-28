@@ -31,8 +31,8 @@ void Element::Element_LOGC() {
 	Weight = 100;
 
 	HeatConduct = 251;
-	Description = "Multi-pixel Logic gate. Use PSCN / COPR for input, NSCN / ZINC for output. Tmp = type, pavg0 = output voltage.";
-	DefaultProperties.pavg[0] = 5.0f;
+	Description = "Multi-pixel Logic gate. Use PSCN / COPR for input, NSCN / ZINC for output. Tmp = type, tmp3 = output voltage.";
+	DefaultProperties.tmp3 = 5.0f;
 
 	Properties = TYPE_SOLID;
 
@@ -56,8 +56,8 @@ static int update(UPDATE_FUNC_ARGS) {
 	 * 
 	 * tmp2 - Positive inputs in this frame
 	 * life - Negative inputs in this frame
-	 * pavg0 - Output voltage
-	 * pavg1 - Effective output voltage
+	 * tmp3 - Output voltage
+	 * tmp4 - Effective output voltage
 	 */
 	CIRCUITS::add_circuit(x, y, sim);
 	

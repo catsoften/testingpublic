@@ -28,9 +28,9 @@ void Element::Element_INDC() {
 	Weight = 100;
 
 	HeatConduct = 251;
-	Description = "Inductor. Resists sudden changes in current. pavg0 = inductance.";
-	DefaultProperties.pavg[0] = 10.0f;
-	DefaultProperties.pavg[1] = 0.0f;
+	Description = "Inductor. Resists sudden changes in current. tmp3 = inductance.";
+	DefaultProperties.tmp3 = 10.0f;
+	DefaultProperties.tmp4 = 0.0f;
 
 	Properties = TYPE_SOLID | PROP_CONDUCTS | PROP_LIFE_DEC;
 
@@ -49,8 +49,8 @@ void Element::Element_INDC() {
 static int update(UPDATE_FUNC_ARGS) {
 	/**
 	 * Properties:
-	 * pavg0 - inductance
-	 * pavg1 - effective resistance
+	 * tmp3 - inductance
+	 * tmp4 - effective resistance
 	 */
 
 	return 0;

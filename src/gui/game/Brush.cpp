@@ -109,7 +109,8 @@ void Brush::RenderLine(Renderer * ren, ui::Point position1, ui::Point position2)
 	ren->xor_line(position1.X, position1.Y, position2.X, position2.Y);
 }
 
-void Brush::RenderPoint(Renderer * ren, ui::Point position) {
+void Brush::RenderPoint(Renderer * ren, ui::Point position)
+{
 	if(!outline)
 		updateOutline();
 	if(!outline)

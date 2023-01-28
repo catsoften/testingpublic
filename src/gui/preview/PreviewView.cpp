@@ -91,9 +91,9 @@ PreviewView::PreviewView():
 	AddComponent(saveNameLabel);
 
 	if(showAvatars)
-		saveDescriptionLabel = new ui::Label(ui::Point(5, (YRES/2)+4+15+25), ui::Point((XRES/2)-10, Size.Y-((YRES/2)+4+15+17)-25), "");
+		saveDescriptionLabel = new ui::Label(ui::Point(5, (YRES/2)+4+15+21), ui::Point((XRES/2)-10, Size.Y-((YRES/2)+4+15+17)-25), "");
 	else
-		saveDescriptionLabel = new ui::Label(ui::Point(5, (YRES/2)+4+15+23), ui::Point((XRES/2)-10, Size.Y-((YRES/2)+4+15+17)-23), "");
+		saveDescriptionLabel = new ui::Label(ui::Point(5, (YRES/2)+4+15+19), ui::Point((XRES/2)-10, Size.Y-((YRES/2)+4+15+17)-23), "");
 	saveDescriptionLabel->SetMultiline(true);
 	saveDescriptionLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	saveDescriptionLabel->Appearance.VerticalAlign = ui::Appearance::AlignTop;
@@ -615,7 +615,7 @@ void PreviewView::NotifyCommentsChanged(PreviewModel * sender)
 			if (showAvatars)
 			{
 				tempAvatar = new ui::AvatarButton(ui::Point(2, currentY+7), ui::Point(26, 26), comments->at(i)->authorName);
-				tempAvatar->SetActionCallback({ [this, tempAvatar] {
+				tempAvatar->SetActionCallback({ [tempAvatar] {
 					if (tempAvatar->GetUsername().size() > 0)
 					{
 						new ProfileActivity(tempAvatar->GetUsername());
@@ -626,10 +626,7 @@ void PreviewView::NotifyCommentsChanged(PreviewModel * sender)
 			}
 
 			if (showAvatars)
-				tempUsername = new ui::Label(ui::Point(31, currentY+3), ui::Point(Size.X-((XRES/2) + 13 + 26), 16),
-					comments->at(i)->authorNameFormatted.size() > 18 ?
-						String::Build(comments->at(i)->authorNameFormatted.FromUtf8().Substr(0, 16), "..") :
-						comments->at(i)->authorNameFormatted.FromUtf8());
+				tempUsername = new ui::Label(ui::Point(31, currentY+3), ui::Point(Size.X-((XRES/2) + 13 + 26), 16), comments->at(i)->authorNameFormatted.FromUtf8());
 			else
 				tempUsername = new ui::Label(ui::Point(5, currentY+3), ui::Point(Size.X-((XRES/2) + 13), 16), comments->at(i)->authorNameFormatted.FromUtf8());
 			

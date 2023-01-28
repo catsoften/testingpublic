@@ -29,10 +29,10 @@ Element_VOLT::Element_VOLT()
 	Weight = 100;
 
 	HeatConduct = 251;
-	Description = "Voltage battery. Set output voltage with pavg0.";
+	Description = "Voltage battery. Set output voltage with tmp3.";
 
 	Properties = TYPE_SOLID;
-	DefaultProperties.pavg[0] = 10.0f;
+	DefaultProperties.tmp3 = 10.0f;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -55,10 +55,10 @@ int Element_VOLT::update(UPDATE_FUNC_ARGS) {
 		int ni = sim->create_part(-3, x, y, PT_RSPK);
 		parts[ni].tmp = 1;
 		parts[ni].life = 9;
-		parts[ni].pavg[0] = parts[i].pavg[0];
+		parts[ni].tmp3 = parts[i].tmp3;
 	}
 	else if (TYP(r) == PT_RSPK)
-		parts[ID(r)].pavg[0] = parts[i].pavg[0];
+		parts[ID(r)].tmp3 = parts[i].tmp3;
 
 	return 0;
 }

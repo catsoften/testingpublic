@@ -63,6 +63,7 @@ class LuaScriptInterface: public CommandInterface
 	static int simulation_partPosition(lua_State * l);
 	static int simulation_partID(lua_State * l);
 	static int simulation_partKill(lua_State * l);
+	static int simulation_partExists(lua_State * l);
 	static int simulation_pressure(lua_State * l);
 	static int simulation_velocityX(lua_State * l);
 	static int simulation_velocityY(lua_State * l);
@@ -100,6 +101,7 @@ class LuaScriptInterface: public CommandInterface
 	static int simulation_gravityGrid(lua_State * l);
 	static int simulation_edgeMode(lua_State * l);
 	static int simulation_gravityMode(lua_State * l);
+	static int simulation_customGravity(lua_State * l);
 	static int simulation_airMode(lua_State * l);
 	static int simulation_waterEqualisation(lua_State * l);
 	static int simulation_ambientAirTemp(lua_State * l);
@@ -113,10 +115,15 @@ class LuaScriptInterface: public CommandInterface
 	static int simulation_framerender(lua_State * l);
 	static int simulation_gspeed(lua_State * l);
 	static int simulation_takeSnapshot(lua_State *l);
+	static int simulation_historyRestore(lua_State *l);
+	static int simulation_historyForward(lua_State *l);
 	static int simulation_replaceModeFlags(lua_State *l);
 	static int simulation_listCustomGol(lua_State *l);
 	static int simulation_addCustomGol(lua_State *l);
 	static int simulation_removeCustomGol(lua_State *l);
+	static int simulation_lastUpdatedID(lua_State *l);
+	static int simulation_updateUpTo(lua_State *l);
+	static int simulation_temperatureScale(lua_State *l);
 
 
 	//Renderer
@@ -140,6 +147,10 @@ class LuaScriptInterface: public CommandInterface
 	static int elements_property(lua_State * l);
 	static int elements_loadDefault(lua_State * l);
 	static int elements_free(lua_State * l);
+	static int elements_exists(lua_State * l);
+
+	static void GetDefaultProperties(lua_State * l, int id);
+	static void SetDefaultProperties(lua_State * l, int id, int stackPos);
 
 	//Interface
 	void initInterfaceAPI();
@@ -161,6 +172,7 @@ class LuaScriptInterface: public CommandInterface
 	static int graphics_fillCircle(lua_State * l);
 	static int graphics_getColors(lua_State * l);
 	static int graphics_getHexColor(lua_State * l);
+	static int graphics_setClipRect(lua_State * l);
 
 	void initFileSystemAPI();
 	static int fileSystem_list(lua_State * l);
@@ -175,6 +187,7 @@ class LuaScriptInterface: public CommandInterface
 
 	void initPlatformAPI();
 	static int platform_platform(lua_State * l);
+	static int platform_ident(lua_State * l);
 	static int platform_build(lua_State * l);
 	static int platform_releaseType(lua_State * l);
 	static int platform_exeName(lua_State * l);
@@ -203,6 +216,7 @@ public:
 
 	static void LuaGetProperty(lua_State* l, StructProperty property, intptr_t propertyAddress);
 	static void LuaSetProperty(lua_State* l, StructProperty property, intptr_t propertyAddress, int stackPos);
+	static void LuaSetParticleProperty(lua_State* l, int particleID, StructProperty property, intptr_t propertyAddress, int stackPos);
 
 	ui::Window * Window;
 	lua_State *l;
@@ -223,5 +237,31 @@ public:
 };
 
 extern LuaScriptInterface *luacon_ci;
+
+void tpt_lua_pushByteString(lua_State *L, const ByteString &str);
+void tpt_lua_pushString(lua_State *L, const String &str);
+
+// TODO: toByteStringView once we have a ByteStringView (or std::string_view, if we get rid of ByteString)
+ByteString tpt_lua_toByteString(lua_State *L, int index);
+String tpt_lua_toString(lua_State *L, int index, bool ignoreError = true);
+
+// TODO: toByteStringView once we have a ByteStringView (or std::string_view, if we get rid of ByteString)
+ByteString tpt_lua_checkByteString(lua_State *L, int index);
+String tpt_lua_checkString(lua_State *L, int index, bool ignoreError = true);
+
+// TODO: toByteStringView once we have a ByteStringView (or std::string_view, if we get rid of ByteString)
+ByteString tpt_lua_optByteString(lua_State *L, int index, ByteString defaultValue = {});
+String tpt_lua_optString(lua_State *L, int index, String defaultValue = {}, bool ignoreError = true);
+
+int tpt_lua_loadstring(lua_State *L, const ByteString &str);
+int tpt_lua_dostring(lua_State *L, const ByteString &str);
+
+bool tpt_lua_equalsString(lua_State *L, int index, const char *data, size_t size);
+template<size_t N>
+// TODO: use std::literals::string_literals::operator""s if we get rid of ByteString
+bool tpt_lua_equalsLiteral(lua_State *L, int index, const char (&lit)[N])
+{
+	return tpt_lua_equalsString(L, index, lit, N - 1U);
+}
 
 #endif /* LUASCRIPTINTERFACE_H_ */

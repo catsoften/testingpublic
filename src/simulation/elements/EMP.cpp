@@ -108,8 +108,8 @@ void Element_EMP_Trigger(Simulation *sim, int triggerCount)
 	for (int r = 0; r <=sim->parts_lastActiveIndex; r++)
 	{
 		int t = parts[r].type;
-		int rx = parts[r].x;
-		int ry = parts[r].y;
+		auto rx = int(parts[r].x);
+		auto ry = int(parts[r].y);
 		if (std::find(sim->emp_faraday_channels.begin(),
 					  sim->emp_faraday_channels.end(),
 					  sim->faraday_map[(int)(ry+0.5f) / CELL][(int)(rx+0.5f) / CELL])

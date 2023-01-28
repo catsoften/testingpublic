@@ -3,9 +3,6 @@
 #include "Config.h"
 
 #include <vector>
-#ifdef OGLR
-#include "OpenGLHeaders.h"
-#endif
 
 #include "Graphics.h"
 #include "gui/interface/Point.h"
@@ -53,8 +50,6 @@ public:
 	unsigned char fire_g[YRES/CELL][XRES/CELL];
 	unsigned char fire_b[YRES/CELL][XRES/CELL];
 	unsigned int fire_alpha[CELL*3][CELL*3];
-	char * flm_data;
-	char * plasma_data;
 	//
 	bool gravityZonesEnabled;
 	bool gravityFieldEnabled;
@@ -105,13 +100,6 @@ public:
 	void clearScreen(float alpha);
 	void SetSample(int x, int y);
 
-#ifdef OGLR
-	void checkShader(GLuint shader, const char * shname);
-	void checkProgram(GLuint program, const char * progname);
-	void loadShaders();
-	GLuint vidBuf,textTexture;
-	GLint prevFbo;
-#endif
 	pixel * vid;
 	pixel * persistentVid;
 	pixel * warpVid;
@@ -120,8 +108,8 @@ public:
 
 	void draw_icon(int x, int y, Icon icon);
 
-	int drawtext_outline(int x, int y, String s, int r, int g, int b, int a);
-	int drawtext(int x, int y, String s, int r, int g, int b, int a);
+	int drawtext_outline(int x, int y, const String &s, int r, int g, int b, int a);
+	int drawtext(int x, int y, const String &s, int r, int g, int b, int a);
 	int drawchar(int x, int y, String::value_type c, int r, int g, int b, int a);
 	int addchar(int x, int y, String::value_type c, int r, int g, int b, int a);
 
@@ -138,9 +126,8 @@ public:
 	void clearrect(int x, int y, int width, int height);
 	void gradientrect(int x, int y, int width, int height, int r, int g, int b, int a, int r2, int g2, int b2, int a2);
 
-	void draw_image(pixel *img, int x, int y, int w, int h, int a);
-	void draw_image(const VideoBuffer & vidBuf, int w, int h, int a);
-	void draw_image(VideoBuffer * vidBuf, int w, int h, int a);
+	void draw_image(const pixel *img, int x, int y, int w, int h, int a);
+	void draw_image(const VideoBuffer * vidBuf, int w, int h, int a);
 
 	VideoBuffer DumpFrame();
 
@@ -172,28 +159,25 @@ public:
 	Renderer(Graphics * g, Simulation * sim);
 	~Renderer();
 
+#define RENDERER_TABLE(name) \
+	static std::vector<pixel> name; \
+	static inline pixel name ## At(int index) \
+	{ \
+		auto size = int(name.size()); \
+		if (index <        0) index =        0; \
+		if (index > size - 1) index = size - 1; \
+		return name[index]; \
+	}
+	RENDERER_TABLE(flameTable)
+	RENDERER_TABLE(plasmaTable)
+	RENDERER_TABLE(heatTable)
+	RENDERER_TABLE(clfmTable)
+	RENDERER_TABLE(firwTable)
+#undef RENDERER_TABLE
+	static void PopulateTables();
+
 private:
 	int gridSize;
-#ifdef OGLR
-	GLuint zoomTex, airBuf, fireAlpha, glowAlpha, blurAlpha, partsFboTex, partsFbo, partsTFX, partsTFY, airPV, airVY, airVX;
-	GLuint fireProg, airProg_Pressure, airProg_Velocity, airProg_Cracker, lensProg;
-	GLuint fireV[(YRES*XRES)*2];
-	GLfloat fireC[(YRES*XRES)*4];
-	GLuint smokeV[(YRES*XRES)*2];
-	GLfloat smokeC[(YRES*XRES)*4];
-	GLuint blobV[(YRES*XRES)*2];
-	GLfloat blobC[(YRES*XRES)*4];
-	GLuint blurV[(YRES*XRES)*2];
-	GLfloat blurC[(YRES*XRES)*4];
-	GLuint glowV[(YRES*XRES)*2];
-	GLfloat glowC[(YRES*XRES)*4];
-	GLuint flatV[(YRES*XRES)*2];
-	GLfloat flatC[(YRES*XRES)*4];
-	GLuint addV[(YRES*XRES)*2];
-	GLfloat addC[(YRES*XRES)*4];
-	GLfloat lineV[(((YRES*XRES)*2)*6)];
-	GLfloat lineC[(((YRES*XRES)*2)*6)];
-#endif
 };
 
 #endif

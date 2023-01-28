@@ -36,19 +36,19 @@ float get_resistance(int type, Particle *parts, int i, Simulation *sim) {
 			// disappearing into the capacitor itself
 			if (parts[i].tmp2 == 0)
 				return 0.0f;
-			return parts[i].pavg[1];
+			return parts[i].tmp4;
 		case PT_INDC:
 			// Inductors have very high initial resistance when there is a positive change in current
-			// that slowly reduces, and vice versa. Effective resistance is saved in pavg1
+			// that slowly reduces, and vice versa. Effective resistance is saved in tmp4
 			if (parts[i].tmp2 == 0)
 				return 0.0f;
-			return parts[i].pavg[1];
+			return parts[i].tmp4;
 		case PT_SWCH:
 			if (parts[i].life)
 				return 0.1f; // On
 			return 10000000000.0f; // Off
-		case PT_RSTR: // Stores resitivity in pavg0
-			return parts[i].pavg[0];
+		case PT_RSTR: // Stores resitivity in tmp3
+			return parts[i].tmp3;
 		case PT_COPR:
 			return 0.0168f;
 		case PT_ZINC:
@@ -112,7 +112,7 @@ float get_resistance(int type, Particle *parts, int i, Simulation *sim) {
 
 float get_power(int x, int y, Simulation *sim) {
 	int r = sim->photons[y][x];
-	float voltage = sim->parts[ID(r)].pavg[1];
+	float voltage = sim->parts[ID(r)].tmp4;
 	r = sim->pmap[y][x];
 	float resistance = get_resistance(TYP(r), sim->parts, ID(r), sim);
 	if (resistance == 0.0f)
@@ -169,8 +169,8 @@ void floodfill_voltage(Simulation *sim, Particle *parts, int x, int y, float vol
 		resistance = get_resistance(TYP(sim->pmap[p->y][p->x]), parts, ID(sim->pmap[p->y][p->x]), sim);
 		current_branch_past_ground = false;
 
-		parts[id].pavg[0] = p->voltage;
-		parts[id].pavg[1] = resistance;
+		parts[id].tmp3 = p->voltage;
+		parts[id].tmp4 = resistance;
 		parts[id].tmp = p->counter;
 		parts[id].tmp2 = 1;
 		parts[id].life = REFRESH_EVERY_FRAMES + 1;
@@ -238,14 +238,14 @@ void floodfill_voltage(Simulation *sim, Particle *parts, int x, int y, float vol
 		for (unsigned int i = 0; i < ids.size(); i++) {
 			if (connected_to_ground && parts[ids[i]].tmp != 1) {
 				if (ground_type == 1) {
-					float percentin = dv == 0.0f ? 1.0f : (parts[ids[i]].pavg[0] - lowest_voltage) / dv;
-					parts[ids[i]].pavg[0] = percentin * voltage_i;
-					parts[ids[i]].pavg[1] *= dv == 0.0f ? 0.0f : voltage_i / dv;
+					float percentin = dv == 0.0f ? 1.0f : (parts[ids[i]].tmp3 - lowest_voltage) / dv;
+					parts[ids[i]].tmp3 = percentin * voltage_i;
+					parts[ids[i]].tmp4 *= dv == 0.0f ? 0.0f : voltage_i / dv;
 				}
 			}
 			else if (parts[ids[i]].tmp != 1) {
-				// parts[ids[i]].pavg[0] = voltage_i;
-				// parts[ids[i]].pavg[1] = 0.0f;
+				// parts[ids[i]].tmp3 = voltage_i;
+				// parts[ids[i]].tmp4 = 0.0f;
 				sim->kill_part(ids[i]);
 			}
 		}
@@ -307,8 +307,8 @@ int Element_RSPK::update(UPDATE_FUNC_ARGS) {
 	 * tmp2  - value for floodfilling:
 	 * 			0 = never visited
 	 * 			1 = visited and valid connection
-	 * pavg0 - Voltage
-	 * pavg1 - Voltage drop across pixel
+	 * tmp3 - Voltage
+	 * tmp4 - Voltage drop across pixel
 	 * dcolour - Resistance of the value its on * 10000
 	 * 
 	 * RSPK makes an electric field in the direction it goes
@@ -341,7 +341,7 @@ int Element_RSPK::update(UPDATE_FUNC_ARGS) {
 	}
 
 	if (parts[i].tmp == 1 && (sim->timer % RSPK::REFRESH_EVERY_FRAMES == 0 || parts[i].life == 1)) {
-		RSPK::floodfill_voltage(sim, parts, x, y, parts[i].pavg[0]);
+		RSPK::floodfill_voltage(sim, parts, x, y, parts[i].tmp3);
 	}
 
 	// Heat up the conductor its on
@@ -353,15 +353,15 @@ int Element_RSPK::update(UPDATE_FUNC_ARGS) {
 	parts[ID(r)].life = 4;
 
 	// Project electric field
-	float efield = res == 0.0f ? 0.0f : isign(parts[i].pavg[0]) * parts[i].pavg[1] / res;
+	float efield = res == 0.0f ? 0.0f : isign(parts[i].tmp3) * parts[i].tmp4 / res;
 	sim->emfield->electric[FASTXY(x / EMCELL, y / EMCELL)] += efield;
 
 	// Due to float point precision issues voltage drops are 0 when high voltages are present
 	// So the solution: we superheat metals when resistance is non-zero
 	// Electric field also doesn't exist, so we just set it to 2560
-	if (res != 0.0f && parts[i].pavg[0] > 1000000) {
+	if (res != 0.0f && parts[i].tmp3 > 1000000) {
 		parts[ID(pmap[y][x])].temp += 9000.0f;
-		sim->emfield->electric[FASTXY(x / EMCELL, y / EMCELL)] += isign(parts[i].pavg[0]) * 2560.0f;
+		sim->emfield->electric[FASTXY(x / EMCELL, y / EMCELL)] += isign(parts[i].tmp3) * 2560.0f;
 	}
 
 	if (parts[i].ctype != PT_VOLT) {
@@ -371,13 +371,13 @@ int Element_RSPK::update(UPDATE_FUNC_ARGS) {
 				r = pmap[y + ry][x + rx];
 				if (!r && RNG::Ref().chance(1, 100)) {
 					// St elmo's fire
-					if (parts[i].pavg[0] > 100000) {
+					if (parts[i].tmp3 > 100000) {
 						int ni = sim->create_part(-1, x + rx ,y + ry, PT_PLSM);
 						parts[ni].temp = parts[i].temp;
 						parts[ni].life = RNG::Ref().between(0, 70);
 					}
 					// Thermonic emission
-					if (parts[i].pavg[0] > 1000) {
+					if (parts[i].tmp3 > 1000) {
 						int ni = sim->create_part(-3, x + rx, y + ry, PT_ELEC);
 						parts[ni].temp = parts[i].temp;
 						parts[ni].life = RNG::Ref().between(0, 570);
@@ -386,7 +386,7 @@ int Element_RSPK::update(UPDATE_FUNC_ARGS) {
 					}
 				}
 				// Ionizing gases
-				if (parts[i].pavg[0] > 1000 && sim->elements[TYP(r)].Properties & TYPE_GAS) {
+				if (parts[i].tmp3 > 1000 && sim->elements[TYP(r)].Properties & TYPE_GAS) {
 					sim->part_change_type(ID(r), x + rx, y + ry, PT_PLSM);
 					parts[ID(r)].life = RNG::Ref().between(0, 570);
 				}
@@ -397,8 +397,8 @@ int Element_RSPK::update(UPDATE_FUNC_ARGS) {
 	while (true) {
 		r = sim->photons[y][x];
 		if (r && ID(r) != i && TYP(r) == PT_RSPK) {
-			parts[i].pavg[0] += parts[ID(r)].pavg[0];
-			parts[i].pavg[1] += parts[ID(r)].pavg[1];
+			parts[i].tmp3 += parts[ID(r)].tmp3;
+			parts[i].tmp4 += parts[ID(r)].tmp4;
 			sim->kill_part(ID(r));
 		}
 		else {

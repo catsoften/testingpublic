@@ -38,6 +38,7 @@ public:
 	virtual void GenerateBitmap();
 	//Get a bitmap for drawing particles
 	unsigned char * GetBitmap();
+
 	unsigned char * GetOutline();
 
 	void SetDrawCrosshair(bool t) { drawCrosshair = t; }

@@ -50,18 +50,18 @@ static int update(UPDATE_FUNC_ARGS) {
 	 * Literally just move around randomly
 	 * Flock like behavior is difficult with liquid swapping
 	 * 
-	 * pavg = velocity vector
+	 * tmp3/4 = velocity vector
 	 */
 
 	// Update new velocity if still or no new velocity
-	if (!(parts[i].pavg[0] || parts[i].pavg[1]) || RNG::Ref().chance(1, 3)) {
+	if (!(parts[i].tmp3 || parts[i].tmp4) || RNG::Ref().chance(1, 3)) {
 		if (RNG::Ref().chance(1, 2)) {
-			parts[i].pavg[0] = RNG::Ref().chance(1, 2) ? -1 : 1;
-			parts[i].pavg[1] = 0;
+			parts[i].tmp3 = RNG::Ref().chance(1, 2) ? -1 : 1;
+			parts[i].tmp4 = 0;
 		}
 		else {
-			parts[i].pavg[1] = RNG::Ref().chance(1, 2) ? -1 : 1;
-			parts[i].pavg[0] = 0;
+			parts[i].tmp4 = RNG::Ref().chance(1, 2) ? -1 : 1;
+			parts[i].tmp3 = 0;
 		}
 	}
 
@@ -74,16 +74,16 @@ static int update(UPDATE_FUNC_ARGS) {
 				r = pmap[y + ry][x + rx];
 				if (!r) {
 					// Redirect velocity away from air
-					parts[i].pavg[0] = -isign(rx);
-					parts[i].pavg[1] = -isign(ry);
+					parts[i].tmp3 = -isign(rx);
+					parts[i].tmp4 = -isign(ry);
 					continue;
 				}
 				rt = TYP(r);
 
 				// Redirect velocity towards SEED and ANT
 				if (rt == PT_SEED || rt == PT_ANT) {
-					parts[i].pavg[0] = isign(rx);
-					parts[i].pavg[1] = isign(ry);
+					parts[i].tmp3 = isign(rx);
+					parts[i].tmp4 = isign(ry);
 				}
 
 				if (abs(rx) < 2 && abs(ry) < 2) {
@@ -104,11 +104,11 @@ static int update(UPDATE_FUNC_ARGS) {
 	}
 
 	// Try to swap with liquid at new velocity
-	rx = round(parts[i].pavg[0]), ry = round(parts[i].pavg[1]);
+	rx = round(parts[i].tmp3), ry = round(parts[i].tmp4);
 	if (BOUNDS_CHECK && (rx || ry)) {
 		r = pmap[y + ry][x + rx];
-		if (!r) { // Cannot move there, pick new velocity next frame by resetting pavgs to 0
-			parts[i].pavg[0] = parts[i].pavg[1] = 0;
+		if (!r) { // Cannot move there, pick new velocity next frame by resetting tmp3/4 to 0
+			parts[i].tmp3 = parts[i].tmp4 = 0;
 			return 0;
 		}
 		rt = TYP(r);

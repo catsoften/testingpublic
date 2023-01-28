@@ -15,7 +15,7 @@
 
 #include <iostream>
 #if defined(LIN)
-#include "icon.h"
+# include "icon_exe.png.h"
 #endif
 #include <stdexcept>
 
@@ -34,7 +34,6 @@
 #include "client/SaveInfo.h"
 #include "client/GameSave.h"
 #include "client/SaveFile.h"
-#include "client/Client.h"
 
 #include "gui/game/GameController.h"
 #include "gui/game/GameView.h"
@@ -45,7 +44,6 @@
 #include "gui/Style.h"
 #include "gui/interface/Engine.h"
 
-#define INCLUDE_SYSWM
 #include "SDLCompat.h"
 
 int desktopWidth = 1280, desktopHeight = 1024;
@@ -108,12 +106,6 @@ void CalculateMousePosition(int *x, int *y)
 		*y = (globalMy - windowY) / scale;
 }
 
-#ifdef OGLI
-void blit()
-{
-	SDL_GL_SwapBuffers();
-}
-#else
 void blit(pixel * vid)
 {
 	SDL_UpdateTexture(sdl_texture, NULL, vid, WINDOWW * sizeof (Uint32));
@@ -123,7 +115,6 @@ void blit(pixel * vid)
 	SDL_RenderCopy(sdl_renderer, sdl_texture, NULL, NULL);
 	SDL_RenderPresent(sdl_renderer);
 }
-#endif
 
 void RecreateWindow();
 int SDLOpen()
@@ -147,27 +138,15 @@ int SDLOpen()
 		}
 	}
 
-#ifdef WIN
-	SDL_SysWMinfo SysInfo;
-	SDL_VERSION(&SysInfo.version);
-	if(SDL_GetWindowWMInfo(sdl_window, &SysInfo) <= 0)
-	{
-	    printf("%s : %p\n", SDL_GetError(), SysInfo.info.win.window);
-	    exit(-1);
-	}
-	HWND WindowHandle = SysInfo.info.win.window;
-
-	// Use GetModuleHandle to get the Exe HMODULE/HINSTANCE
-	HMODULE hModExe = GetModuleHandle(NULL);
-	HICON hIconSmall = (HICON)LoadImage(hModExe, MAKEINTRESOURCE(101), IMAGE_ICON, 16, 16, LR_SHARED);
-	HICON hIconBig = (HICON)LoadImage(hModExe, MAKEINTRESOURCE(101), IMAGE_ICON, 32, 32, LR_SHARED);
-	SendMessage(WindowHandle, WM_SETICON, ICON_SMALL, (LPARAM)hIconSmall);
-	SendMessage(WindowHandle, WM_SETICON, ICON_BIG, (LPARAM)hIconBig);
-#endif
 #ifdef LIN
-	SDL_Surface *icon = SDL_CreateRGBSurfaceFrom((void*)app_icon, 128, 128, 32, 512, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
-	SDL_SetWindowIcon(sdl_window, icon);
-	SDL_FreeSurface(icon);
+	std::vector<pixel> imageData;
+	int imgw, imgh;
+	if (PngDataToPixels(imageData, imgw, imgh, reinterpret_cast<const char *>(icon_exe_png), icon_exe_png_size, false))
+	{
+		SDL_Surface *icon = SDL_CreateRGBSurfaceFrom(&imageData[0], imgw, imgh, 32, imgw * sizeof(pixel), 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+		SDL_SetWindowIcon(sdl_window, icon);
+		SDL_FreeSurface(icon);
+	}
 #endif
 
 	return 0;
@@ -222,7 +201,7 @@ void RecreateWindow()
 		SDL_DestroyWindow(sdl_window);
 	}
 
-	sdl_window = SDL_CreateWindow("The Powder Toy", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOWW * scale, WINDOWH * scale,
+	sdl_window = SDL_CreateWindow(APPNAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOWW * scale, WINDOWH * scale,
 	                              flags);
 	sdl_renderer = SDL_CreateRenderer(sdl_window, -1, 0);
 	SDL_RenderSetLogicalSize(sdl_renderer, WINDOWW, WINDOWH);
@@ -230,6 +209,7 @@ void RecreateWindow()
 		SDL_RenderSetIntegerScale(sdl_renderer, SDL_TRUE);
 	sdl_texture = SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, WINDOWW, WINDOWH);
 	SDL_RaiseWindow(sdl_window);
+	SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
 	//Uncomment this to enable resizing
 	//SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 	//SDL_SetWindowResizable(sdl_window, SDL_TRUE);
@@ -296,11 +276,11 @@ void EventProcess(SDL_Event event)
 		break;
 	case SDL_MOUSEWHEEL:
 	{
-		int x = event.wheel.x;
+		// int x = event.wheel.x;
 		int y = event.wheel.y;
 		if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED)
 		{
-			x *= -1;
+			// x *= -1;
 			y *= -1;
 		}
 
@@ -421,11 +401,7 @@ void EngineProcess()
 						 engine->GetForceIntegerScaling());
 		}
 
-#ifdef OGLI
-		blit();
-#else
 		blit(engine->g->vid);
-#endif
 
 		int frameTime = SDL_GetTicks() - frameStart;
 		frameTimeAvg = frameTimeAvg * 0.8 + frameTime * 0.2;
@@ -456,10 +432,6 @@ void EngineProcess()
 	std::cout << "Breaking out of EngineProcess" << std::endl;
 #endif
 }
-
-#ifdef main
-# undef main // thank you sdl
-#endif
 
 int main(int argc, char * argv[])
 {

@@ -27,25 +27,25 @@ void Element::Element_COTR()
 }
 
 static void create(ELEMENT_CREATE_FUNC_ARGS) {
-	sim->parts[i].pavg[0] = -1;
+	sim->parts[i].tmp3 = -1;
 }
 
 static void changeType(ELEMENT_CHANGETYPE_FUNC_ARGS) {
 	// Remove self if dead
-	if (SHIPS::ships.count(sim->parts[i].pavg[0]) > 0)
-		SHIPS::ships[sim->parts[i].pavg[0]].destroy(sim); // Ship self-destructs if controller dies
+	if (SHIPS::ships.count(sim->parts[i].tmp3) > 0)
+		SHIPS::ships[sim->parts[i].tmp3].destroy(sim); // Ship self-destructs if controller dies
 }
 
 static int update(UPDATE_FUNC_ARGS)
 {
-	// pavg[0] is unique ship ID
+	// tmp3 is unique ship ID
 	// Generate ship ID or regenerate if it doesn't exist
-	if (parts[i].pavg[0] < 0 || !SHIPS::is_ship(parts[i].pavg[0])) {
-		parts[i].pavg[0] = SHIPS::create_ship(parts[i].pavg[0]);
-		SHIPS::ships[parts[i].pavg[0]].add_component(i, parts[i].type);
+	if (parts[i].tmp3 < 0 || !SHIPS::is_ship(parts[i].tmp3)) {
+		parts[i].tmp3 = SHIPS::create_ship(parts[i].tmp3);
+		SHIPS::ships[parts[i].tmp3].add_component(i, parts[i].type);
 	}
 
-	SHIPS::move_ship(sim, parts[i].pavg[0]);
+	SHIPS::move_ship(sim, parts[i].tmp3);
 	return 0;
 }
 

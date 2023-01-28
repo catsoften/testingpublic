@@ -77,10 +77,17 @@ namespace http
 #endif
 	}
 
-	void Request::AddHeader(ByteString name, ByteString value)
+	void Request::Verb(ByteString newVerb)
 	{
 #ifndef NOHTTP
-		headers = curl_slist_append(headers, (name + ": " + value).c_str());
+		verb = newVerb;
+#endif
+	}
+
+	void Request::AddHeader(ByteString header)
+	{
+#ifndef NOHTTP
+		headers = curl_slist_append(headers, header.c_str());
 #endif
 	}
 
@@ -131,17 +138,32 @@ namespace http
 		{
 			if (session.size())
 			{
-				AddHeader("X-Auth-User-Id", ID);
-				AddHeader("X-Auth-Session-Key", session);
+				AddHeader("X-Auth-User-Id: " + ID);
+				AddHeader("X-Auth-Session-Key: " + session);
 			}
 			else
 			{
-				AddHeader("X-Auth-User", ID);
+				AddHeader("X-Auth-User: " + ID);
 			}
 		}
 	}
 
 #ifndef NOHTTP
+	size_t Request::HeaderDataHandler(char *ptr, size_t size, size_t count, void *userdata)
+	{
+		Request *req = (Request *)userdata;
+		auto actual_size = size * count;
+		if (actual_size >= 2 && ptr[actual_size - 2] == '\r' && ptr[actual_size - 1] == '\n')
+		{
+			if (actual_size > 2) // don't include header list terminator (but include the status line)
+			{
+				req->response_headers.push_back(ByteString(ptr, ptr + actual_size - 2));
+			}
+			return actual_size;
+		}
+		return 0;
+	}
+
 	size_t Request::WriteDataHandler(char *ptr, size_t size, size_t count, void *userdata)
 	{
 		Request *req = (Request *)userdata;
@@ -202,14 +224,28 @@ namespace http
 			{
 				curl_easy_setopt(easy, CURLOPT_HTTPGET, 1L);
 			}
+			if (verb.size())
+			{
+				curl_easy_setopt(easy, CURLOPT_CUSTOMREQUEST, verb.c_str());
+			}
 
 			curl_easy_setopt(easy, CURLOPT_FOLLOWLOCATION, 1L);
-#ifdef ENFORCE_HTTPS
+#if defined(CURL_AT_LEAST_VERSION) && CURL_AT_LEAST_VERSION(7, 85, 0)
+# ifdef ENFORCE_HTTPS
+			curl_easy_setopt(easy, CURLOPT_PROTOCOLS_STR, "https");
+			curl_easy_setopt(easy, CURLOPT_REDIR_PROTOCOLS_STR, "https");
+# else
+			curl_easy_setopt(easy, CURLOPT_PROTOCOLS_STR, "https,http");
+			curl_easy_setopt(easy, CURLOPT_REDIR_PROTOCOLS_STR, "https,http");
+# endif
+#else
+# ifdef ENFORCE_HTTPS
 			curl_easy_setopt(easy, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS);
 			curl_easy_setopt(easy, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS);
-#else
+# else
 			curl_easy_setopt(easy, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS | CURLPROTO_HTTP);
 			curl_easy_setopt(easy, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS | CURLPROTO_HTTP);
+# endif
 #endif
 
 			SetupCurlEasyCiphers(easy);
@@ -227,10 +263,20 @@ namespace http
 			{
 				curl_easy_setopt(easy, CURLOPT_PROXY, proxy.c_str());
 			}
+			if (cafile.size())
+			{
+				curl_easy_setopt(easy, CURLOPT_CAINFO, cafile.c_str());
+			}
+			if (capath.size())
+			{
+				curl_easy_setopt(easy, CURLOPT_CAPATH, capath.c_str());
+			}
 
 			curl_easy_setopt(easy, CURLOPT_PRIVATE, (void *)this);
 			curl_easy_setopt(easy, CURLOPT_USERAGENT, user_agent.c_str());
-			curl_easy_setopt(easy, CURLOPT_NOSIGNAL, 1L);
+
+			curl_easy_setopt(easy, CURLOPT_HEADERDATA, (void *)this);
+			curl_easy_setopt(easy, CURLOPT_HEADERFUNCTION, Request::HeaderDataHandler);
 
 			curl_easy_setopt(easy, CURLOPT_WRITEDATA, (void *)this);
 			curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, Request::WriteDataHandler);
@@ -246,7 +292,7 @@ namespace http
 
 
 	// finish the request (if called before the request is done, this will block)
-	ByteString Request::Finish(int *status_out)
+	ByteString Request::Finish(int *status_out, std::vector<ByteString> *headers_out)
 	{
 #ifndef NOHTTP
 		if (CheckCanceled())
@@ -263,6 +309,10 @@ namespace http
 			if (status_out)
 			{
 				*status_out = status;
+			}
+			if (headers_out)
+			{
+				*headers_out = std::move(response_headers);
 			}
 			response_out = std::move(response_body);
 		}
@@ -345,7 +395,10 @@ namespace http
 	ByteString Request::SimpleAuth(ByteString uri, int *status, ByteString ID, ByteString session, std::map<ByteString, ByteString> post_data)
 	{
 		Request *request = new Request(uri);
-		request->AddPostData(post_data);
+		if (!post_data.empty())
+		{
+			request->AddPostData(post_data);
+		}
 		request->AuthHeaders(ID, session);
 		request->Start();
 		return request->Finish(status);
@@ -355,86 +408,86 @@ namespace http
 	{
 		switch (ret)
 		{
-		case 0:   return String("Status code 0 (bug?)");
-		case 100: return String("Continue");
-		case 101: return String("Switching Protocols");
-		case 102: return String("Processing");
-		case 200: return String("OK");
-		case 201: return String("Created");
-		case 202: return String("Accepted");
-		case 203: return String("Non-Authoritative Information");
-		case 204: return String("No Content");
-		case 205: return String("Reset Content");
-		case 206: return String("Partial Content");
-		case 207: return String("Multi-Status");
-		case 300: return String("Multiple Choices");
-		case 301: return String("Moved Permanently");
-		case 302: return String("Found");
-		case 303: return String("See Other");
-		case 304: return String("Not Modified");
-		case 305: return String("Use Proxy");
-		case 306: return String("Switch Proxy");
-		case 307: return String("Temporary Redirect");
-		case 400: return String("Bad Request");
-		case 401: return String("Unauthorized");
-		case 402: return String("Payment Required");
-		case 403: return String("Forbidden");
-		case 404: return String("Not Found");
-		case 405: return String("Method Not Allowed");
-		case 406: return String("Not Acceptable");
-		case 407: return String("Proxy Authentication Required");
-		case 408: return String("Request Timeout");
-		case 409: return String("Conflict");
-		case 410: return String("Gone");
-		case 411: return String("Length Required");
-		case 412: return String("Precondition Failed");
-		case 413: return String("Request Entity Too Large");
-		case 414: return String("Request URI Too Long");
-		case 415: return String("Unsupported Media Type");
-		case 416: return String("Requested Range Not Satisfiable");
-		case 417: return String("Expectation Failed");
-		case 418: return String("I'm a teapot");
-		case 422: return String("Unprocessable Entity");
-		case 423: return String("Locked");
-		case 424: return String("Failed Dependency");
-		case 425: return String("Unordered Collection");
-		case 426: return String("Upgrade Required");
-		case 444: return String("No Response");
-		case 450: return String("Blocked by Windows Parental Controls");
-		case 499: return String("Client Closed Request");
-		case 500: return String("Internal Server Error");
-		case 501: return String("Not Implemented");
-		case 502: return String("Bad Gateway");
-		case 503: return String("Service Unavailable");
-		case 504: return String("Gateway Timeout");
-		case 505: return String("HTTP Version Not Supported");
-		case 506: return String("Variant Also Negotiates");
-		case 507: return String("Insufficient Storage");
-		case 509: return String("Bandwidth Limit Exceeded");
-		case 510: return String("Not Extended");
-		case 600: return String("Internal Client Error");
-		case 601: return String("Unsupported Protocol");
-		case 602: return String("Server Not Found");
-		case 603: return String("Malformed Response");
-		case 604: return String("Network Not Available");
-		case 605: return String("Request Timed Out");
-		case 606: return String("Malformed URL");
-		case 607: return String("Connection Refused");
-		case 608: return String("Proxy Server Not Found");
-		case 609: return String("SSL: Invalid Certificate Status");
-		case 610: return String("Cancelled by Shutdown");
-		case 611: return String("Too Many Redirects");
-		case 612: return String("SSL: Connect Error");
-		case 613: return String("SSL: Crypto Engine Not Found");
-		case 614: return String("SSL: Failed to Set Default Crypto Engine");
-		case 615: return String("SSL: Local Certificate Issue");
-		case 616: return String("SSL: Unable to Use Specified Cipher");
-		case 617: return String("SSL: Failed to Initialise Crypto Engine");
-		case 618: return String("SSL: Failed to Load CACERT File");
-		case 619: return String("SSL: Failed to Load CRL File");
-		case 620: return String("SSL: Issuer Check Failed");
-		case 621: return String("SSL: Pinned Public Key Mismatch");
-		default:  return String("Unknown Status Code");
+		case 0:   return "Status code 0 (bug?)";
+		case 100: return "Continue";
+		case 101: return "Switching Protocols";
+		case 102: return "Processing";
+		case 200: return "OK";
+		case 201: return "Created";
+		case 202: return "Accepted";
+		case 203: return "Non-Authoritative Information";
+		case 204: return "No Content";
+		case 205: return "Reset Content";
+		case 206: return "Partial Content";
+		case 207: return "Multi-Status";
+		case 300: return "Multiple Choices";
+		case 301: return "Moved Permanently";
+		case 302: return "Found";
+		case 303: return "See Other";
+		case 304: return "Not Modified";
+		case 305: return "Use Proxy";
+		case 306: return "Switch Proxy";
+		case 307: return "Temporary Redirect";
+		case 400: return "Bad Request";
+		case 401: return "Unauthorized";
+		case 402: return "Payment Required";
+		case 403: return "Forbidden";
+		case 404: return "Not Found";
+		case 405: return "Method Not Allowed";
+		case 406: return "Not Acceptable";
+		case 407: return "Proxy Authentication Required";
+		case 408: return "Request Timeout";
+		case 409: return "Conflict";
+		case 410: return "Gone";
+		case 411: return "Length Required";
+		case 412: return "Precondition Failed";
+		case 413: return "Request Entity Too Large";
+		case 414: return "Request URI Too Long";
+		case 415: return "Unsupported Media Type";
+		case 416: return "Requested Range Not Satisfiable";
+		case 417: return "Expectation Failed";
+		case 418: return "I'm a teapot";
+		case 422: return "Unprocessable Entity";
+		case 423: return "Locked";
+		case 424: return "Failed Dependency";
+		case 425: return "Unordered Collection";
+		case 426: return "Upgrade Required";
+		case 444: return "No Response";
+		case 450: return "Blocked by Windows Parental Controls";
+		case 499: return "Client Closed Request";
+		case 500: return "Internal Server Error";
+		case 501: return "Not Implemented";
+		case 502: return "Bad Gateway";
+		case 503: return "Service Unavailable";
+		case 504: return "Gateway Timeout";
+		case 505: return "HTTP Version Not Supported";
+		case 506: return "Variant Also Negotiates";
+		case 507: return "Insufficient Storage";
+		case 509: return "Bandwidth Limit Exceeded";
+		case 510: return "Not Extended";
+		case 600: return "Internal Client Error";
+		case 601: return "Unsupported Protocol";
+		case 602: return "Server Not Found";
+		case 603: return "Malformed Response";
+		case 604: return "Network Not Available";
+		case 605: return "Request Timed Out";
+		case 606: return "Malformed URL";
+		case 607: return "Connection Refused";
+		case 608: return "Proxy Server Not Found";
+		case 609: return "SSL: Invalid Certificate Status";
+		case 610: return "Cancelled by Shutdown";
+		case 611: return "Too Many Redirects";
+		case 612: return "SSL: Connect Error";
+		case 613: return "SSL: Crypto Engine Not Found";
+		case 614: return "SSL: Failed to Set Default Crypto Engine";
+		case 615: return "SSL: Local Certificate Issue";
+		case 616: return "SSL: Unable to Use Specified Cipher";
+		case 617: return "SSL: Failed to Initialise Crypto Engine";
+		case 618: return "SSL: Failed to Load CACERT File";
+		case 619: return "SSL: Failed to Load CRL File";
+		case 620: return "SSL: Issuer Check Failed";
+		case 621: return "SSL: Pinned Public Key Mismatch";
+		default:  return "Unknown Status Code";
 		}
 	}
 }

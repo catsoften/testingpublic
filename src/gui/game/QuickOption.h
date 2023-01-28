@@ -60,7 +60,7 @@ public:
 	virtual bool GetToggle() { return true;}
 	virtual int GetMutli() { return 0;}
 	virtual int GetMultiCount() { return 0;}
-	
+
 	String GetIcon() { return icon; }
 	void SetIcon(String icon) { this->icon = icon; }
 	String GetDescription() { return description; }

@@ -160,10 +160,6 @@ void SearchView::NotifyMessageOfTheDay(Client * sender)
 
 void SearchView::doSearch()
 {
-	if (searchField->GetText().BeginsWith("~"))
-		searchField->SetText(String::Build("id:", searchField->GetText().Substr(1)));
-	else if (searchField->GetText().BeginsWith("@"))
-		searchField->SetText(String::Build("user:", searchField->GetText().Substr(1)));
 	if (searchField->GetText().length() > 3 || !searchField->GetText().length())
 		c->DoSearch(searchField->GetText());
 }
@@ -490,16 +486,16 @@ void SearchView::NotifySaveListChanged(SearchModel * sender)
 		if (Client::Ref().GetAuthUser().UserID)
 			favButton->Enabled = true;
 	}
-	if (!sender->GetSavesLoaded() || favButton->GetToggleState())
+	ownButton->Enabled = true;
+	sortButton->Enabled = true;
+	if (!Client::Ref().GetAuthUser().UserID || favButton->GetToggleState())
+	{
+		ownButton->Enabled = false;
+	}
+	if (!sender->GetSavesLoaded())
 	{
 		ownButton->Enabled = false;
 		sortButton->Enabled = false;
-	}
-	else
-	{
-		if (Client::Ref().GetAuthUser().UserID)
-			ownButton->Enabled = true;
-		sortButton->Enabled = true;
 	}
 	if (!saves.size())
 	{
@@ -578,7 +574,8 @@ void SearchView::NotifySaveListChanged(SearchModel * sender)
 			});
 			if(Client::Ref().GetAuthUser().UserID)
 				saveButton->SetSelectable(true);
-			saveButton->SetShowVotes(true);
+			if (saves[i]->GetUserName() == Client::Ref().GetAuthUser().Username || Client::Ref().GetAuthUser().UserElevation == User::ElevationAdmin || Client::Ref().GetAuthUser().UserElevation == User::ElevationModerator)
+				saveButton->SetShowVotes(true);
 			saveButtons.push_back(saveButton);
 			AddComponent(saveButton);
 			saveX++;

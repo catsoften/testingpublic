@@ -79,7 +79,6 @@ WallTool::~WallTool() {}
 void WallTool::Draw(Simulation * sim, Brush * brush, ui::Point position) {
 	sim->CreateWalls(position.X, position.Y, 1, 1, toolID, brush);
 }
-
 void WallTool::DrawLine(Simulation * sim, Brush * brush, ui::Point position1, ui::Point position2, bool dragging) {
 	int wallX = position1.X/CELL;
 	int wallY = position1.Y/CELL;

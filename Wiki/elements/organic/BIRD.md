@@ -19,6 +19,6 @@ The behavior algorithim for BIRD is a simple boid flocking algorithim (For insta
 
 **tmp2:** Time left to perch, when this reaches -1 stops perching.
 
-**pavg[0]:** Spawn x location, unused
+**tmp3:** Spawn x location, unused
 
-**pavg[1]:** Spawn y location, unused
+**tmp4:** Spawn y location, unused

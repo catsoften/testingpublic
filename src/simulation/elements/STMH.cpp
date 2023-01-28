@@ -56,14 +56,14 @@ static int update(UPDATE_FUNC_ARGS) {
 	 * life:  Graphics
 	 * tmp:   Oxygen stored
 	 * tmp2:  Nutrients stored
-	 * pavg0: Highest temperature
-	 * pavg1: Type 0 = inside, 1 = skin, 2 = dead
+	 * tmp3: Highest temperature
+	 * tmp4: Type 0 = inside, 1 = skin, 2 = dead
 	 */
 	Element_FLSH_update(sim, i, x, y, surround_space, nt, parts, pmap);
-	if (parts[i].pavg[1] == 1) // Override skin formation
-		parts[i].pavg[1] = 0;
+	if (parts[i].tmp4 == 1) // Override skin formation
+		parts[i].tmp4 = 0;
 
-	if (parts[i].pavg[1] != 2) {
+	if (parts[i].tmp4 != 2) {
 		int rx, ry, r, rt;
 		for (rx = -1; rx < 2; ++rx)
 		for (ry = -1; ry < 2; ++ry)
@@ -98,8 +98,8 @@ static int graphics(GRAPHICS_FUNC_ARGS) {
 
 	// Cooking
 	// Well done (Around 70 - 80 C)
-	if (cpart->pavg[0] > 273.15f + 40.0f) {
-		float percent_fade = std::min(cpart->pavg[0] - 273.15f, 80.0f) / 80.0f;
+	if (cpart->tmp3 > 273.15f + 40.0f) {
+		float percent_fade = std::min(cpart->tmp3 - 273.15f, 80.0f) / 80.0f;
 		percent_fade += ((abs(nx - ny) * (nx + ny) + nx) % 5) / 10.0f; // Noise
 
 		*colr -= (*colr - 176) * percent_fade;
@@ -112,13 +112,13 @@ static int graphics(GRAPHICS_FUNC_ARGS) {
 		}
 	}
 	// Burnt (Above 110 C)
-	if (cpart->pavg[0] > 273.15f + 110.0f) {
-		float m = 1.0f - std::min(cpart->pavg[0] - 273.15f + 90.0f, 200.0f) / 200.0f;
+	if (cpart->tmp3 > 273.15f + 110.0f) {
+		float m = 1.0f - std::min(cpart->tmp3 - 273.15f + 90.0f, 200.0f) / 200.0f;
 		m = 0.2 + 0.8 * m; // Prevent 100% black
 		*colr *= m, *colg *= m, *colb *= m;
 	}
 	// Blue when cold
-	if (cpart->temp < 273 && cpart->pavg[0] < 273.15f + 110.0f) {
+	if (cpart->temp < 273 && cpart->tmp3 < 273.15f + 110.0f) {
 		*colr -= (int)restrict_flt((273-cpart->temp)/5,0,80);
 		*colg += (int)restrict_flt((273-cpart->temp)/4,0,40);
 		*colb += (int)restrict_flt((273-cpart->temp)/1.5,0,100);
