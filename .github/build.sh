@@ -1048,6 +1048,8 @@ for junk in \
 	include/libpng16 \
 	include/nghttp2 \
 	lib/{cmake,libpng,pkgconfig} \
+	include/webp/{sharpyuv,decode.h,demux.h} \
+	lib/{libwebpdecoder.a,libwebpdemux.a} \
 ; do
 	rm -r $junk
 done
