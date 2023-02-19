@@ -8,6 +8,7 @@ gui_files += files(
 	'DirectionSelector.cpp',
 	'DropDown.cpp',
 	'Engine.cpp',
+	'FoldPanel.cpp',
 	'Label.cpp',
 	'Panel.cpp',
 	'ProgressBar.cpp',

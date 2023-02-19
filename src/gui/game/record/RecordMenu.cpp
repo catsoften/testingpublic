@@ -8,6 +8,7 @@
 #include "gui/Style.h"
 #include "gui/interface/Colour.h"
 #include "gui/interface/Appearance.h"
+#include "gui/interface/FoldPanel.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/Button.h"
 #include "gui/interface/Checkbox.h"
@@ -246,20 +247,248 @@ void RecordMenu::OnDraw()
 }
 
 RecordMenu::RecordMenu() :
-	ui::Window(ui::Point(-1, -1), ui::Point(160, 246)),
+	ui::Window(ui::Point(-1, -1), ui::Point(160, 320)),
 	rs(RecordController::Ref().rs)
 {
 	auto& rc = RecordController::Ref();
 	newStage = rs.stage;
 	rs.halt = true;
 
+	// Instantiate Components
+	// Title "Bar"
+	titleLabel							= new ui::Label			(ui::Point(4, 5), ui::Point(Size.X - 8, 15), "Record Menu");
+	helpButton						= new ui::Button			(ui::Point(Size.X - 20, 4), ui::Point(16, 16), "?");
+
+	int currentY = 25;
+	int foldY = currentY;
+	int innerY = 4;
+	// Recording Options
+	formatLabel						= new ui::Label			(ui::Point(8, innerY),		ui::Point(67, 16), "Format:");
+	formatDropdown				= new ui::DropDown	(ui::Point(85, innerY),	ui::Point(67, 16));								innerY += 20;
+	fpsLabel							= new ui::Label			(ui::Point(8, innerY),		ui::Point(27, 16), "FPS:");
+	fpsTextbox						= new ui::Textbox		(ui::Point(85, innerY),	ui::Point(67, 16), "60", "[fps]");		innerY += 20;
+	qualityLabel						= new ui::Label			(ui::Point(8, innerY),		ui::Point(67, 16), "Compres. (-):");
+	qualitySlider						= new ui::Slider			(ui::Point(85, innerY),	ui::Point(67, 16), 10);						innerY += 20; currentY += innerY;
+	recordingFoldPanel			= new ui::FoldPanel	(ui::Point(0, foldY),		ui::Point(160, innerY + 32), "Recording"); currentY += 16;
+
+	foldY = currentY;
+	innerY = 4;
+	// Area/Size Options
+	selectButton						= new ui::Button			(ui::Point(8, innerY),		ui::Point(144, 16), "Select Area");	innerY += 20;
+	fullscreenLabel					= new ui::Label			(ui::Point(8, innerY),		ui::Point(67, 16), "Fullscreen:");
+	fullscreenCheckbox			= new ui::Checkbox	(ui::Point(85, innerY),	ui::Point(16, 16), "", "");					innerY += 20;
+	includeUILabel					= new ui::Label			(ui::Point(8, innerY),		ui::Point(67, 16), "Include UI:");
+	includeUICheckbox			= new ui::Checkbox	(ui::Point(85, innerY),	ui::Point(16, 16), "", "");					innerY += 20;
+	scaleLabel						= new ui::Label			(ui::Point(8, innerY),		ui::Point(67, 16), "Scale:");
+	scaleDropdown				= new ui::DropDown	(ui::Point(85, innerY),	ui::Point(67, 16));								innerY += 20; currentY += innerY;
+	sizeFoldPanel					= new ui::FoldPanel	(ui::Point(0, foldY),		ui::Point(160, innerY + 32), "Size"); currentY += 16;
+
+	foldY = currentY;
+	innerY = 4;
+	// Performance Options
+	bufferLabel						= new ui::Label			(ui::Point(8, innerY),		ui::Point(67, 16), "Buffer:");
+	bufferDropdown				= new ui::DropDown	(ui::Point(85, innerY),	ui::Point(67, 16));								innerY += 20;
+	bufferUsageLabel				= new ui::Label			(ui::Point(12, innerY),	ui::Point(100, 16), "");
+	bufferUsageButton			= new ui::Button			(ui::Point(Size.X - 40 , innerY), ui::Point(32, 16), "Limit");	innerY += 20;
+	writeThreadLabel				= new ui::Label			(ui::Point(8, innerY),		ui::Point(67, 16), "Write Thread:");
+	writeThreadCheckbox		= new ui::Checkbox	(ui::Point(85, innerY),	ui::Point(16, 16), "", "");					innerY += 20; currentY += innerY;
+	performanceFoldPanel 	= new ui::FoldPanel	(ui::Point(0, foldY),		ui::Point(160, innerY + 32), "Performance"); currentY += 16;
+
+	// Recording Controls
+	resetButton						= new ui::Button			(ui::Point(8, currentY),		ui::Point(67, 16), "Reset");
+	pauseButton					= new ui::Button			(ui::Point(85, currentY),	ui::Point(67, 16), "Pause");
+
+	// Window Buttons
+	closeButton						= new ui::Button			(ui::Point(0, Size.Y - 17), ui::Point((Size.X / 2) + 1, 17), "Close");
+	startButton						= new ui::Button			(ui::Point(Size.X / 2, Size.Y - 17), ui::Point(Size.X / 2, 17), "Start");
+
+
+	// Configure Components
 	// Title Label
-	titleLabel = new ui::Label(ui::Point(4, 5), ui::Point(Size.X - 8, 15), "Record Menu");
 	titleLabel->SetTextColour(style::Colour::InformationTitle);
 	titleLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 
 	// Help Button
-	ui::Button* helpButton = new ui::Button(ui::Point(Size.X - 20, 4), ui::Point(16, 16), "?");
+	; // TODO: Move here
+
+	// Format Label
+	formatLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+
+	// Format Dropdown
+	formatDropdown->AddOption(std::pair<String, int>("Gif", RecordFormat::Gif));
+	formatDropdown->AddOption(std::pair<String, int>("WebP", RecordFormat::WebP));
+	formatDropdown->AddOption(std::pair<String, int>("Old", RecordFormat::Old));
+	formatDropdown->SetActionCallback({ [this]() {
+		rs.format = RecordFormat(formatDropdown->GetOption().second);
+		StateChanged();
+	} });
+
+	// FPS Label
+	fpsLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+
+	// FPS Textbox
+	fpsTextbox->SetInputType(ui::Textbox::ValidInput::Number);
+	fpsTextbox->SetLimit(4);
+	fpsTextbox->SetActionCallback({ [this]() {
+		try {
+			if (fpsTextbox->GetText().size() > 0)
+			{
+				rs.fps = std::max(std::min(fpsTextbox->GetText().ToNumber<int>(), 60), 1);
+				StateChanged();
+			}
+		}
+		catch (const std::exception& e)
+		{
+			new ErrorMessage("Could not set FPS", "Invalid value provided.");
+		}
+	} });
+
+	// Quality Label (Actually compression strength in lossless mode)
+	qualityLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+
+	// Quality Slider
+	qualitySlider->SetActionCallback({ [this]() {
+		rs.quality = qualitySlider->GetValue();
+		StateChanged();
+	} });
+
+	// Select Button
+	selectButton->SetActionCallback({ [this]() {
+		rs.select = 1;
+		RecordController::Ref().SetCallback(nullptr);
+		CloseActiveWindow();
+		SelfDestruct();
+	} });
+
+	// Fullscreen Label
+	fullscreenLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+
+	// Fullscreen Checkbox
+	fullscreenCheckbox->SetActionCallback({ [this]() {
+		rs.x1 = 0;
+		rs.y1 = 0;
+		bool checked = fullscreenCheckbox->GetChecked();
+		rs.x2 = checked ? WINDOWW : XRES;
+		rs.y2 = checked ? WINDOWH : YRES;
+		rs.RecalcPos();
+		StateChanged();
+	} });
+
+	// Include UI Label
+	includeUILabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+
+	// Include UI Checkbox
+	includeUICheckbox->SetActionCallback({ [this]() {
+		rs.includeUI = includeUICheckbox->GetChecked();
+		StateChanged();
+	} });
+
+	// Scale Label
+	scaleLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+
+	// Scale Dropdown
+	scaleDropdown->AddOption(std::pair<String, int>("1", 1));
+	scaleDropdown->AddOption(std::pair<String, int>("2", 2));
+	scaleDropdown->AddOption(std::pair<String, int>("4", 4));
+	scaleDropdown->AddOption(std::pair<String, int>("8", 8)); // Limited max size due to memory usage
+	scaleDropdown->AddOption(std::pair<String, int>("8+Spacing", -8));
+	scaleDropdown->SetActionCallback({ [this]() {
+		int option = scaleDropdown->GetOption().second;
+		rs.scale = std::abs(option);
+		rs.spacing = option < 0;
+		StateChanged();
+	} });
+
+	// Buffer Label
+	bufferLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+
+	// Buffer Dropdown
+	bufferDropdown->AddOption(std::pair<String, int>("Off", RecordBuffer::Off));
+	bufferDropdown->AddOption(std::pair<String, int>("Ram", RecordBuffer::Ram));
+	bufferDropdown->AddOption(std::pair<String, int>("Disk", RecordBuffer::Disk));
+	bufferDropdown->SetActionCallback({ [this]() {
+		rs.buffer = RecordBuffer(bufferDropdown->GetOption().second);
+		StateChanged();
+	} });
+
+	// Buffer Usage Label
+	;
+
+	// Buffer Usage Button
+	bufferUsageButton->SetActionCallback({ [this]() {
+		String output = TextPrompt::Blocking("Buffer Usage Limit", "Limit for record buffer in MB.\nSet to 0 for none. Max 32GB.", String::Build(rs.bufferLimit), ui::Textbox::ValidInput::Number, "", false);
+		try
+		{
+			if (output.size() > 0)
+			{
+				rs.bufferLimit  = std::min(output.ToNumber<int>(), 32768);
+			}
+			StateChanged();
+		}
+		catch (const std::exception& e)
+		{
+			new ErrorMessage("Could not set buffer limit", "Invalid value provided.");
+		}
+	} });
+
+	// Write Thread Label
+	writeThreadLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+
+	// Write Thread Checkbox
+	writeThreadCheckbox->SetActionCallback({ [this]() {
+		rs.writeThread = writeThreadCheckbox->GetChecked();
+		StateChanged();
+	} });
+
+	// Reset Button
+	resetButton->SetActionCallback({ [this]() {
+		rs.Clear();
+		StateChanged();
+	} });
+
+	// Pause Button
+	pauseButton->Appearance.BackgroundHover = ui::Colour(63, 63, 127);
+	pauseButton->SetActionCallback({ [this]() {
+		newStage = newStage == RecordStage::Recording ? RecordStage::Paused : RecordStage::Recording;
+		StateChanged();
+	} });
+
+	// Close Button
+	closeButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
+	closeButton->SetActionCallback({ [this]() {
+		ExitSetRecord();
+	} });
+
+	// Start Button
+	startButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
+	startButton->SetActionCallback({ [this]() {
+		auto& rc = RecordController::Ref();
+		if (rs.stage == RecordStage::Writing)
+		{
+			if (!ConfirmPrompt::Blocking("Cancel Recording", "The remaining unprocessed frames will be lost."))
+			{
+				return;
+			}
+			rc.CancelWrite();
+		}
+		else if (RecordingActive(rs.stage) && RecordingActive(newStage))
+		{
+			if (!ConfirmPrompt::Blocking("Stop Recording", "This will immediately end the recording."))
+			{
+				return;
+			}
+			rc.StopRecording();
+			newStage = rs.stage;
+		}
+		else
+		{	class ScrollPanel
+			ToggleRecording();
+		}
+		StateChanged();
+	} });
+
+
+	// TODO: Move
 	helpButton->SetActionCallback({ []() {
 		new InformationMessage("Record Menu Help", String::Build("\bo",
 			"Select Area:\n\bw\t",
@@ -294,251 +523,46 @@ RecordMenu::RecordMenu() :
 			), true);
 	} });
 
-	int currentY = 25;
-
-	// Select Button
-	selectButton = new ui::Button(ui::Point(8, currentY), ui::Point(67, 16), "Select Area");
-	selectButton->SetActionCallback({ [this]() {
-		rs.select = 1;
-		RecordController::Ref().SetCallback(nullptr);
-		CloseActiveWindow();
-		SelfDestruct();
-	} });
-
-	// FPS Label
-	fpsLabel = new ui::Label(ui::Point(85, currentY), ui::Point(27, 16), "FPS:");
-	fpsLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-
-	// FPS Textbox
-	fpsTextbox = new ui::Textbox(ui::Point(112, currentY), ui::Point(40, 16), "60", "[fps]");
-	fpsTextbox->SetInputType(ui::Textbox::ValidInput::Number);
-	fpsTextbox->SetLimit(4);
-	fpsTextbox->SetActionCallback({ [this]() {
-		try {
-			if (fpsTextbox->GetText().size() > 0)
-			{
-				rs.fps = std::max(std::min(fpsTextbox->GetText().ToNumber<int>(), 60), 1);
-				StateChanged();
-			}
-		}
-		catch (const std::exception& e)
-		{
-			new ErrorMessage("Could not set FPS", "Invalid value provided.");
-		}
-	} });
-
-	currentY += 20;
-
-	// Fullscreen Label
-	fullscreenLabel = new ui::Label(ui::Point(8, currentY), ui::Point(67, 16), "Fullscreen:");
-	fullscreenLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-
-	// Fullscreen Checkbox
-	fullscreenCheckbox = new ui::Checkbox(ui::Point(85, currentY), ui::Point(16, 16), "", "");
-	fullscreenCheckbox->SetActionCallback({ [this]() {
-		rs.x1 = 0;
-		rs.y1 = 0;
-		bool checked = fullscreenCheckbox->GetChecked();
-		rs.x2 = checked ? WINDOWW : XRES;
-		rs.y2 = checked ? WINDOWH : YRES;
-		rs.RecalcPos();
-		StateChanged();
-	} });
-
-	currentY += 20;
-
-	// Include UI Label
-	includeUILabel = new ui::Label(ui::Point(8, currentY), ui::Point(67, 16), "Include UI:");
-	includeUILabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-
-	// Include UI Checkbox
-	includeUICheckbox = new ui::Checkbox(ui::Point(85, currentY), ui::Point(16, 16), "", "");
-	includeUICheckbox->SetActionCallback({ [this]() {
-		rs.includeUI = includeUICheckbox->GetChecked();
-		StateChanged();
-	} });
-
-	currentY += 20;
-
-	// Scale Label
-	scaleLabel = new ui::Label(ui::Point(8, currentY), ui::Point(67, 16), "Scale:");
-	scaleLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-
-	// Scale Dropdown
-	scaleDropdown = new ui::DropDown(ui::Point(85, currentY), ui::Point(67, 16));
-	scaleDropdown->AddOption(std::pair<String, int>("1", 1));
-	scaleDropdown->AddOption(std::pair<String, int>("2", 2));
-	scaleDropdown->AddOption(std::pair<String, int>("4", 4));
-	scaleDropdown->AddOption(std::pair<String, int>("8", 8)); // Limited max size due to memory usage
-	scaleDropdown->AddOption(std::pair<String, int>("8+Spacing", -8));
-	scaleDropdown->SetActionCallback({ [this]() {
-		int option = scaleDropdown->GetOption().second;
-		rs.scale = std::abs(option);
-		rs.spacing = option < 0;
-		StateChanged();
-	} });
-
-	currentY += 20;
-
-	// Format Label
-	formatLabel = new ui::Label(ui::Point(8, currentY), ui::Point(67, 16), "Format:");
-	formatLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-
-	// Format Dropdown
-	formatDropdown = new ui::DropDown(ui::Point(85, currentY), ui::Point(67, 16));
-	formatDropdown->AddOption(std::pair<String, int>("Gif", RecordFormat::Gif));
-	formatDropdown->AddOption(std::pair<String, int>("WebP", RecordFormat::WebP));
-	formatDropdown->AddOption(std::pair<String, int>("Old", RecordFormat::Old));
-	formatDropdown->SetActionCallback({ [this]() {
-		rs.format = RecordFormat(formatDropdown->GetOption().second);
-		StateChanged();
-	} });
-
-	currentY += 20;
-
-	// Buffer Label
-	bufferLabel = new ui::Label(ui::Point(8, currentY), ui::Point(67, 16), "Buffer:");
-	bufferLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-
-	// Buffer Dropdown
-	bufferDropdown = new ui::DropDown(ui::Point(85, currentY), ui::Point(67, 16));
-	bufferDropdown->AddOption(std::pair<String, int>("Off", RecordBuffer::Off));
-	bufferDropdown->AddOption(std::pair<String, int>("Ram", RecordBuffer::Ram));
-	bufferDropdown->AddOption(std::pair<String, int>("Disk", RecordBuffer::Disk));
-	bufferDropdown->SetActionCallback({ [this]() {
-		rs.buffer = RecordBuffer(bufferDropdown->GetOption().second);
-		StateChanged();
-	} });
-
-	currentY += 20;
-
-	// Buffer Usage Label
-	bufferUsageLabel = new ui::Label(ui::Point(12, currentY), ui::Point(100, 16), "");
-
-	// Buffer Usage Button
-	bufferUsageButton = new ui::Button(ui::Point(Size.X - 40 , currentY), ui::Point(32, 16), "Limit");
-	bufferUsageButton->SetActionCallback({ [this]() {
-		String output = TextPrompt::Blocking("Buffer Usage Limit", "Limit for record buffer in MB.\nSet to 0 for none. Max 32GB.", String::Build(rs.bufferLimit), ui::Textbox::ValidInput::Number, "", false);
-		try
-		{
-			if (output.size() > 0)
-			{
-				rs.bufferLimit  = std::min(output.ToNumber<int>(), 32768);
-			}
-			StateChanged();
-		}
-		catch (const std::exception& e)
-		{
-			new ErrorMessage("Could not set buffer limit", "Invalid value provided.");
-		}
-	} });
-
-	currentY += 20;
-
-	// Write Thread Label
-	writeThreadLabel = new ui::Label(ui::Point(8, currentY), ui::Point(67, 16), "Write Thread:");
-	writeThreadLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-
-	// Write Thread Checkbox
-	writeThreadCheckbox = new ui::Checkbox(ui::Point(85, currentY), ui::Point(16, 16), "", "");
-	writeThreadCheckbox->SetActionCallback({ [this]() {
-		rs.writeThread = writeThreadCheckbox->GetChecked();
-		StateChanged();
-	} });
-
-	currentY += 20;
-
-	// Quality Label (Actually compression strength in lossless mode)
-	qualityLabel = new ui::Label(ui::Point(8, currentY), ui::Point(67, 16), "Compres. (-):");
-	qualityLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-
-	// Quality Slider
-	qualitySlider = new ui::Slider(ui::Point(85, currentY), ui::Point(67, 16), 10);
-	qualitySlider->SetActionCallback({ [this]() {
-		rs.quality = qualitySlider->GetValue();
-		StateChanged();
-	} });
-
-	currentY += 20;
-
-	// Reset Button
-	resetButton = new ui::Button(ui::Point(8, currentY), ui::Point(67, 16), "Reset");
-	resetButton->SetActionCallback({ [this]() {
-		rs.Clear();
-		StateChanged();
-	} });
-
-	// Pause Button
-	pauseButton = new ui::Button(ui::Point(85, currentY), ui::Point(67, 16), "Pause");
-	pauseButton->Appearance.BackgroundHover = ui::Colour(63, 63, 127);
-	pauseButton->SetActionCallback({ [this]() {
-		newStage = newStage == RecordStage::Recording ? RecordStage::Paused : RecordStage::Recording;
-		StateChanged();
-	} });
-
-	// Close Button
-	closeButton = new ui::Button(ui::Point(0, Size.Y - 17), ui::Point((Size.X / 2) + 1, 17), "Close");
-	closeButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
-	closeButton->SetActionCallback({ [this]() {
-		ExitSetRecord();
-	} });
-
-	// Start Button
-	startButton = new ui::Button(ui::Point(Size.X / 2, Size.Y - 17), ui::Point(Size.X / 2, 17), "Start");
-	startButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
-	startButton->SetActionCallback({ [this]() {
-		auto& rc = RecordController::Ref();
-		if (rs.stage == RecordStage::Writing)
-		{
-			if (!ConfirmPrompt::Blocking("Cancel Recording", "The remaining unprocessed frames will be lost."))
-			{
-				return;
-			}
-			rc.CancelWrite();
-		}
-		else if (RecordingActive(rs.stage) && RecordingActive(newStage))
-		{
-			if (!ConfirmPrompt::Blocking("Stop Recording", "This will immediately end the recording."))
-			{
-				return;
-			}
-			rc.StopRecording();
-			newStage = rs.stage;
-		}
-		else
-		{
-			ToggleRecording();
-		}
-		StateChanged();
-	} });
-
 	StateChanged();
 
+
+	// Add FoldPanel Components
+	recordingFoldPanel->AddChild(formatLabel);
+	recordingFoldPanel->AddChild(formatDropdown);
+	recordingFoldPanel->AddChild(fpsLabel);
+	recordingFoldPanel->AddChild(fpsTextbox);
+	recordingFoldPanel->AddChild(qualityLabel);
+	recordingFoldPanel->AddChild(qualitySlider);
+
+	sizeFoldPanel->AddChild(selectButton);
+	sizeFoldPanel->AddChild(fullscreenLabel);
+	sizeFoldPanel->AddChild(fullscreenCheckbox);
+	sizeFoldPanel->AddChild(includeUILabel);
+	sizeFoldPanel->AddChild(includeUICheckbox);
+	sizeFoldPanel->AddChild(scaleLabel);
+	sizeFoldPanel->AddChild(scaleDropdown);
+
+	performanceFoldPanel->AddChild(bufferLabel);
+	performanceFoldPanel->AddChild(bufferDropdown);
+	performanceFoldPanel->AddChild(bufferUsageLabel);
+	performanceFoldPanel->AddChild(bufferUsageButton);
+	performanceFoldPanel->AddChild(writeThreadLabel);
+	performanceFoldPanel->AddChild(writeThreadCheckbox);
+
+
+	// Add Base Components
 	AddComponent(titleLabel);
 	AddComponent(helpButton);
-	AddComponent(selectButton);
-	AddComponent(fpsLabel);
-	AddComponent(fpsTextbox);
-	AddComponent(fullscreenLabel);
-	AddComponent(fullscreenCheckbox);
-	AddComponent(includeUILabel);
-	AddComponent(includeUICheckbox);
-	AddComponent(scaleLabel);
-	AddComponent(scaleDropdown);
-	AddComponent(formatLabel);
-	AddComponent(formatDropdown);
-	AddComponent(bufferLabel);
-	AddComponent(bufferDropdown);
-	AddComponent(bufferUsageLabel);
-	AddComponent(bufferUsageButton);
-	AddComponent(writeThreadLabel);
-	AddComponent(writeThreadCheckbox);
-	AddComponent(qualityLabel);
-	AddComponent(qualitySlider);
+
+	AddComponent(recordingFoldPanel);
+	AddComponent(sizeFoldPanel);
+	AddComponent(performanceFoldPanel);
+
 	AddComponent(resetButton);
 	AddComponent(pauseButton);
 	AddComponent(closeButton);
 	AddComponent(startButton);
+
 
 	SetOkayButton(closeButton);
 	MakeActiveWindow();
