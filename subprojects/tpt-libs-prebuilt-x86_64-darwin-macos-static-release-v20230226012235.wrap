@@ -1,0 +1,6 @@
+[wrap-file]
+directory = tpt-libs-prebuilt-x86_64-darwin-macos-static-release-v20230226012235
+
+source_url = https://github.com/catsoften/testingpublic/releases/download/v20230226012235/tpt-libs-prebuilt-x86_64-darwin-macos-static-release-v20230226012235.zip
+source_filename = tpt-libs-prebuilt-x86_64-darwin-macos-static-release-v20230226012235.zip
+source_hash = c97d2f328cd5aa541974305dcc3d48bfc2a524c28f774f42f58de40be5317b24

@@ -13,13 +13,13 @@
 
 // Gif
 #define MSF_GIF_IMPL
-#include "gif/msf_gif.h"
+#include "msf_gif.h"
 
 // WebP
-#include "webp/types.h"
-#include "webp/encode.h"
-#include "webp/mux_types.h"
-#include "webp/mux.h"
+#include <webp/types.h>
+#include <webp/encode.h>
+#include <webp/mux_types.h>
+#include <webp/mux.h>
 
 // Old
 #include "Format.h"

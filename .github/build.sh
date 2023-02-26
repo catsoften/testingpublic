@@ -49,7 +49,7 @@ linux)
 	if [[ $BSH_STATIC_DYNAMIC == static ]]; then
 		sudo apt install libc6-dev libc6-dev-i386
 	else
-		sudo apt install libluajit-5.1-dev libcurl4-openssl-dev libfftw3-dev zlib1g-dev libsdl2-dev libbz2-dev libjsoncpp-dev
+		sudo apt install libluajit-5.1-dev libcurl4-openssl-dev libfftw3-dev zlib1g-dev libsdl2-dev libbz2-dev libjsoncpp-dev libwebp-dev
 	fi
 	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-mingw ]]; then
 		sudo apt install g++-mingw-w64-x86-64
@@ -58,7 +58,7 @@ linux)
 darwin)
 	brew install pkg-config binutils
 	if [[ $BSH_STATIC_DYNAMIC != static ]]; then
-		brew install luajit curl fftw zlib sdl2 bzip2 jsoncpp
+		brew install luajit curl fftw zlib sdl2 bzip2 jsoncpp webp
 	fi
 	;;
 esac

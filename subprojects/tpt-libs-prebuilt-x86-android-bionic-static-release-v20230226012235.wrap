@@ -1,0 +1,6 @@
+[wrap-file]
+directory = tpt-libs-prebuilt-x86-android-bionic-static-release-v20230226012235
+
+source_url = https://github.com/catsoften/testingpublic/releases/download/v20230226012235/tpt-libs-prebuilt-x86-android-bionic-static-release-v20230226012235.zip
+source_filename = tpt-libs-prebuilt-x86-android-bionic-static-release-v20230226012235.zip
+source_hash = e5a1fdfe505aa35db1db9d464160aec81e0c6a3c791564f8bfc5f47339863e4d
