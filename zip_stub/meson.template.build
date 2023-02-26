@@ -235,6 +235,7 @@ libwebpmux_name = 'libwebpmux'
 config_dlls_pre += [ [ join_paths(meson.current_source_dir(), 'bin'), dll_prefix + libwebpmux_name + '.dll', 'all' ] ]
 meson.override_dependency('libwebpmux', declare_dependency(
 	dependencies: [
+		cpp_compiler.find_library('libwebp', dirs: join_paths(meson.current_source_dir(), lib_dir), static: is_static),
 		cpp_compiler.find_library('libwebpmux', dirs: join_paths(meson.current_source_dir(), lib_dir), static: is_static),
 	],
 	include_directories: [
