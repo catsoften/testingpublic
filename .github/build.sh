@@ -950,9 +950,9 @@ function compile_bzip2() {
 	library_versions+="bzip2_version = '$bzip2_version-tpt-libs'"$'\n'
 }
 
-function compile_libwebp()
+function compile_webpmux()
 {
-	get_and_cd libwebp-1.3.0.tar.gz libwebp_version
+	get_and_cd libwebp-1.3.0.tar.gz webpmux_version
 	mkdir build
 	cmake_configure=cmake # not local because add_*_flags can't deal with that
 	cmake_configure+=$'\t'-DWEBP_BUILD_ANIM_UTILS=OFF
@@ -974,9 +974,9 @@ function compile_libwebp()
 	VERBOSE=1 cmake --install . --config $cmake_build_type
 	cd ..
 	echo 5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf COPYING | sha256sum -c
-	cp COPYING $zip_root_real/licenses/libwebp.LICENSE
+	cp COPYING $zip_root_real/licenses/webpmux.LICENSE
 	uncd_and_unget
-	library_versions+="libwebp_version = '$libwebp_version-tpt-libs'"$'\n'
+	library_versions+="webpmux_version = '$webpmux_version-tpt-libs'"$'\n'
 }
 
 function compile() {
@@ -1012,7 +1012,7 @@ compile fftw
 compile lua51
 compile lua52
 compile luajit
-compile libwebp
+compile webpmux
 
 cat - << MESON > $temp_dir/$zip_root/meson.build
 project('tpt-libs-prebuilt', [ 'c', 'cpp' ])

@@ -231,14 +231,14 @@ if host_platform == 'windows' and not is_static
 	endforeach
 endif
 
-libwebp_name = 'libwebp'
-config_dlls_pre += [ [ join_paths(meson.current_source_dir(), 'bin'), dll_prefix + libwebp_name + '.dll', 'all' ] ]
-meson.override_dependency('libwebp', declare_dependency(
+webpmux_name = 'webpmux'
+config_dlls_pre += [ [ join_paths(meson.current_source_dir(), 'bin'), dll_prefix + webpmux_name + '.dll', 'all' ] ]
+meson.override_dependency('webpmux', declare_dependency(
 	dependencies: [
 		cpp_compiler.find_library('webpmux', dirs: join_paths(meson.current_source_dir(), lib_dir), static: is_static),
 	],
 	include_directories: [
 		include_directories('include'),
 	],
-	version: libwebp_version,
+	version: webpmux_version,
 ), static: is_static)
