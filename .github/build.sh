@@ -32,6 +32,7 @@ tarball_hash() {
 	jsoncpp-1.9.5.tar.gz)      sha256sum=f409856e5920c18d0c2fb85276e24ee607d2a09b5e7d5f0a371368903c275da2;; # acquired from https://github.com/open-source-parsers/jsoncpp/archive/refs/tags/1.9.5.tar.gz
 	bzip2-1.0.8.tar.gz)        sha256sum=ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269;; # acquired from https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
 	nghttp2-1.50.0.tar.gz)     sha256sum=6de469efc8e9d47059327a6736aebe0a7d73f57e5e37ab4c4f838fb1eebd7889;; # acquired from https://github.com/nghttp2/nghttp2/archive/refs/tags/v1.50.0.tar.gz
+	libwebp-1.3.0.tar.gz)      sha256sum=64ac4614db292ae8c5aa26de0295bf1623dbb3985054cb656c55e67431def17c;; # acquired from https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.3.0.tar.gz
 	*)                                         >&2 echo "no such tarball (update tarball_hash)" && exit 1;;
 	esac
 }
@@ -949,6 +950,35 @@ function compile_bzip2() {
 	library_versions+="bzip2_version = '$bzip2_version-tpt-libs'"$'\n'
 }
 
+function compile_libwebpmux()
+{
+	get_and_cd libwebp-1.3.0.tar.gz libwebpmux_version
+	mkdir build
+	cmake_configure=cmake # not local because add_*_flags can't deal with that
+	cmake_configure+=$'\t'-DWEBP_BUILD_ANIM_UTILS=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_CWEBP=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_DWEBP=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_GIF2WEBP=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_IMG2WEBP=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_VWEBP=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_WEBPINFO=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_WEBPMUX=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_EXTRAS=OFF
+	add_install_flags cmake_configure
+	if [[ $BSH_HOST_PLATFORM == android ]]; then
+		add_android_flags cmake_configure
+	fi
+	cd build
+	VERBOSE=1 $cmake_configure ..
+	VERBOSE=1 cmake --build . -j$NPROC --config $cmake_build_type
+	VERBOSE=1 cmake --install . --config $cmake_build_type
+	cd ..
+	echo 5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf COPYING | sha256sum -c
+	cp COPYING $zip_root_real/licenses/libwebpmux.LICENSE
+	uncd_and_unget
+	library_versions+="libwebpmux_version = '$libwebpmux_version-tpt-libs'"$'\n'
+}
+
 function compile() {
 	local what=$1 # $2 and up hold names of libraries that have to be compiled before $what
 	declare -n status=status_$what
@@ -982,6 +1012,7 @@ compile fftw
 compile lua51
 compile lua52
 compile luajit
+compile libwebpmux
 
 cat - << MESON > $temp_dir/$zip_root/meson.build
 project('tpt-libs-prebuilt', [ 'c', 'cpp' ])
@@ -1017,6 +1048,8 @@ for junk in \
 	include/libpng16 \
 	include/nghttp2 \
 	lib/{cmake,libpng,pkgconfig} \
+	include/webp/{sharpyuv,decode.h,demux.h} \
+	lib/{libwebpdecoder.a,libwebpdemux.a} \
 ; do
 	rm -r $junk
 done
