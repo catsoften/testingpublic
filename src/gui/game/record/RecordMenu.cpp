@@ -1,5 +1,10 @@
 #include "RecordMenu.h"
 
+#include <cmath>
+#include <algorithm>
+#include <ctime>
+
+#include "RecordHelpText.h"
 #include "RecordController.h"
 
 #include "common/String.h"
@@ -8,7 +13,7 @@
 #include "gui/Style.h"
 #include "gui/interface/Colour.h"
 #include "gui/interface/Appearance.h"
-#include "gui/interface/FoldPanel.h"
+#include "gui/interface/FoldScrollPanel.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/Button.h"
 #include "gui/interface/Checkbox.h"
@@ -19,10 +24,6 @@
 #include "gui/dialogues/ErrorMessage.h"
 #include "gui/dialogues/ConfirmPrompt.h"
 #include "gui/dialogues/TextPrompt.h"
-
-#include <cmath>
-#include <algorithm>
-#include <ctime>
 
 bool RecordMenu::RecordingActive(RecordStage stage)
 {
@@ -247,56 +248,54 @@ void RecordMenu::OnDraw()
 }
 
 RecordMenu::RecordMenu() :
-	ui::Window(ui::Point(-1, -1), ui::Point(160, 320)),
+	ui::Window(ui::Point(-1, -1), ui::Point(160, 272)),
 	rs(RecordController::Ref().rs)
 {
 	auto& rc = RecordController::Ref();
 	newStage = rs.stage;
 	rs.halt = true;
 
-	// Instantiate Components
+	// Initialize Components
 	// Title "Bar"
 	titleLabel							= new ui::Label			(ui::Point(4, 5), ui::Point(Size.X - 8, 15), "Record Menu");
 	helpButton						= new ui::Button			(ui::Point(Size.X - 20, 4), ui::Point(16, 16), "?");
 
-	int currentY = 25;
-	int foldY = currentY;
-	int innerY = 4;
+	foldScrollPanel = new ui::FoldScrollPanel(ui::Point(0, 24), ui::Point(160, 200));
+
+	int currentY = 4;
 	// Recording Options
-	formatLabel						= new ui::Label			(ui::Point(8, innerY),		ui::Point(67, 16), "Format:");
-	formatDropdown				= new ui::DropDown	(ui::Point(85, innerY),	ui::Point(67, 16));								innerY += 20;
-	fpsLabel							= new ui::Label			(ui::Point(8, innerY),		ui::Point(27, 16), "FPS:");
-	fpsTextbox						= new ui::Textbox		(ui::Point(85, innerY),	ui::Point(67, 16), "60", "[fps]");		innerY += 20;
-	qualityLabel						= new ui::Label			(ui::Point(8, innerY),		ui::Point(67, 16), "Compres. (-):");
-	qualitySlider						= new ui::Slider			(ui::Point(85, innerY),	ui::Point(67, 16), 10);						innerY += 20; currentY += innerY;
-	recordingFoldPanel			= new ui::FoldPanel	(ui::Point(0, foldY),		ui::Point(160, innerY + 32), "Recording"); currentY += 16;
+	formatLabel						= new ui::Label			(ui::Point(8, currentY),		ui::Point(67, 16), "Format:");
+	formatDropdown				= new ui::DropDown	(ui::Point(85, currentY),	ui::Point(67, 16));								currentY += 20;
+	fpsLabel							= new ui::Label			(ui::Point(8, currentY),		ui::Point(27, 16), "FPS:");
+	fpsTextbox						= new ui::Textbox		(ui::Point(85, currentY),	ui::Point(67, 16), "60", "[fps]");		currentY += 20;
+	qualityLabel						= new ui::Label			(ui::Point(8, currentY),		ui::Point(67, 16), "Compres. (-):");
+	qualitySlider						= new ui::Slider			(ui::Point(85, currentY),	ui::Point(67, 16), 10);						currentY += 20;
+	int recordingFoldY = currentY;
 
-	foldY = currentY;
-	innerY = 4;
-	// Area/Size Options
-	selectButton						= new ui::Button			(ui::Point(8, innerY),		ui::Point(144, 16), "Select Area");	innerY += 20;
-	fullscreenLabel					= new ui::Label			(ui::Point(8, innerY),		ui::Point(67, 16), "Fullscreen:");
-	fullscreenCheckbox			= new ui::Checkbox	(ui::Point(85, innerY),	ui::Point(16, 16), "", "");					innerY += 20;
-	includeUILabel					= new ui::Label			(ui::Point(8, innerY),		ui::Point(67, 16), "Include UI:");
-	includeUICheckbox			= new ui::Checkbox	(ui::Point(85, innerY),	ui::Point(16, 16), "", "");					innerY += 20;
-	scaleLabel						= new ui::Label			(ui::Point(8, innerY),		ui::Point(67, 16), "Scale:");
-	scaleDropdown				= new ui::DropDown	(ui::Point(85, innerY),	ui::Point(67, 16));								innerY += 20; currentY += innerY;
-	sizeFoldPanel					= new ui::FoldPanel	(ui::Point(0, foldY),		ui::Point(160, innerY + 32), "Size"); currentY += 16;
+	currentY = 4;
+	// Size Options
+	selectButton						= new ui::Button			(ui::Point(8, currentY),		ui::Point(144, 16), "Select Area");	currentY += 20;
+	fullscreenLabel					= new ui::Label			(ui::Point(8, currentY),		ui::Point(67, 16), "Fullscreen:");
+	fullscreenCheckbox			= new ui::Checkbox	(ui::Point(85, currentY),	ui::Point(16, 16), "", "");					currentY += 20;
+	includeUILabel					= new ui::Label			(ui::Point(8, currentY),		ui::Point(67, 16), "Include UI:");
+	includeUICheckbox			= new ui::Checkbox	(ui::Point(85, currentY),	ui::Point(16, 16), "", "");					currentY += 20;
+	scaleLabel						= new ui::Label			(ui::Point(8, currentY),		ui::Point(67, 16), "Scale:");
+	scaleDropdown				= new ui::DropDown	(ui::Point(85, currentY),	ui::Point(67, 16));								currentY += 20;
+	int sizeFoldY = currentY;
 
-	foldY = currentY;
-	innerY = 4;
+	currentY = 4;
 	// Performance Options
-	bufferLabel						= new ui::Label			(ui::Point(8, innerY),		ui::Point(67, 16), "Buffer:");
-	bufferDropdown				= new ui::DropDown	(ui::Point(85, innerY),	ui::Point(67, 16));								innerY += 20;
-	bufferUsageLabel				= new ui::Label			(ui::Point(12, innerY),	ui::Point(100, 16), "");
-	bufferUsageButton			= new ui::Button			(ui::Point(Size.X - 40 , innerY), ui::Point(32, 16), "Limit");	innerY += 20;
-	writeThreadLabel				= new ui::Label			(ui::Point(8, innerY),		ui::Point(67, 16), "Write Thread:");
-	writeThreadCheckbox		= new ui::Checkbox	(ui::Point(85, innerY),	ui::Point(16, 16), "", "");					innerY += 20; currentY += innerY;
-	performanceFoldPanel 	= new ui::FoldPanel	(ui::Point(0, foldY),		ui::Point(160, innerY + 32), "Performance"); currentY += 16;
+	bufferLabel						= new ui::Label			(ui::Point(8, currentY),		ui::Point(67, 16), "Buffer:");
+	bufferDropdown				= new ui::DropDown	(ui::Point(85, currentY),	ui::Point(67, 16));								currentY += 20;
+	bufferUsageLabel				= new ui::Label			(ui::Point(12, currentY),	ui::Point(100, 16), "");
+	bufferUsageButton			= new ui::Button			(ui::Point(Size.X - 40 , currentY), ui::Point(32, 16), "Limit");	currentY += 20;
+	writeThreadLabel				= new ui::Label			(ui::Point(8, currentY),		ui::Point(67, 16), "Write Thread:");
+	writeThreadCheckbox		= new ui::Checkbox	(ui::Point(85, currentY),	ui::Point(16, 16), "", "");					currentY += 20 - 4;
+	int performanceFoldY = currentY;
 
 	// Recording Controls
-	resetButton						= new ui::Button			(ui::Point(8, currentY),		ui::Point(67, 16), "Reset");
-	pauseButton					= new ui::Button			(ui::Point(85, currentY),	ui::Point(67, 16), "Pause");
+	resetButton						= new ui::Button			(ui::Point(8, Size.Y - 40), ui::Point(67, 16), "Reset");
+	pauseButton					= new ui::Button			(ui::Point(85, Size.Y - 40), ui::Point(67, 16), "Pause");
 
 	// Window Buttons
 	closeButton						= new ui::Button			(ui::Point(0, Size.Y - 17), ui::Point((Size.X / 2) + 1, 17), "Close");
@@ -309,7 +308,9 @@ RecordMenu::RecordMenu() :
 	titleLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 
 	// Help Button
-	; // TODO: Move here
+	helpButton->SetActionCallback({ []() {
+		new InformationMessage("Record Menu Help", ByteString(recordHelpTextData).FromUtf8(), true);
+	} });
 
 	// Format Label
 	formatLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
@@ -481,82 +482,47 @@ RecordMenu::RecordMenu() :
 			newStage = rs.stage;
 		}
 		else
-		{	class ScrollPanel
+		{
 			ToggleRecording();
 		}
 		StateChanged();
 	} });
 
-
-	// TODO: Move
-	helpButton->SetActionCallback({ []() {
-		new InformationMessage("Record Menu Help", String::Build("\bo",
-			"Select Area:\n\bw\t",
-			"Select the area of the screen to record (inclusive).\n\bo",
-			"FPS (Max 60):\n\bw\t",
-			"Framerate of final recording, dropping frames if necessary. Not affected by lag, but assumes game should be running at 60fps (Ignores tpt.setfpscap).\n\bo",
-			"Fullscreen:\n\bw\t",
-			"Records the entire window, including the UI. Overrides area selection.\n\bo",
-			"Include UI:\n\bw\t",
-			"Includes the HUD in recordings.\n\bo",
-			"Scale:\n\bl\t",
-			"*** Slows write performance with large areas ***\n\bw\t",
-			"Duplicates pixels to make recording larger. Useful if blurry when being upscaled. \"8+Spacing\" adds black areas between pixels (like zoom window).\n\bo",
-			"Format:\n\bw\t",
-			"Output image format. WebP is much slower at processing frames with long recordings but is lossless. Gif framerate may be incorrect due to precision limitations (10ms increments). Old disables all settings except FPS.\n\bo",
-			"Buffer:\n\bw\t",
-			"Stores image data before processing to improve performance while recording. Final image is created after recording stops. Ram stores data in memory and is fast, but may use large amounts of ram. Disk stores data in the recordings folder temporarily. Size depends on area.\n\bo",
-			"Buffer Usage/Limit:\n\bl\t",
-			"*** Limiter does not account for memory usage of other programs ***\n\bw\t",
-			"Usage shows amount of memory or disk space used for each second of recording with the current settings. Limiter will automatically stop the recording if the buffer is about to exceed this size.\n\bo",
-			"Write Thread:\n\bw\t",
-			"Start processing frames on a separate thread immediately. Can reduce write time with similar game performance if multiple cores are available.\n\bo"
-			"Compression Strength (WebP only):\n\bw\t",
-			"Amount of effort put into compression. Larger values result in smaller files at the cost of write time. Max value (M) enables additional size reduction. \n\bu\t",
-			"Note: WebP images are always stored with lossless compression.\n\bo",
-			"Reset:\n\bw\t"
-			"Reset all settings (including record area) to defaults.\n\bo",
-			"Pause:\n\bw\t",
-			"Temporarily stops recording.\n\bo",
-			"\uE06B:\n\bw\t",
-			"Bagel."
-			), true);
-	} });
-
 	StateChanged();
 
 
-	// Add FoldPanel Components
-	recordingFoldPanel->AddChild(formatLabel);
-	recordingFoldPanel->AddChild(formatDropdown);
-	recordingFoldPanel->AddChild(fpsLabel);
-	recordingFoldPanel->AddChild(fpsTextbox);
-	recordingFoldPanel->AddChild(qualityLabel);
-	recordingFoldPanel->AddChild(qualitySlider);
+	AddComponent(foldScrollPanel); // (Fold)ScrollPanel doesn't know where components are unless it comes first (floating DropDowns, etc.)
 
-	sizeFoldPanel->AddChild(selectButton);
-	sizeFoldPanel->AddChild(fullscreenLabel);
-	sizeFoldPanel->AddChild(fullscreenCheckbox);
-	sizeFoldPanel->AddChild(includeUILabel);
-	sizeFoldPanel->AddChild(includeUICheckbox);
-	sizeFoldPanel->AddChild(scaleLabel);
-	sizeFoldPanel->AddChild(scaleDropdown);
+	// Add foldScrollPanel Components
+	foldScrollPanel->NextGroup("Recording", recordingFoldY, true);
+	foldScrollPanel->AddChild(formatLabel);
+	foldScrollPanel->AddChild(formatDropdown);
+	foldScrollPanel->AddChild(fpsLabel);
+	foldScrollPanel->AddChild(fpsTextbox);
+	foldScrollPanel->AddChild(qualityLabel);
+	foldScrollPanel->AddChild(qualitySlider);
 
-	performanceFoldPanel->AddChild(bufferLabel);
-	performanceFoldPanel->AddChild(bufferDropdown);
-	performanceFoldPanel->AddChild(bufferUsageLabel);
-	performanceFoldPanel->AddChild(bufferUsageButton);
-	performanceFoldPanel->AddChild(writeThreadLabel);
-	performanceFoldPanel->AddChild(writeThreadCheckbox);
+	foldScrollPanel->NextGroup("Size", sizeFoldY, true);
+	foldScrollPanel->AddChild(selectButton);
+	foldScrollPanel->AddChild(fullscreenLabel);
+	foldScrollPanel->AddChild(fullscreenCheckbox);
+	foldScrollPanel->AddChild(includeUILabel);
+	foldScrollPanel->AddChild(includeUICheckbox);
+	foldScrollPanel->AddChild(scaleLabel);
+	foldScrollPanel->AddChild(scaleDropdown);
+
+	foldScrollPanel->NextGroup("Performance", performanceFoldY, false);
+	foldScrollPanel->AddChild(bufferLabel);
+	foldScrollPanel->AddChild(bufferDropdown);
+	foldScrollPanel->AddChild(bufferUsageLabel);
+	foldScrollPanel->AddChild(bufferUsageButton);
+	foldScrollPanel->AddChild(writeThreadLabel);
+	foldScrollPanel->AddChild(writeThreadCheckbox);
 
 
-	// Add Base Components
+	// Add Base Components (except that ScrollPanel...)
 	AddComponent(titleLabel);
 	AddComponent(helpButton);
-
-	AddComponent(recordingFoldPanel);
-	AddComponent(sizeFoldPanel);
-	AddComponent(performanceFoldPanel);
 
 	AddComponent(resetButton);
 	AddComponent(pauseButton);

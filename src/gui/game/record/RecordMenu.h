@@ -8,7 +8,7 @@
 
 namespace ui
 {
-	class FoldPanel;
+	class FoldScrollPanel;
 	class Label;
 	class Button;
 	class Checkbox;
@@ -25,7 +25,8 @@ class RecordMenu : public ui::Window
 	ui::Label* titleLabel;
 	ui::Button* helpButton;
 
-	ui::FoldPanel* recordingFoldPanel;
+	ui::FoldScrollPanel* foldScrollPanel;
+
 	ui::Label* formatLabel;
 	ui::DropDown* formatDropdown;
 	ui::Label* fpsLabel;
@@ -33,7 +34,6 @@ class RecordMenu : public ui::Window
 	ui::Label* qualityLabel;
 	ui::Slider* qualitySlider;
 
-	ui::FoldPanel* sizeFoldPanel;
 	ui::Button* selectButton;
 	ui::Label* fullscreenLabel;
 	ui::Checkbox* fullscreenCheckbox;
@@ -42,14 +42,12 @@ class RecordMenu : public ui::Window
 	ui::Label* scaleLabel;
 	ui::DropDown* scaleDropdown;
 
-	ui::FoldPanel* performanceFoldPanel;
 	ui::Label* bufferLabel;
 	ui::DropDown* bufferDropdown;
 	ui::Label* bufferUsageLabel;
 	ui::Button* bufferUsageButton;
 	ui::Label* writeThreadLabel;
 	ui::Checkbox* writeThreadCheckbox;
-	ui::FoldPanel* testFoldPanel;
 
 	ui::Button* resetButton;
 	ui::Button* pauseButton;
