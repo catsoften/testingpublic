@@ -18,7 +18,7 @@ To select a direction to aim the beam, set the `tmp` value.
 2: RIGHT 3: DOWN
 ```
 
-It's recommended that you create a *straight* line 1 element thick for the beam emitter. If you see errors in the wave pattern, you can reset it by using the PROP tool and setting pavg0 to 0, then drawing over all the EXFN.
+It's recommended that you create a *straight* line 1 element thick for the beam emitter. If you see errors in the wave pattern, you can reset it by using the PROP tool and setting tmp3 to 0, then drawing over all the EXFN.
 
 ## Technical
 #### Properties
@@ -33,7 +33,7 @@ EXFN uses several of its properties to store values about the formation:
 **tmp2:** Saves the beam direction (pull or push), 0 = PUSH, anything else > 0 is PULL. Will floodfill the ON/OFF property when sparked with GOLD / TTAN
 - Same mechanics as life property.
 
-**pavg[0]:** Saves the current position along the formation. For horizontal beam emitters (a vertical formation) stores distance from topmost EXFN, with top having pavg[0] = 1. For vertical beam emitters (a horizontal formation) stores distance from leftmost EXFN, leftmost having pavg[0] = 1. 
+**tmp3:** Saves the current position along the formation. For horizontal beam emitters (a vertical formation) stores distance from topmost EXFN, with top having tmp3 = 1. For vertical beam emitters (a horizontal formation) stores distance from leftmost EXFN, leftmost having tmp3 = 1.
 
 **flags:** Saves total size of the formation. If it emits a horizontal beam stores the height of the emitter, otherwise the width (for vertical beams). Should be recalculated when the formation size is altered, or when flags=0.
 

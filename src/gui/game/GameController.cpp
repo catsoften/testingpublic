@@ -97,13 +97,13 @@ GameController::GameController():
 	gameView->SetDebugHUD(Client::Ref().GetPrefBool("Renderer.DebugMode", false));
 
 	
-	if (SDL_Init(SDL_INIT_AUDIO) != 0) {
+	/* if (SDL_Init(SDL_INIT_AUDIO) != 0) {
 		std::cout << "Error: could not init audio" << std::endl;
 	}
 
 	#ifdef WIN // Fucking windows, needs env variable for SDL sound
 		SDL_AudioInit("directsound");
-	#endif
+	#endif */ // *ULTIMATA97*
 
 #ifdef LUACONSOLE
 	commandInterface = new LuaScriptInterface(this, gameModel);
@@ -300,9 +300,9 @@ void GameController::PlaceSave(ui::Point position)
 void GameController::Install()
 {
 #if defined(MACOSX)
-	new InformationMessage("No installation necessary", "You don't need to install The Powder Toy on OS X", false);
+	new InformationMessage("No installation necessary", "You don't need to install " APPNAME " on OS X", false);
 #elif defined(WIN) || defined(LIN)
-	new ConfirmPrompt("Install The Powder Toy", "Do you wish to install The Powder Toy on this computer?\nThis allows you to open save files and saves directly from the website.", { [this] {
+	new ConfirmPrompt("Install " APPNAME, "Do you wish to install " APPNAME " on this computer?\nThis allows you to open save files and saves directly from the website.", { [] {
 		if (Client::Ref().DoInstallation())
 		{
 			new InformationMessage("Success", "Installation completed", false);
@@ -313,7 +313,7 @@ void GameController::Install()
 		}
 	} });
 #else
-	new ErrorMessage("Cannot install", "You cannot install The Powder Toy on this platform");
+	new ErrorMessage("Cannot install", "You cannot install " APPNAME " on this platform");
 #endif
 }
 
@@ -476,16 +476,12 @@ bool GameController::LoadClipboard()
 	if (!clip)
 		return false;
 	gameModel->SetPlaceSave(clip);
-	if (gameModel->GetPlaceSave() && gameModel->GetPlaceSave()->Collapsed())
-		gameModel->GetPlaceSave()->Expand();
 	return true;
 }
 
 void GameController::LoadStamp(GameSave *stamp)
 {
 	gameModel->SetPlaceSave(stamp);
-	if(gameModel->GetPlaceSave() && gameModel->GetPlaceSave()->Collapsed())
-		gameModel->GetPlaceSave()->Expand();
 }
 
 void GameController::TranslateSave(ui::Point point)
@@ -588,11 +584,11 @@ bool GameController::MouseDown(int x, int y, unsigned button)
 	return ret;
 }
 
-bool GameController::MouseUp(int x, int y, unsigned button, char type)
+bool GameController::MouseUp(int x, int y, unsigned button, MouseupReason reason)
 {
-	MouseUpEvent ev(x, y, button, type);
+	MouseUpEvent ev(x, y, button, reason);
 	bool ret = commandInterface->HandleEvent(LuaEvents::mouseup, &ev);
-	if (type)
+	if (reason != mouseUpNormal)
 		return ret;
 	if (ret && foundSignID != -1 && y<YRES && x<XRES && !gameView->GetPlacingSave())
 	{
@@ -808,7 +804,7 @@ void GameController::Tick()
 void GameController::Blur()
 {
 	// Tell lua that mouse is up (even if it really isn't)
-	MouseUp(0, 0, 0, 1);
+	MouseUp(0, 0, 0, mouseUpBlur);
 	BlurEvent ev;
 	commandInterface->HandleEvent(LuaEvents::blur, &ev);
 }
@@ -819,7 +815,7 @@ void GameController::Exit()
 	commandInterface->HandleEvent(LuaEvents::close, &ev);
 	gameView->CloseActiveWindow();
 	HasDone = true;
-	SDL_CloseAudio();
+	//SDL_CloseAudio(); *ULTIMATA97*
 }
 
 void GameController::ResetAir()
@@ -828,9 +824,9 @@ void GameController::ResetAir()
 	sim->air->Clear();
 	for (int i = 0; i < NPART; i++)
 	{
-		if (sim->parts[i].type == PT_QRTZ || sim->parts[i].type == PT_GLAS || sim->parts[i].type == PT_TUNG)
+		if (GameSave::PressureInTmp3(sim->parts[i].type))
 		{
-			sim->parts[i].pavg[0] = sim->parts[i].pavg[1] = 0;
+			sim->parts[i].tmp3 = 0;
 		}
 	}
 }
@@ -854,7 +850,7 @@ void GameController::ResetSpark()
 
 void GameController::SwitchGravity()
 {
-	gameModel->GetSimulation()->gravityMode = (gameModel->GetSimulation()->gravityMode+1)%3;
+	gameModel->GetSimulation()->gravityMode = (gameModel->GetSimulation()->gravityMode+1)%4;
 
 	switch (gameModel->GetSimulation()->gravityMode)
 	{
@@ -866,6 +862,9 @@ void GameController::SwitchGravity()
 		break;
 	case 2:
 		gameModel->SetInfoTip("Gravity: Radial");
+		break;
+	case 3:
+		gameModel->SetInfoTip("Gravity: Custom");
 		break;
 	}
 }
@@ -937,7 +936,7 @@ void GameController::Update()
 	sim->BeforeSim();
 	if (!sim->sys_pause || sim->framerender)
 	{
-		sim->UpdateParticles(0, NPART);
+		sim->UpdateParticles(0, NPART - 1);
 		sim->AfterSim();
 	}
 
@@ -1075,6 +1074,16 @@ void GameController::SetDebugHUD(bool hudState)
 bool GameController::GetDebugHUD()
 {
 	return gameView->GetDebugHUD();
+}
+
+void GameController::SetTemperatureScale(int temperatureScale)
+{
+	gameModel->SetTemperatureScale(temperatureScale);
+}
+
+int GameController::GetTemperatureScale()
+{
+	return gameModel->GetTemperatureScale();
 }
 
 void GameController::SetActiveColourPreset(int preset)
@@ -1295,10 +1304,11 @@ void GameController::OpenLocalSaveWindow(bool asCurrent)
 
 			gameModel->SetSaveFile(&tempSave, gameView->ShiftBehaviour());
 			Platform::MakeDirectory(LOCAL_SAVE_DIR);
-			std::vector<char> saveData = gameSave->Serialise();
+			auto [ fromNewerVersion, saveData ] = gameSave->Serialise();
+			(void)fromNewerVersion;
 			if (saveData.size() == 0)
 				new ErrorMessage("Error", "Unable to serialize game data.");
-			else if (Client::Ref().WriteFile(saveData, gameModel->GetSaveFile()->GetName()))
+			else if (!Platform::WriteFile(saveData, gameModel->GetSaveFile()->GetName()))
 				new ErrorMessage("Error", "Unable to write save file.");
 			else
 				gameModel->SetInfoTip("Saved Successfully");
@@ -1562,7 +1572,7 @@ void GameController::FrameStep()
 
 void GameController::Vote(int direction)
 {
-	if(gameModel->GetSave() && gameModel->GetUser().UserID && gameModel->GetSave()->GetID() && gameModel->GetSave()->GetVote()==0)
+	if(gameModel->GetSave() && gameModel->GetUser().UserID && gameModel->GetSave()->GetID())
 	{
 		try
 		{
@@ -1640,6 +1650,11 @@ String GameController::WallName(int type)
 		return gameModel->GetSimulation()->wtypes[type].name;
 	else
 		return String();
+}
+
+ByteString GameController::TakeScreenshot(int captureUI, int fileType)
+{
+	return gameView->TakeScreenshot(captureUI, fileType);
 }
 
 int GameController::Record(bool record)

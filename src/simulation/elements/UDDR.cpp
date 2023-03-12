@@ -54,14 +54,14 @@ static int update(UPDATE_FUNC_ARGS) {
 	 * life:  Graphics
 	 * tmp:   Oxygen stored
 	 * tmp2:  Nutrients stored
-	 * pavg0: Highest temperature
-	 * pavg1: Type 0 = inside, 1 = skin, 2 = dead
+	 * tmp3: Highest temperature
+	 * tmp4: Type 0 = inside, 1 = skin, 2 = dead
 	 */
 	Element_FLSH_update(sim, i, x, y, surround_space, nt, parts, pmap);
-	if (parts[i].pavg[1] == 1) // Override skin formation
-		parts[i].pavg[1] = 0;
+	if (parts[i].tmp4 == 1) // Override skin formation
+		parts[i].tmp4 = 0;
 
-	if (sim->pv[y / CELL][x / CELL] > 1.0f && parts[i].pavg[1] != 2) {
+	if (sim->pv[y / CELL][x / CELL] > 1.0f && parts[i].tmp4 != 2) {
 		int rx, ry, r;
 		for (rx = -1; rx < 2; ++rx)
 		for (ry = -1; ry < 2; ++ry)

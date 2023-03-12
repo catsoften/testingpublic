@@ -5,12 +5,15 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "bzip2/bzlib.h"
+#include <bzlib.h>
+#include "common/Platform.h"
 
 #include "FontReader.h"
 #ifdef HIGH_QUALITY_RESAMPLE
 #include "resampler/resampler.h"
 #endif
+
+#include <png.h>
 
 VideoBuffer::VideoBuffer(int width, int height):
 	Width(width),
@@ -36,12 +39,27 @@ VideoBuffer::VideoBuffer(VideoBuffer * old):
 	std::copy(old->Buffer, old->Buffer+(old->Width*old->Height), Buffer);
 };
 
-VideoBuffer::VideoBuffer(pixel * buffer, int width, int height):
+VideoBuffer::VideoBuffer(pixel * buffer, int width, int height, int pitch):
 	Width(width),
 	Height(height)
 {
 	Buffer = new pixel[width*height];
-	std::copy(buffer, buffer+(width*height), Buffer);
+	CopyData(buffer, width, height, pitch ? pitch : width);
+}
+
+void VideoBuffer::CopyData(pixel * buffer, int width, int height, int pitch)
+{
+	for (auto y = 0; y < height; ++y)
+	{
+		std::copy(buffer + y * pitch, buffer + y * pitch + width, Buffer + y * width);
+	}
+}
+
+void VideoBuffer::Crop(int width, int height, int x, int y)
+{
+	CopyData(Buffer + y * Width + x, width, height, Width);
+	Width = width;
+	Height = height;
 }
 
 void VideoBuffer::Resize(float factor, bool resample)
@@ -117,167 +135,6 @@ int VideoBuffer::AddCharacter(int x, int y, String::value_type c, int r, int g, 
 VideoBuffer::~VideoBuffer()
 {
 	delete[] Buffer;
-}
-
-/**
- * Common graphics functions, mostly static methods that provide
- * encoding/decoding of different formats and font metrics
- */
-
-char * Graphics::GenerateGradient(pixel * colours, float * points, int pointcount, int size)
-{
-	int cp, i, j;
-	pixel ptemp;
-	char * newdata = (char*)malloc(size * 3);
-	float poss, pose, temp;
-	memset(newdata, 0, size*3);
-	//Sort the Colours and Points
-	for (i = (pointcount - 1); i > 0; i--)
-	{
-		for (j = 1; j <= i; j++)
-		{
-			if (points[j-1] > points[j])
-			{
-				temp = points[j-1];
-				points[j-1] = points[j];
-				points[j] = temp;
-
-				ptemp = colours[j-1];
-				colours[j-1] = colours[j];
-				colours[j] = ptemp;
-			}
-		}
-	}
-	i = 0;
-	j = 1;
-	poss = points[i];
-	pose = points[j];
-	for (cp = 0; cp < size; cp++)
-	{
-		float cpos = (float)cp / (float)size, ccpos, cccpos;
-		if(cpos > pose && j+1 < pointcount)
-		{
-			poss = points[++i];
-			pose = points[++j];
-		}
-		ccpos = cpos - poss;
-		cccpos = ccpos / (pose - poss);
-		if(cccpos > 1.0f)
-			cccpos = 1.0f;
-		newdata[(cp*3)  ] = char(PIXR(colours[i])*(1.0f-cccpos) + PIXR(colours[j])*(cccpos));
-		newdata[(cp*3)+1] = char(PIXG(colours[i])*(1.0f-cccpos) + PIXG(colours[j])*(cccpos));
-		newdata[(cp*3)+2] = char(PIXB(colours[i])*(1.0f-cccpos) + PIXB(colours[j])*(cccpos));
-	}
-	return newdata;
-}
-
-void *Graphics::ptif_pack(pixel *src, int w, int h, int *result_size){
-	int i = 0, datalen = (w*h)*3, cx = 0, cy = 0;
-	unsigned char *red_chan = (unsigned char*)calloc(1, w*h);
-	unsigned char *green_chan = (unsigned char*)calloc(1, w*h);
-	unsigned char *blue_chan = (unsigned char*)calloc(1, w*h);
-	unsigned char *data = (unsigned char*)malloc(((w*h)*3)+8);
-	unsigned char *result = (unsigned char*)malloc(((w*h)*3)+8);
-
-	for(cx = 0; cx<w; cx++){
-		for(cy = 0; cy<h; cy++){
-			red_chan[w*(cy)+(cx)] = PIXR(src[w*(cy)+(cx)]);
-			green_chan[w*(cy)+(cx)] = PIXG(src[w*(cy)+(cx)]);
-			blue_chan[w*(cy)+(cx)] = PIXB(src[w*(cy)+(cx)]);
-		}
-	}
-
-	memcpy(data, red_chan, w*h);
-	memcpy(data+(w*h), green_chan, w*h);
-	memcpy(data+((w*h)*2), blue_chan, w*h);
-	free(red_chan);
-	free(green_chan);
-	free(blue_chan);
-
-	result[0] = 'P';
-	result[1] = 'T';
-	result[2] = 'i';
-	result[3] = 1;
-	result[4] = w;
-	result[5] = w>>8;
-	result[6] = h;
-	result[7] = h>>8;
-
-	i -= 8;
-
-	if(BZ2_bzBuffToBuffCompress((char *)(result+8), (unsigned *)&i, (char *)data, datalen, 9, 0, 0) != 0){
-		free(data);
-		free(result);
-		return NULL;
-	}
-
-	*result_size = i+8;
-	free(data);
-	return result;
-}
-
-pixel *Graphics::ptif_unpack(void *datain, int size, int *w, int *h){
-	int width, height, i, cx, cy, resCode;
-	unsigned char *red_chan;
-	unsigned char *green_chan;
-	unsigned char *blue_chan;
-	unsigned char *data = (unsigned char*)datain;
-	unsigned char *undata;
-	pixel *result;
-	if(size<16){
-		printf("Image empty\n");
-		return NULL;
-	}
-	if(!(data[0]=='P' && data[1]=='T' && data[2]=='i')){
-		printf("Image header invalid\n");
-		return NULL;
-	}
-	width = data[4]|(data[5]<<8);
-	height = data[6]|(data[7]<<8);
-
-	i = (width*height)*3;
-	undata = (unsigned char*)calloc(1, (width*height)*3);
-	red_chan = (unsigned char*)calloc(1, width*height);
-	green_chan = (unsigned char*)calloc(1, width*height);
-	blue_chan = (unsigned char *)calloc(1, width*height);
-	result = (pixel *)calloc(width*height, PIXELSIZE);
-
-	resCode = BZ2_bzBuffToBuffDecompress((char *)undata, (unsigned *)&i, (char *)(data+8), size-8, 0, 0);
-	if (resCode){
-		printf("Decompression failure, %d\n", resCode);
-		free(red_chan);
-		free(green_chan);
-		free(blue_chan);
-		free(undata);
-		free(result);
-		return NULL;
-	}
-	if(i != (width*height)*3){
-		printf("Result buffer size mismatch, %d != %d\n", i, (width*height)*3);
-		free(red_chan);
-		free(green_chan);
-		free(blue_chan);
-		free(undata);
-		free(result);
-		return NULL;
-	}
-	memcpy(red_chan, undata, width*height);
-	memcpy(green_chan, undata+(width*height), width*height);
-	memcpy(blue_chan, undata+((width*height)*2), width*height);
-
-	for(cx = 0; cx<width; cx++){
-		for(cy = 0; cy<height; cy++){
-			result[width*(cy)+(cx)] = PIXRGB(red_chan[width*(cy)+(cx)], green_chan[width*(cy)+(cx)], blue_chan[width*(cy)+(cx)]);
-		}
-	}
-
-	*w = width;
-	*h = height;
-	free(red_chan);
-	free(green_chan);
-	free(blue_chan);
-	free(undata);
-	return result;
 }
 
 pixel *Graphics::resample_img_nn(pixel * src, int sw, int sh, int rw, int rh)
@@ -497,60 +354,26 @@ pixel *Graphics::resample_img(pixel *src, int sw, int sh, int rw, int rh)
 #endif
 }
 
-pixel *Graphics::rescale_img(pixel *src, int sw, int sh, int *qw, int *qh, int f)
-{
-	int i,j,x,y,w,h,r,g,b,c;
-	pixel p, *q;
-	w = (sw+f-1)/f;
-	h = (sh+f-1)/f;
-	q = (pixel *)malloc(w*h*PIXELSIZE);
-	for (y=0; y<h; y++)
-		for (x=0; x<w; x++)
-		{
-			r = g = b = c = 0;
-			for (j=0; j<f; j++)
-				for (i=0; i<f; i++)
-					if (x*f+i<sw && y*f+j<sh)
-					{
-						p = src[(y*f+j)*sw + (x*f+i)];
-						if (p)
-						{
-							r += PIXR(p);
-							g += PIXG(p);
-							b += PIXB(p);
-							c ++;
-						}
-					}
-			if (c>1)
-			{
-				r = (r+c/2)/c;
-				g = (g+c/2)/c;
-				b = (b+c/2)/c;
-			}
-			q[y*w+x] = PIXRGB(r, g, b);
-		}
-	*qw = w;
-	*qh = h;
-	return q;
-}
-
-int Graphics::textwidth(String str)
+int Graphics::textwidth(const String &str)
 {
 	int x = 0;
-	String::value_type const *s = str.c_str();
-	for (; *s; s++)
+	for (size_t i = 0; i < str.length(); i++)
 	{
-		if(*s=='\b')
+		if (str[i] == '\b')
 		{
-			if(!s[1]) break;
-			s++;
-			continue;
-		} else if(*s == '\x0F') {
-			if(!s[1] || !s[2] || !s[3]) break;
-			s+=3;
+			if (str.length() <= i+1)
+				break;
+			i++;
 			continue;
 		}
-		x += FontReader(*s).GetWidth();
+		else if (str[i] == '\x0F')
+		{
+			if (str.length() <= i+3)
+				break;
+			i += 3;
+			continue;
+		}
+		x += FontReader(str[i]).GetWidth();
 	}
 	return x-1;
 }
@@ -560,83 +383,24 @@ int Graphics::CharWidth(String::value_type c)
 	return FontReader(c).GetWidth();
 }
 
-int Graphics::textnwidth(String str, int n)
+int Graphics::textwidthx(const String &str, int w)
 {
-	int x = 0;
-	String::value_type const *s = str.c_str();
-	for (; *s; s++)
+	int x = 0,n = 0,cw = 0;
+	for (size_t i = 0; i < str.length(); i++)
 	{
-		if (!n)
-			break;
-		if(*s=='\b')
+		if (str[i] == '\b')
 		{
-			if(!s[1]) break;
-			s++;
-			continue;
-		} else if(*s == '\x0F') {
-			if(!s[1] || !s[2] || !s[3]) break;
-			s+=3;
-			continue;
-		}
-		x += FontReader(*s).GetWidth();
-		n--;
-	}
-	return x-1;
-}
-
-void Graphics::textnpos(String str, int n, int w, int *cx, int *cy)
-{
-	int x = 0;
-	int y = 0;
-	int wordlen, charspace;
-	String::value_type const *s = str.c_str();
-	while (*s&&n)
-	{
-		wordlen = 0;
-		while(*s && String(" .,!?\n").Contains(*s))
-			s++;
-		charspace = textwidthx(s, w-x);
-		if (charspace<wordlen && wordlen && w-x<w/3)
-		{
-			x = 0;
-			y += FONT_H;
-		}
-		for (; *s && --wordlen>=-1; s++)
-		{
-			if (!n) {
+			if (str.length() <= i+1)
 				break;
-			}
-			x += FontReader(*s).GetWidth();
-			if (x>=w)
-			{
-				x = 0;
-				y += FONT_H;
-			}
-			n--;
-		}
-	}
-	*cx = x-1;
-	*cy = y;
-}
-
-int Graphics::textwidthx(String str, int w)
-{
-	int x=0,n=0,cw;
-	String::value_type const *s = str.c_str();
-	for (; *s; s++)
-	{
-		if(*s == '\b')
-		{
-			if(!s[1]) break;
-			s++;
+			i++;
 			continue;
-		} else if (*s == '\x0F')
-		{
-			if(!s[1] || !s[2] || !s[3]) break;
-			s+=3;
+		} else if (str[i] == '\x0F') {
+			if (str.length() <= i+3)
+				break;
+			i += 3;
 			continue;
 		}
-		cw = FontReader(*s).GetWidth();
+		cw = FontReader(str[i]).GetWidth();
 		if (x+(cw/2) >= w)
 			break;
 		x += cw;
@@ -645,56 +409,7 @@ int Graphics::textwidthx(String str, int w)
 	return n;
 }
 
-int Graphics::textwrapheight(String str, int width)
-{
-	int x=0, height=FONT_H, cw;
-	int wordlen;
-	int charspace;
-	String::value_type const *s = str.c_str();
-	while (*s)
-	{
-		wordlen = 0;
-		while(*s && String(" .,!?\n").Contains(*s))
-			s++;
-		charspace = textwidthx(s, width-x);
-		if (charspace<wordlen && wordlen && width-x<width/3)
-		{
-			x = 0;
-			height += FONT_H;
-		}
-		for (; *s && --wordlen>=-1; s++)
-		{
-			if (*s == '\n')
-			{
-				x = 0;
-				height += FONT_H;
-			}
-			else if (*s == '\b')
-			{
-				if(!s[1]) break;
-				s++;
-			}
-			else if (*s == '\x0F')
-			{
-				if(!s[1] || !s[2] || !s[3]) break;
-				s+=3;
-			}
-			else
-			{
-				cw = FontReader(*s).GetWidth();
-				if (x+cw>=width)
-				{
-					x = 0;
-					height += FONT_H;
-				}
-				x += cw;
-			}
-		}
-	}
-	return height;
-}
-
-void Graphics::textsize(String str, int & width, int & height)
+void Graphics::textsize(const String &str, int & width, int & height)
 {
 	if(!str.size())
 	{
@@ -704,27 +419,28 @@ void Graphics::textsize(String str, int & width, int & height)
 	}
 
 	int cHeight = FONT_H-2, cWidth = 0, lWidth = 0;
-	String::value_type const *s = str.c_str();
-	for (; *s; s++)
+	for (size_t i = 0; i < str.length(); i++)
 	{
-		if (*s == '\n')
+		if (str[i] == '\n')
 		{
 			cWidth = 0;
 			cHeight += FONT_H;
 		}
-		else if (*s == '\x0F')
+		else if (str[i] == '\x0F')
 		{
-			if(!s[1] || !s[2] || !s[3]) break;
-			s+=3;
+			if (str.length() <= i+3)
+				break;
+			i += 3;
 		}
-		else if (*s == '\b')
+		else if (str[i] == '\b')
 		{
-			if(!s[1]) break;
-			s++;
+			if (str.length() <= i+1)
+				break;
+			i++;
 		}
 		else
 		{
-			cWidth += FontReader(*s).GetWidth();
+			cWidth += FontReader(str[i]).GetWidth();
 			if(cWidth>lWidth)
 				lWidth = cWidth;
 		}
@@ -1013,65 +729,229 @@ void Graphics::draw_icon(int x, int y, Icon icon, unsigned char alpha, bool inve
 	}
 }
 
-void Graphics::draw_rgba_image(const unsigned char *data_, int x, int y, float alpha)
+void Graphics::draw_rgba_image(const pixel *data, int w, int h, int x, int y, float alpha)
 {
-	unsigned char w, h;
-	int i, j;
-	unsigned char r, g, b, a;
-	unsigned char *data = (unsigned char*)data_;
-	if (!data) return;
-	w = *(data++)&0xFF;
-	h = *(data++)&0xFF;
-	for (j=0; j<h; j++)
+	for (int j = 0; j < h; j++)
 	{
-		for (i=0; i<w; i++)
+		for (int i = 0; i < w; i++)
 		{
-			r = *(data++)&0xFF;
-			g = *(data++)&0xFF;
-			b = *(data++)&0xFF;
-			a = *(data++)&0xFF;
+			auto rgba = *(data++);
+			auto a = (rgba >> 24) & 0xFF;
+			auto r = (rgba >> 16) & 0xFF;
+			auto g = (rgba >>  8) & 0xFF;
+			auto b = (rgba      ) & 0xFF;
 			addpixel(x+i, y+j, r, g, b, (int)(a*alpha));
 		}
 	}
 }
 
-pixel *Graphics::render_packed_rgb(void *image, int width, int height, int cmp_size)
-{
-	unsigned char *tmp;
-	pixel *res;
-	int i;
-
-	tmp = (unsigned char *)malloc(width*height*3);
-	if (!tmp)
-		return NULL;
-	res = (pixel *)malloc(width*height*PIXELSIZE);
-	if (!res)
-	{
-		free(tmp);
-		return NULL;
-	}
-
-	i = width*height*3;
-	if (BZ2_bzBuffToBuffDecompress((char *)tmp, (unsigned *)&i, (char *)image, cmp_size, 0, 0))
-	{
-		free(res);
-		free(tmp);
-		return NULL;
-	}
-
-	for (i=0; i<width*height; i++)
-		res[i] = PIXRGB(tmp[3*i], tmp[3*i+1], tmp[3*i+2]);
-
-	free(tmp);
-	return res;
-}
-
 VideoBuffer Graphics::DumpFrame()
 {
-#ifdef OGLI
-#else
 	VideoBuffer newBuffer(WINDOWW, WINDOWH);
 	std::copy(vid, vid+(WINDOWW*WINDOWH), newBuffer.Buffer);
 	return newBuffer;
+}
+
+void Graphics::SetClipRect(int &x, int &y, int &w, int &h)
+{
+	int newX = x;
+	int newY = y;
+	int newW = w;
+	int newH = h;
+	if (newX < 0) newX = 0;
+	if (newY < 0) newY = 0;
+	if (newW > WINDOWW - newX) newW = WINDOWW - newX;
+	if (newH > WINDOWH - newY) newH = WINDOWH - newY;
+	x = clipx1;
+	y = clipy1;
+	w = clipx2 - clipx1;
+	h = clipy2 - clipy1;
+	clipx1 = newX;
+	clipy1 = newY;
+	clipx2 = newX + newW;
+	clipy2 = newY + newH;
+}
+
+bool VideoBuffer::WritePNG(const ByteString &path) const
+{
+	std::vector<png_const_bytep> rowPointers(Height);
+	for (auto y = 0; y < Height; ++y)
+	{
+		rowPointers[y] = (png_const_bytep)&Buffer[y * Width];
+	}
+#ifdef WIN
+	FILE *f = _wfopen(Platform::WinWiden(path).c_str(), L"wb");
+#else
+	FILE *f = fopen(path.c_str(), "wb");
 #endif
+	if (!f)
+	{
+		std::cerr << "WritePNG: fopen failed" << std::endl;
+		return false;
+	}
+	png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if (!png)
+	{
+		std::cerr << "WritePNG: png_create_write_struct failed" << std::endl;
+		fclose(f);
+		return false;
+	}
+	png_infop info = png_create_info_struct(png);
+	if (!info)
+	{
+		std::cerr << "WritePNG: png_create_info_struct failed" << std::endl;
+		png_destroy_write_struct(&png, (png_infopp)NULL);
+		fclose(f);
+		return false;
+	}
+	if (setjmp(png_jmpbuf(png)))
+	{
+		// libpng longjmp'd here in its infinite widsom, clean up and return
+		std::cerr << "WritePNG: longjmp from within libpng" << std::endl;
+		png_destroy_write_struct(&png, &info);
+		fclose(f);
+		return false;
+	}
+	png_init_io(png, f);
+	png_set_IHDR(png, info, Width, Height, 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	png_write_info(png, info);
+	png_set_filler(png, 0, PNG_FILLER_AFTER);
+	png_set_bgr(png);
+	png_write_image(png, (png_bytepp)&rowPointers[0]);
+	png_write_end(png, NULL);
+	png_destroy_write_struct(&png, &info);
+	fclose(f);
+	return true;
+}
+
+bool PngDataToPixels(std::vector<pixel> &imageData, int &imgw, int &imgh, const char *pngData, size_t pngDataSize, bool addBackground)
+{
+	std::vector<png_const_bytep> rowPointers;
+	struct InMemoryFile
+	{
+		png_const_bytep data;
+		size_t size;
+		size_t cursor;
+	} imf{ (png_const_bytep)pngData, pngDataSize, 0 };
+	png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if (!png)
+	{
+		std::cerr << "pngDataToPixels: png_create_read_struct failed" << std::endl;
+		return false;
+	}
+	png_infop info = png_create_info_struct(png);
+	if (!info)
+	{
+		std::cerr << "pngDataToPixels: png_create_info_struct failed" << std::endl;
+		png_destroy_read_struct(&png, (png_infopp)NULL, (png_infopp)NULL);
+		return false;
+	}
+	if (setjmp(png_jmpbuf(png)))
+	{
+		// libpng longjmp'd here in its infinite widsom, clean up and return
+		std::cerr << "pngDataToPixels: longjmp from within libpng" << std::endl;
+		png_destroy_read_struct(&png, &info, (png_infopp)NULL);
+		return false;
+	}
+	png_set_read_fn(png, (png_voidp)&imf, [](png_structp png, png_bytep data, size_t length) -> void {
+		auto ud = png_get_io_ptr(png);
+		auto &imf = *(InMemoryFile *)ud;
+		if (length + imf.cursor > imf.size)
+		{
+			png_error(png, "pngDataToPixels: libpng tried to read beyond the buffer");
+		}
+		std::copy(imf.data + imf.cursor, imf.data + imf.cursor + length, data);
+		imf.cursor += length;
+	});
+	png_set_user_limits(png, 1000, 1000);
+	png_read_info(png, info);
+	imgw = png_get_image_width(png, info);
+	imgh = png_get_image_height(png, info);
+	int bitDepth = png_get_bit_depth(png, info);
+	int colorType = png_get_color_type(png, info);
+	imageData.resize(imgw * imgh);
+	rowPointers.resize(imgh);
+	for (auto y = 0; y < imgh; ++y)
+	{
+		rowPointers[y] = (png_const_bytep)&imageData[y * imgw];
+	}
+	if (setjmp(png_jmpbuf(png)))
+	{
+		// libpng longjmp'd here in its infinite widsom, clean up and return
+		std::cerr << "pngDataToPixels: longjmp from within libpng" << std::endl;
+		png_destroy_read_struct(&png, &info, (png_infopp)NULL);
+		return false;
+	}
+	if (addBackground)
+	{
+		png_set_filler(png, 0, PNG_FILLER_AFTER);
+	}
+	png_set_bgr(png);
+	if (colorType == PNG_COLOR_TYPE_PALETTE)
+	{
+		png_set_palette_to_rgb(png);
+	}
+	if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
+	{
+		png_set_expand_gray_1_2_4_to_8(png);
+	}
+	if (png_get_valid(png, info, PNG_INFO_tRNS))
+	{
+		png_set_tRNS_to_alpha(png);
+	}
+	if (bitDepth == 16)
+	{
+		png_set_scale_16(png);
+	}
+	if (colorType == PNG_COLOR_TYPE_GRAY || colorType == PNG_COLOR_TYPE_GRAY_ALPHA)
+	{
+		png_set_gray_to_rgb(png);
+	}
+	if (addBackground)
+	{
+		png_color_16 defaultBackground;
+		defaultBackground.red = 0;
+		defaultBackground.green = 0;
+		defaultBackground.blue = 0;
+		png_set_background(png, &defaultBackground, PNG_BACKGROUND_GAMMA_SCREEN, 0, 1.0);
+	}
+	png_read_image(png, (png_bytepp)&rowPointers[0]);
+	png_destroy_read_struct(&png, &info, (png_infopp)NULL);
+	return true;
+}
+
+bool Graphics::GradientStop::operator <(const GradientStop &other) const
+{
+	return point < other.point;
+}
+
+std::vector<pixel> Graphics::Gradient(std::vector<GradientStop> stops, int resolution)
+{
+	std::vector<pixel> table(resolution, 0);
+	if (stops.size() >= 2)
+	{
+		std::sort(stops.begin(), stops.end());
+		auto stop = -1;
+		for (auto i = 0; i < resolution; ++i)
+		{
+			auto point = i / (float)resolution;
+			while (stop < (int)stops.size() - 1 && stops[stop + 1].point <= point)
+			{
+				++stop;
+			}
+			if (stop < 0 || stop >= (int)stops.size() - 1)
+			{
+				continue;
+			}
+			auto &left = stops[stop];
+			auto &right = stops[stop + 1];
+			auto f = (point - left.point) / (right.point - left.point);
+			table[i] = PIXRGB(
+				int(int(PIXR(left.color)) + (int(PIXR(right.color)) - int(PIXR(left.color))) * f),
+				int(int(PIXG(left.color)) + (int(PIXG(right.color)) - int(PIXG(left.color))) * f),
+				int(int(PIXB(left.color)) + (int(PIXB(right.color)) - int(PIXB(left.color))) * f)
+			);
+		}
+	}
+	return table;
 }

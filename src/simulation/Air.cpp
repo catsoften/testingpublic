@@ -121,11 +121,17 @@ void Air::update_airh(void)
 				dh += AIR_VADV*(1.0f-tx)*ty*((bmap_blockairh[j+1][i]&0x8) ? odh : hv[j+1][i]);
 				dh += AIR_VADV*tx*ty*((bmap_blockairh[j+1][i+1]&0x8) ? odh : hv[j+1][i+1]);
 			}
-			if(!sim.gravityMode)
-			{ //Vertical gravity only for the time being
-				float airdiff = hv[y-1][x]-hv[y][x];
-				if(airdiff>0 && !(bmap_blockairh[y-1][x]&0x8))
-					vy[y][x] -= airdiff/5000.0f;
+			ohv[y][x] = dh;
+			if (x>=2 && x<XRES/CELL-2 && y>=2 && y<YRES/CELL-2)
+			{
+				float convGravX, convGravY;
+				sim.GetGravityField(x*CELL, y*CELL, -1.0f, -1.0f, convGravX, convGravY);
+				auto weight = ((hv[y][x] - hv[y][x-1]) * convGravX + (hv[y][x] - hv[y-1][x]) * convGravY) / 5000.0f;
+				if (weight > 0 && !(bmap_blockairh[y-1][x]&0x8))
+				{
+					vx[y][x] += weight * convGravX;
+					vy[y][x] += weight * convGravY;
+				}
 			}
 			ohv[y][x] = dh;
 
@@ -318,12 +324,12 @@ void Air::update_air(void)
 					dy += fvy[y][x];
 				}
 				// pressure/velocity caps
-				if (dp > 256.0f) dp = 256.0f;
-				if (dp < -256.0f) dp = -256.0f;
-				if (dx > 256.0f) dx = 256.0f;
-				if (dx < -256.0f) dx = -256.0f;
-				if (dy > 256.0f) dy = 256.0f;
-				if (dy < -256.0f) dy = -256.0f;
+				if (dp > MAX_PRESSURE) dp = MAX_PRESSURE;
+				if (dp < MIN_PRESSURE) dp = MIN_PRESSURE;
+				if (dx > MAX_PRESSURE) dx = MAX_PRESSURE;
+				if (dx < MIN_PRESSURE) dx = MIN_PRESSURE;
+				if (dy > MAX_PRESSURE) dy = MAX_PRESSURE;
+				if (dy < MIN_PRESSURE) dy = MIN_PRESSURE;
 
 
 				switch (airMode)

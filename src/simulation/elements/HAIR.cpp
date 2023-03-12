@@ -60,7 +60,7 @@ static int update(UPDATE_FUNC_ARGS) {
 	 * tmp  - attached to STKM currently (-1 = GELed or frozen, 0 = not yet, 1 = STKM, 2 = STKM2, higher = FIGH)
 	 * tmp2 - 1 = "base" strand, 2 = attached to a base strand
 	 * life - ID of strand to attach to, if secondary
-	 * pavg - Relative position to id
+	 * tmp3/4 - Relative position to id
 	 */
 
 	// Invalid if >= max fighters
@@ -92,8 +92,8 @@ static int update(UPDATE_FUNC_ARGS) {
 	// GOTO For attaching to STKM
 	if (false) {
 		attach_hair_end:
-		parts[i].pavg[0] = xdiff;
-		parts[i].pavg[1] = ydiff;
+		parts[i].tmp3 = xdiff;
+		parts[i].tmp4 = ydiff;
 		parts[i].tmp2 = 1;
 	}
 
@@ -111,8 +111,8 @@ static int update(UPDATE_FUNC_ARGS) {
 				// Attach to other hair
 				if (rt == PT_HAIR && parts[i].tmp2 == 0 && parts[ID(r)].tmp == 1) {
 					parts[i].tmp2 = 2;
-					parts[i].pavg[0] = rx;
-					parts[i].pavg[1] = ry;
+					parts[i].tmp3 = rx;
+					parts[i].tmp4 = ry;
 					parts[i].life = ID(r);
 				}
 				// Gel
@@ -149,8 +149,8 @@ static int update(UPDATE_FUNC_ARGS) {
 
 	// Attached to STKM
 	if (parts[i].tmp > 0) {
-		parts[i].x = parts[stkm.stkmID].x - parts[i].pavg[0];
-		parts[i].y = parts[stkm.stkmID].y - parts[i].pavg[1];
+		parts[i].x = parts[stkm.stkmID].x - parts[i].tmp3;
+		parts[i].y = parts[stkm.stkmID].y - parts[i].tmp4;
 	}
 	// Attached to other hair
 	else if (parts[i].tmp2 == 2) {
@@ -160,8 +160,8 @@ static int update(UPDATE_FUNC_ARGS) {
 			parts[i].tmp2 = 0;
 		}
 		else {
-			parts[i].x = parts[parts[i].life].x - parts[i].pavg[0];
-			parts[i].y = parts[parts[i].life].y - parts[i].pavg[1];
+			parts[i].x = parts[parts[i].life].x - parts[i].tmp3;
+			parts[i].y = parts[parts[i].life].y - parts[i].tmp4;
 		}
 	}
 

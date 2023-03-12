@@ -60,10 +60,10 @@ static int update_scan(Particle *parts, int pmap[YRES][XRES], int i, int tx, int
 
 	if (parts[id].ctype == parts[i].ctype) {
 		if (multi_check && parts[id].tmp == parts[i].tmp) {
-			if (parts[id].tmp2 == 1 && parts[i].pavg[0] < 0)
-				parts[i].pavg[0] = id;
-			else if (parts[id].tmp2 == 2 && parts[i].pavg[1] < 0)
-				parts[i].pavg[1] = id;
+			if (parts[id].tmp2 == 1 && parts[i].tmp3 < 0)
+				parts[i].tmp3 = id;
+			else if (parts[id].tmp2 == 2 && parts[i].tmp4 < 0)
+				parts[i].tmp4 = id;
 		}
 	}
 	return 0;
@@ -100,7 +100,7 @@ static int update(UPDATE_FUNC_ARGS) {
 	 * - ctype: logic gate type
 	 * 
 	 * For multi-input gates (up to 3 inputs)
-	 * - pavg[0], pavg[1]: ID(r) of the other 2 gate inputs (Assumes self is input 0)
+	 * - tmp3, tmp4: ID(r) of the other 2 gate inputs (Assumes self is input 0)
 	 */
 	int rx, ry, r;
 
@@ -117,8 +117,8 @@ static int update(UPDATE_FUNC_ARGS) {
 		int tx = parts[i].x, ty = parts[i].y;
 
 		// Reset before searching
-		parts[i].pavg[0] = -1;
-		parts[i].pavg[1] = -1;
+		parts[i].tmp3 = -1;
+		parts[i].tmp4 = -1;
 
 		if (parts[i].tmp == 0 || parts[i].tmp == 2) { // Search vertical
 			ty++;
@@ -160,20 +160,22 @@ static int update(UPDATE_FUNC_ARGS) {
 		// Additional logic for multi gates to check all inputs are accounted for
 		// We check gates from 2 inputs to 3 inputs
 		// > Self = Input 0
-		// > pavg[0] = Input 1
-		// > pavg[1] = Input 2
+		// > tmp3 = Input 1
+		// > tmp4 = Input 2
 		for (int shift = 2; shift <= 3; ++shift) {
 			// (2^n by 2^n matrix for 2^n particle state, where n is number of inputs)
 			if ((int)gate.size() >= (1 << shift)) {
 				// Failed to find a 2ND input (All checks must be present as element might have moved)
 				// or been deleted since last frame
-				int pavg = shift - 2;
-				if (parts[i].pavg[pavg] == -1 || parts[(int)(parts[i].pavg[pavg])].type != PT_QLOG ||
-						parts[i].ctype != parts[(int)(parts[i].pavg[pavg])].ctype ||
-						parts[i].tmp != parts[(int)(parts[i].pavg[pavg])].tmp ||
-						parts[(int)(parts[i].pavg[pavg])].tmp2 != pavg + 1)
+				auto& tmp3 = parts[i].tmp3;
+				auto& tmp4 = parts[i].tmp4;
+				int to4 = shift - 2;
+				if ((to4 ? tmp4 : tmp3) == -1 || parts[(int)(to4 ? tmp4 : tmp3)].type != PT_QLOG ||
+						parts[i].ctype != parts[(int)(to4 ? tmp4 : tmp3)].ctype ||
+						parts[i].tmp != parts[(int)(to4 ? tmp4 : tmp3)].tmp ||
+						parts[(int)(to4 ? tmp4 : tmp3)].tmp2 != to4 + 1)
 					goto end_logic;
-				IONS.push_back(find_ion(parts, sim->photons, pmap, parts[i].pavg[pavg]));
+				IONS.push_back(find_ion(parts, sim->photons, pmap, (to4 ? tmp4 : tmp3)));
 			}
 		}
 
@@ -238,9 +240,9 @@ static int update(UPDATE_FUNC_ARGS) {
 
 		end_logic:
 
-		// Reset pavg
-		parts[i].pavg[0] = -1;
-		parts[i].pavg[1] = -1;
+		// Reset tmp3/4
+		parts[i].tmp3 = -1;
+		parts[i].tmp4 = -1;
 
 		return 0; // Stop now since we already fired and updated
 	} else if (parts[i].life > 0) {

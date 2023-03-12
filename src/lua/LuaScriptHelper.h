@@ -22,6 +22,7 @@ extern Renderer * luacon_ren;
 
 extern bool *luacon_currentCommand;
 extern String *luacon_lastError;
+extern bool luacon_hasLastError;
 
 class LuaSmartRef;
 extern int *lua_el_mode;
@@ -39,7 +40,6 @@ void luaopen_scriptmanager(lua_State *l);
 void luaopen_multiplayer(lua_State *l);
 
 void luacon_hook(lua_State *L, lua_Debug *ar);
-int luacon_eval(const char *command);
 String luacon_geterror();
 void luacon_close();
 void initLegacyProps();
@@ -55,12 +55,6 @@ int luacon_transitionwrite(lua_State* l);
 
 //tpt. api
 int luatpt_getelement(lua_State *l);
-
-int luacon_graphicsReplacement(GRAPHICS_FUNC_ARGS, int i);
-int luatpt_graphics_func(lua_State *l);
-
-int luacon_elementReplacement(UPDATE_FUNC_ARGS);
-int luatpt_element_func(lua_State *l);
 
 int luatpt_error(lua_State* l);
 int luatpt_drawtext(lua_State* l);

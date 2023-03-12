@@ -145,8 +145,8 @@ void Element_SPDR_intersect_line(Simulation *sim, int sx, int sy, float vx, floa
 
 static void create(ELEMENT_CREATE_FUNC_ARGS) {
 	sim->parts[i].tmp = RNG::Ref().chance(1, 2);
-	sim->parts[i].pavg[0] = -1;
-	sim->parts[i].pavg[1] = -1;
+	sim->parts[i].tmp3 = -1;
+	sim->parts[i].tmp4 = -1;
 }
 
 static int update(UPDATE_FUNC_ARGS) {
@@ -158,7 +158,7 @@ static int update(UPDATE_FUNC_ARGS) {
 	 *  1 = first line and second line
 	 *  2 = spokes and rings
 	 * 	3 = done
-	 * pavg[0], pavg[1]: Target location to move
+	 * tmp3, tmp4: Target location to move
 	 */
 	int rx, ry, r, rt;
 	bool touching = false;
@@ -193,17 +193,17 @@ static int update(UPDATE_FUNC_ARGS) {
 	// Reset target location if "falls off" web
 	else {
 		parts[i].tmp2 = 0;
-		parts[i].pavg[0] = parts[i].pavg[1] = -1;
+		parts[i].tmp3 = parts[i].tmp4 = -1;
 	}
 
 	// At target, reset
-	if (abs(x - parts[i].pavg[0]) < 2 && abs(y - parts[i].pavg[1]) < 2)
-		parts[i].pavg[0] = parts[i].pavg[1] = -1;
+	if (abs(x - parts[i].tmp3) < 2 && abs(y - parts[i].tmp4) < 2)
+		parts[i].tmp3 = parts[i].tmp4 = -1;
 
 	// Move to target
-	if (parts[i].pavg[0] >= 0 && parts[i].pavg[1] >= 0) {
-		parts[i].vx += (parts[i].pavg[0] - x) / 200.0f;
-		parts[i].vy += (parts[i].pavg[1] - y) / 200.0f;
+	if (parts[i].tmp3 >= 0 && parts[i].tmp4 >= 0) {
+		parts[i].vx += (parts[i].tmp3 - x) / 200.0f;
+		parts[i].vy += (parts[i].tmp4 - y) / 200.0f;
 	}
 	// Move along solids
 	else if (parts[i].tmp2 == 0) {
@@ -234,8 +234,8 @@ static int update(UPDATE_FUNC_ARGS) {
 	// Randomly spin a web in a direction
 	// tmp2 = 0 means not started yet, randomly decide to start
 	// tmp2 = 1 means started, make the 2nd line
-	if ((parts[i].tmp2 == 1 && parts[i].pavg[0] == -1) ||
-		(parts[i].tmp2 == 0 && parts[i].pavg[0] == -1 && RNG::Ref().chance(1, 2000) && touching)) {
+	if ((parts[i].tmp2 == 1 && parts[i].tmp3 == -1) ||
+		(parts[i].tmp2 == 0 && parts[i].tmp3 == -1 && RNG::Ref().chance(1, 2000) && touching)) {
 		int x1, y1;
 		float angle = 0.0f;
 
@@ -250,8 +250,8 @@ static int update(UPDATE_FUNC_ARGS) {
 				int dis = (x1 - x) * (x1 - x) + (y1 - y) * (y1 - y);
 				if (dis > 30 * 30 && dis < 350 * 350) {
 					sim->CreateLine(x, y, x1, y1, PT_WEB);
-					parts[i].pavg[0] = (x + x1) / 2;
-					parts[i].pavg[1] = (y + y1) / 2;
+					parts[i].tmp3 = (x + x1) / 2;
+					parts[i].tmp4 = (y + y1) / 2;
 					++parts[i].tmp2;
 					return 0;
 				}
@@ -259,7 +259,7 @@ static int update(UPDATE_FUNC_ARGS) {
 		}
 	}
 	// Make the spokes and rings
-	else if (parts[i].tmp2 == 2 && parts[i].pavg[0] == -1) {
+	else if (parts[i].tmp2 == 2 && parts[i].tmp3 == -1) {
 		// Attempt 32 spokes from a random starting point
 		float start = RNG::Ref().uniform01() * 2 * PI;
 		float angle;

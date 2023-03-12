@@ -86,6 +86,7 @@ private:
 	bool dimGlowMode = false;
 	bool fasterRenderer = true;
 	bool soundEnabled = true;
+	int temperatureScale;
 
 	size_t activeColourPreset;
 	std::vector<ui::Colour> colourPresets;
@@ -128,6 +129,11 @@ public:
 
 	void SetEdgeMode(int edgeMode);
 	int GetEdgeMode();
+	void SetTemperatureScale(int temperatureScale);
+	inline int GetTemperatureScale() const
+	{
+		return temperatureScale;
+	}
 	void SetAmbientAirTemperature(float ambientAirTemp);
 	float GetAmbientAirTemperature();
 	void SetDecoSpace(int decoSpace);

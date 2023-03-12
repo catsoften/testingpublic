@@ -1,9 +1,6 @@
 #ifndef SAVERENDERER_H_
 #define SAVERENDERER_H_
 #include "Config.h"
-#ifdef OGLI
-#include "graphics/OpenGLHeaders.h"
-#endif
 #include "common/Singleton.h"
 #include <mutex>
 
@@ -22,12 +19,8 @@ public:
 	SaveRenderer();
 	VideoBuffer * Render(GameSave * save, bool decorations = true, bool fire = true, Renderer *renderModeSource = nullptr);
 	VideoBuffer * Render(unsigned char * saveData, int saveDataSize, bool decorations = true, bool fire = true);
+	void Flush(int begin, int end);
 	virtual ~SaveRenderer();
-
-private:
-#if defined(OGLR) || defined(OGLI)
-	GLuint fboTex, fbo;
-#endif
 };
 
 #endif /* SAVERENDERER_H_ */

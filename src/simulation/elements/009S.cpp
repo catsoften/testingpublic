@@ -51,17 +51,17 @@ static int update(UPDATE_FUNC_ARGS) {
 	 * Properties:
 	 * - tmp:  vx
 	 * - tmp2: vy
-	 * - pavg1: crystal size
-	 * - pavg0: Max crystal size
+	 * - tmp4: crystal size
+	 * - tmp3: Max crystal size
 	 */
-	if (parts[i].pavg[0] == 0) {
-		parts[i].pavg[0] = RNG::Ref().between(1, 30);
+	if (parts[i].tmp3 == 0) {
+		parts[i].tmp3 = RNG::Ref().between(1, 30);
 		parts[i].tmp = RNG::Ref().chance(1, 3) ? 0 : RNG::Ref().chance(1, 2) ? -1 : 1;
 		parts[i].tmp2 = RNG::Ref().chance(1, 3) ? 0 : RNG::Ref().chance(1, 2) ? -1 : 1;
 	}
 
 	// Crystal growth
-	if (parts[i].pavg[1] < parts[i].pavg[0]) {
+	if (parts[i].tmp4 < parts[i].tmp3) {
 		int r = pmap[y + parts[i].tmp2][x + parts[i].tmp];
 		int rt = TYP(r);
 		int ni = -1;
@@ -82,8 +82,8 @@ static int update(UPDATE_FUNC_ARGS) {
 		if (ni >= 0) {
 			parts[ni].tmp = parts[i].tmp;
 			parts[ni].tmp2 = parts[i].tmp2;
-			parts[ni].pavg[0] = parts[i].pavg[0];
-			parts[ni].pavg[1] = parts[i].pavg[1] + 1;
+			parts[ni].tmp3 = parts[i].tmp3;
+			parts[ni].tmp4 = parts[i].tmp4 + 1;
 		}
 	}
 

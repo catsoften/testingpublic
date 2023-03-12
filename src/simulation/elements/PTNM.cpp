@@ -99,6 +99,14 @@ static int update(UPDATE_FUNC_ARGS) {
 				continue;
 			}
 
+			// ISZS / ISOZ -> PHOT + PLUT
+			if (rt == PT_ISZS || rt == PT_ISOZ)
+			{
+				sim->part_change_type(ID(r), x + rx, y + ry, PT_PLUT);
+				sim->create_part(-3, x + rx, y + ry, PT_PHOT);
+				continue;
+			}
+
 				// These reactions are dependent on temperature
 				// Probability goes quadratically from 0% / frame to 100% / frame from 0 C to 1500 C
 				// --------------------------------------------------------

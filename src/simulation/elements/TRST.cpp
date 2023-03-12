@@ -26,9 +26,9 @@ void Element::Element_TRST() {
 	Weight = 100;
 
 	HeatConduct = 251;
-	Description = "Thermoresistor, resistance is pavg0 + pavg1 * temp.";
-	DefaultProperties.pavg[0] = 1000.0f;
-	DefaultProperties.pavg[1] = 10.0f;
+	Description = "Thermoresistor, resistance is tmp3 + tmp4 * temp.";
+	DefaultProperties.tmp3 = 1000.0f;
+	DefaultProperties.tmp4 = 10.0f;
 
 	Properties = TYPE_SOLID | PROP_CONDUCTS;
 

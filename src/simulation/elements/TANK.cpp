@@ -65,9 +65,9 @@ static void changeType(ELEMENT_CHANGETYPE_FUNC_ARGS) {
 		for (auto px = KV2_PIXELS.begin(); px != KV2_PIXELS.end(); ++px) {
 			t = RNG::Ref().between(0, 100);
 			if (t < 70)
-				j = Element_CYTK_create_part(sim, px->x, px->y, PT_BRMT, sim->parts[i].pavg[0], sim->parts, i);
+				j = Element_CYTK_create_part(sim, px->x, px->y, PT_BRMT, sim->parts[i].tmp3, sim->parts, i);
 			else
-				j = Element_CYTK_create_part(sim, px->x, px->y, PT_BREC, sim->parts[i].pavg[0], sim->parts, i);
+				j = Element_CYTK_create_part(sim, px->x, px->y, PT_BREC, sim->parts[i].tmp3, sim->parts, i);
 			if (j > -1) {
 				sim->parts[j].dcolour = 0xCF000000 | PIXRGB(px->r, px->g, px->b);
 				sim->parts[j].vx = sim->parts[i].vx;
@@ -87,8 +87,8 @@ static int update(UPDATE_FUNC_ARGS) {
 	 * tmp2 = which STKM controls it (1 = STKM, 2 = STK2, 3 = AI car)
 	 * tmp = rocket or flamethrower (0 none, 1 plasma, 2 flamethrower, 3 bomb)
 	 * life = HP
-	 * pavg[0] = rotation
-	 * pavg[1] = direction of travel (left or right)
+	 * tmp3 = rotation
+	 * tmp4 = direction of travel (left or right)
 	 * 
 	 * If touched by a FIGH the FIGH will attempt to use the tank to run down
 	 * the STKM and STK2
@@ -117,15 +117,15 @@ static int update(UPDATE_FUNC_ARGS) {
 	// If life <= 150 spawn sparks (EMBR)
 	if (parts[i].life <= 150) {
 		if (RNG::Ref().chance(1, 50))
-			Element_CYTK_create_part(sim, KV2.width * 0.4f, -KV2.height / 2, PT_EMBR, parts[i].pavg[0], parts, i);
+			Element_CYTK_create_part(sim, KV2.width * 0.4f, -KV2.height / 2, PT_EMBR, parts[i].tmp3, parts, i);
 		if (RNG::Ref().chance(1, 50))
-			Element_CYTK_create_part(sim, -KV2.width * 0.4f, -KV2.height / 2, PT_EMBR, parts[i].pavg[0], parts, i);
+			Element_CYTK_create_part(sim, -KV2.width * 0.4f, -KV2.height / 2, PT_EMBR, parts[i].tmp3, parts, i);
 		if (RNG::Ref().chance(1, 50))
-			Element_CYTK_create_part(sim, 0, -KV2.height / 2, PT_EMBR, parts[i].pavg[0], parts, i);
+			Element_CYTK_create_part(sim, 0, -KV2.height / 2, PT_EMBR, parts[i].tmp3, parts, i);
 	}
 	// If life <= 300 spawn fire damage
 	if (parts[i].life <= 300 && RNG::Ref().chance(1, 30)) {
-		Element_CYTK_create_part(sim, -KV2.width * 0.4f, -KV2.height / 2, PT_FIRE, parts[i].pavg[0], parts, i);
+		Element_CYTK_create_part(sim, -KV2.width * 0.4f, -KV2.height / 2, PT_FIRE, parts[i].tmp3, parts, i);
 	}
 
 	// Player controls
@@ -140,7 +140,7 @@ static int update(UPDATE_FUNC_ARGS) {
 		if (tarx > 0) {
 			if (parts[i].tmp == 2 || parts[i].tmp == 3) { // Flamethrower / bomb weapon
 				cmd2 = DOWN;
-				parts[i].pavg[1] = tarx > parts[i].x;
+				parts[i].tmp4 = tarx > parts[i].x;
 			}
 			else if (parts[i].tmp == 1) { // Rocket
 				cmd = tarx > parts[i].x ? RIGHT : LEFT;
@@ -156,16 +156,16 @@ static int update(UPDATE_FUNC_ARGS) {
 		if (has_collision || parts[i].tmp == 1) { // Accelerating only can be done on ground or if rocket
 			float ax = has_collision ? -KV2.acceleration : -KV2.fly_acceleration / 8.0f, ay = 0.0f;
 			if (cmd == LEFT) { // Left
-				rotate(ax, ay, parts[i].pavg[0]);
+				rotate(ax, ay, parts[i].tmp3);
 				parts[i].vx += ax, parts[i].vy += ay;
-				parts[i].pavg[1] = 0; // Set face direction
+				parts[i].tmp4 = 0; // Set face direction
 				parts[i].y -= 0.5;
 			}
 			else if (cmd == RIGHT) { // Right
 				ax *= -1;
-				rotate(ax, ay, parts[i].pavg[0]);
+				rotate(ax, ay, parts[i].tmp3);
 				parts[i].vx += ax, parts[i].vy += ay;
-				parts[i].pavg[1] = 1; // Set face direction
+				parts[i].tmp4 = 1; // Set face direction
 				parts[i].y -= 0.5;
 			}
 		}
@@ -175,31 +175,31 @@ static int update(UPDATE_FUNC_ARGS) {
 		}
 		else if (cmd2 == DOWN) { // Fly or shoot (down)
 			if (parts[i].tmp == 1 || parts[i].tmp == 2) { // Flamethrower
-				int j = Element_CYTK_create_part(sim, -KV2.width * 0.4f, -KV2.height / 2, PT_BCOL, parts[i].pavg[0], parts, i);
+				int j = Element_CYTK_create_part(sim, -KV2.width * 0.4f, -KV2.height / 2, PT_BCOL, parts[i].tmp3, parts, i);
 				if (j > -1) {
 					parts[j].life = RNG::Ref().between(0, 100) + 50;
-					parts[j].vx = parts[i].pavg[1] ? 15 : -15;
+					parts[j].vx = parts[i].tmp4 ? 15 : -15;
 					parts[j].vy = -(RNG::Ref().between(0, 3) + 3);
 					if (parts[i].tmp == 1) // Plasma
 						parts[j].temp = 9000.0f;
-					rotate(parts[j].vx, parts[j].vy, parts[i].pavg[0]);
+					rotate(parts[j].vx, parts[j].vy, parts[i].tmp3);
 				}
 			}
 			else if ((parts[i].tmp == 3 || parts[i].tmp == 0)) { // BOMB
 				if (sim->timer % 50 == 0) {
 					int j1 = Element_CYTK_create_part(sim, -KV2.width * 0.4f, -KV2.height / 2,
-						parts[i].tmp == 3 ? PT_BOMB : PT_FSEP, parts[i].pavg[0], parts, i);
+						parts[i].tmp == 3 ? PT_BOMB : PT_FSEP, parts[i].tmp3, parts, i);
 					if (j1 > -1) {
 						parts[j1].life = 20;
-						parts[j1].vx = parts[i].pavg[1] ? 550 : -550;
+						parts[j1].vx = parts[i].tmp4 ? 550 : -550;
 						parts[j1].vy = 0;
 						parts[j1].temp = 9999.0f;
-						rotate(parts[j1].vx, parts[j1].vy, parts[i].pavg[0]);
+						rotate(parts[j1].vx, parts[j1].vy, parts[i].tmp3);
 					}
 				}
 				// Turret flame when firing (Not with BOMB)
 				if (parts[i].tmp != 3) {
-					int j2 = Element_CYTK_create_part(sim, -KV2.width * 0.4f + 1, -KV2.height / 2, PT_BANG, parts[i].pavg[0], parts, i);
+					int j2 = Element_CYTK_create_part(sim, -KV2.width * 0.4f + 1, -KV2.height / 2, PT_BANG, parts[i].tmp3, parts, i);
 					parts[j2].temp = 1500.0f;
 				}
 			}
@@ -212,6 +212,6 @@ static int update(UPDATE_FUNC_ARGS) {
 
 static int graphics(GRAPHICS_FUNC_ARGS) {
 	*cola = 0;
-	draw_kv2(ren, cpart, cpart->pavg[0]);
+	draw_kv2(ren, cpart, cpart->tmp3);
 	return 0;
 }

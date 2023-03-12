@@ -77,8 +77,8 @@ static int update(UPDATE_FUNC_ARGS) {
 						parts[ID(r2)].tmp += parts[i].tmp;
 						parts[ID(r2)].tmp2 += parts[i].tmp2;
 						parts[ID(r2)].dcolour += parts[i].dcolour;
-						parts[ID(r2)].pavg[0] += parts[i].pavg[0];
-						parts[ID(r2)].pavg[1] += parts[i].pavg[1];
+						parts[ID(r2)].tmp3 += parts[i].tmp3;
+						parts[ID(r2)].tmp4 += parts[i].tmp4;
 						break;
 					case PT_NSCN:
 						parts[ID(r2)].temp -= parts[i].temp;
@@ -87,8 +87,8 @@ static int update(UPDATE_FUNC_ARGS) {
 						parts[ID(r2)].tmp -= parts[i].tmp;
 						parts[ID(r2)].tmp2 -= parts[i].tmp2;
 						parts[ID(r2)].dcolour -= parts[i].dcolour;
-						parts[ID(r2)].pavg[0] -= parts[i].pavg[0];
-						parts[ID(r2)].pavg[1] -= parts[i].pavg[1];
+						parts[ID(r2)].tmp3 -= parts[i].tmp3;
+						parts[ID(r2)].tmp4 -= parts[i].tmp4;
 						break;
 					case PT_INWR:
 						if (parts[i].temp)
@@ -103,10 +103,10 @@ static int update(UPDATE_FUNC_ARGS) {
 							parts[ID(r2)].tmp2 = parts[i].tmp2;
 						if (parts[i].dcolour)	
 							parts[ID(r2)].dcolour = parts[i].dcolour;
-						if (parts[i].pavg[0])
-							parts[ID(r2)].pavg[0] = parts[i].pavg[0];
-						if (parts[i].pavg[1])
-							parts[ID(r2)].pavg[1] = parts[i].pavg[1];
+						if (parts[i].tmp3)
+							parts[ID(r2)].tmp3 = parts[i].tmp3;
+						if (parts[i].tmp4)
+							parts[ID(r2)].tmp4 = parts[i].tmp4;
 						break;
 					default:
 						parts[ID(r2)].temp = parts[i].temp;
@@ -115,8 +115,8 @@ static int update(UPDATE_FUNC_ARGS) {
 						parts[ID(r2)].tmp = parts[i].tmp;
 						parts[ID(r2)].tmp2 = parts[i].tmp2;
 						parts[ID(r2)].dcolour = parts[i].dcolour;
-						parts[ID(r2)].pavg[0] = parts[i].pavg[0];
-						parts[ID(r2)].pavg[1] = parts[i].pavg[1];
+						parts[ID(r2)].tmp3 = parts[i].tmp3;
+						parts[ID(r2)].tmp4 = parts[i].tmp4;
 						break;
 				}
 			}

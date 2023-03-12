@@ -195,7 +195,7 @@ ModOptionsView::ModOptionsView() { // Originally 320, 340
     scrollPanel->AddChild(fasterRenderer);
 
 	// ------------------
-	currentY += 20;
+	/* currentY += 20;
 	soundEnabled = new ui::Checkbox(ui::Point(8, currentY), ui::Point(1, 16), "Sound", "");
 	autowidth(soundEnabled);
 	soundEnabled->SetActionCallback({[this] { c->SetSoundEnabled(soundEnabled->GetChecked()); }});
@@ -209,7 +209,7 @@ ModOptionsView::ModOptionsView() { // Originally 320, 340
 	tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	tempLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	scrollPanel->AddChild(tempLabel);
-    scrollPanel->AddChild(soundEnabled);
+    scrollPanel->AddChild(soundEnabled); */ // *ULTIMATA97*
 
     // ------------------
 
@@ -231,7 +231,7 @@ void ModOptionsView::NotifySettingsChanged(OptionsModel * sender) {
     dimGlowMode->SetChecked(sender->GetDimGlowMode());
 	drawingFrqLimit->SetOption(sender->GetDrawingFrequencyLimit());
 	fasterRenderer->SetChecked(sender->GetFasterRenderer());
-	soundEnabled->SetChecked(sender->GetSoundEnabled());
+	//soundEnabled->SetChecked(sender->GetSoundEnabled()); *ULTIMATA97*
 }
 
 ModOptionsView::~ModOptionsView() {}

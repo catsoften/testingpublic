@@ -15,7 +15,7 @@ sign::sign(String text_, int x_, int y_, Justification justification_):
 {
 }
 
-String sign::getDisplayText(Simulation *sim, int &x0, int &y0, int &w, int &h, bool colorize, bool *v95)
+String sign::getDisplayText(Simulation *sim, int &x0, int &y0, int &w, int &h, bool colorize, bool *v95) const
 {
 	String drawable_text;
 	auto si = std::make_pair(0, Type::Normal);
@@ -128,13 +128,13 @@ String sign::getDisplayText(Simulation *sim, int &x0, int &y0, int &w, int &h, b
 					}
 					else if (between_curlies == "v" || between_curlies == "volt") {
 						if (part && part->type == PT_RSPK)
-							formatted_text << format_value(part->pavg[0], "V");
+							formatted_text << format_value(part->tmp3, "V");
 						else
 							formatted_text << "0.0 V";
 					}
 					else if (between_curlies == "i" || between_curlies == "current") {
 						if (part && part->type == PT_RSPK)
-							formatted_text << format_value(part->pavg[1], "A");
+							formatted_text << format_value(part->tmp4, "A");
 						else
 							formatted_text << "0.0 A";
 					}
@@ -145,7 +145,7 @@ String sign::getDisplayText(Simulation *sim, int &x0, int &y0, int &w, int &h, b
 					else if (between_curlies == "pow" || between_curlies == "power") {
 						if (part && part->type == PT_RSPK) {
 							double res = get_effective_resistance(TYP(sim->pmap[y][x]), sim->parts, ID(sim->pmap[y][x]), sim);
-							formatted_text << format_value(part->pavg[1] * part->pavg[1] * res, "W");
+							formatted_text << format_value(part->tmp4 * part->tmp4 * res, "W");
 						}
 						else
 							formatted_text << "0.0 W";
@@ -185,7 +185,7 @@ String sign::getDisplayText(Simulation *sim, int &x0, int &y0, int &w, int &h, b
 	return drawable_text;
 }
 
-std::pair<int, sign::Type> sign::split()
+std::pair<int, sign::Type> sign::split() const
 {
 	String::size_type pipe = 0;
 	if (text.size() >= 4 && text.front() == '{' && text.back() == '}')

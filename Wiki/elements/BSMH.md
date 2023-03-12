@@ -18,6 +18,6 @@ BSMH can be used to dope SLCN into NSCN.
 
 **tmp2:** Current crystal growth size
 
-**pavg0:** Should it appear "dark" (as a dark band)
+**tmp3:** Should it appear "dark" (as a dark band)
 
-**pavg1:** Index in the colors array, used to randomize crystal color.
+**tmp4:** Index in the colors array, used to randomize crystal color.

@@ -27,10 +27,10 @@ void Element::Element_RSTR() {
 	Weight = 100;
 
 	HeatConduct = 2;
-	Description = "Resistor. Set resistivity / px as pavg0.";
+	Description = "Resistor. Set resistivity / px as tmp3.";
 
 	Properties = TYPE_SOLID | PROP_CONDUCTS | PROP_LIFE_DEC;
-	DefaultProperties.pavg[0] = 1000;
+	DefaultProperties.tmp3 = 1000;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -45,8 +45,8 @@ void Element::Element_RSTR() {
 }
 
 static int update(UPDATE_FUNC_ARGS) {
-	// pavg0 = restivity
-	if (parts[i].pavg[0] <= 0.0f)
-		parts[i].pavg[0] = 1.0f;
+	// tmp3 = restivity
+	if (parts[i].tmp3 <= 0.0f)
+		parts[i].tmp3 = 1.0f;
 	return 0;
 }

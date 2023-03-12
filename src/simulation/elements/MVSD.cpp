@@ -49,7 +49,7 @@ static int update(UPDATE_FUNC_ARGS) {
 	 * 
 	 * life stores previous ctype (If it was stained by portal gel)
 	 * 
-	 * pavg[0] and pavg[1] store the solid's velocity for updating when a solid is cut
+	 * tmp3 and tmp4 store the solid's velocity for updating when a solid is cut
 	 * into 2 solids
 	 */
 	if (parts[i].tmp2 == 0)
@@ -71,8 +71,8 @@ static int update(UPDATE_FUNC_ARGS) {
 
 		// If the solid was cut, we'll need to set its velocity to the original
 		if (parts[i].flags == 1) {
-			MOVINGSOLID::solids[parts[i].tmp2].set_velocity(parts[i].pavg[0], parts[i].pavg[1]);
-			parts[i].pavg[0] = parts[i].pavg[1] = 0.0f;
+			MOVINGSOLID::solids[parts[i].tmp2].set_velocity(parts[i].tmp3, parts[i].tmp4);
+			parts[i].tmp3 = parts[i].tmp4 = 0.0f;
 		}
 
 		parts[i].flags = 0;

@@ -1,4 +1,4 @@
-The Powder Toy - July 2021
+The Powder Toy - January 2023
 ==========================
 
 Get the latest version [from the Powder Toy website](https://powdertoy.co.uk/Download.html).
@@ -45,10 +45,11 @@ Libraries and other assets used
 * [FFTW](http://fftw.org/)
 * [JsonCpp](https://github.com/open-source-parsers/jsoncpp)
 * [libcurl](https://curl.se/libcurl/)
+* [libpng](http://www.libpng.org/pub/png/libpng.html)
 * [Lua](https://www.lua.org/)
 * [LuaJIT](https://luajit.org/)
-* [LuaSocket](http://w3.impa.br/~diego/software/luasocket/)
 * [Mallangche](https://github.com/JammPark/Mallangche)
+* [mbedtls](https://www.trustedfirmware.org/projects/mbed-tls/)
 * [SDL](https://libsdl.org/)
 * [zlib](https://www.zlib.net/)
 
@@ -56,7 +57,6 @@ Instructions
 ===========================================================================
 
 Click on the elements with the mouse and draw in the field, like in MS Paint. The rest of the game is learning what happens next.
-
 
 Controls
 ===========================================================================
@@ -108,18 +108,19 @@ Controls
 | Ctrl + Shift + R        | Vertical mirror for selected area when pasting stamps           |
 | R                       | Rotate selected area counterclockwise when pasting stamps       |
 
-
-
 Command Line
 ---------------------------------------------------------------------------
 
-| Command               | Description                                      | Example                           |
-| --------------------- | ------------------------------------------------ | --------------------------------- |
-| `scale:SIZE`          | Change window scale factor                       | `scale:2`                         |
-| `kiosk`               | Fullscreen mode                                  |                                   |
-| `proxy:SERVER[:PORT]` | Proxy server to use                              | `proxy:wwwcache.lancs.ac.uk:8080` |
-| `open FILE`           | Opens the file as a stamp or game save           |                                   |
-| `ddir DIRECTORY`      | Directory used for saving stamps and preferences |                                   |
-| `ptsave:SAVEID`       | Open online save, used by ptsave: URLs           | `ptsave:2198`                     |
-| `disable-network`     | Disables internet connections                    |                                   |
-| `redirect`            | Redirects output to stdout.txt / stderr.txt      |                                   |
+| Command               | Description                                      | Example                                     |
+| --------------------- | ------------------------------------------------ | --------------------------------------------|
+| `scale:SIZE`          | Change window scale factor                       | `scale:2`                                   |
+| `kiosk`               | Fullscreen mode                                  |                                             |
+| `proxy:SERVER[:PORT]` | Proxy server to use                              | `proxy:wwwcache.lancs.ac.uk:8080`           |
+| `open FILE`           | Opens the file as a stamp or game save           |                                             |
+| `ddir DIRECTORY`      | Directory used for saving stamps and preferences |                                             |
+| `ptsave:SAVEID`       | Open online save, used by ptsave: URLs           | `ptsave:2198`                               |
+| `disable-network`     | Disables internet connections                    |                                             |
+| `disable-bluescreen`  | Disable bluescreen handler                       |                                             |
+| `redirect`            | Redirects output to stdout.txt / stderr.txt      |                                             |
+| `cafile:CAFILE`       | Set certificate bundle path                      | `cafile:/etc/ssl/certs/ca-certificates.crt` |
+| `capath:CAPATH`       | Set certificate directory path                   | `capath:/etc/ssl/certs`                     |

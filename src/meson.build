@@ -33,8 +33,7 @@ subdir('common')
 subdir('debug')
 subdir('graphics')
 subdir('gui')
-subdir('json')
-if uopt_lua != 'none'
+if lua_variant != 'none'
 	subdir('lua')
 endif
 subdir('resampler')

@@ -54,12 +54,12 @@ void Element::Element_POTO() {
 static int update(UPDATE_FUNC_ARGS) {
 	/**
 	 * Properties:
-	 * pavg0 - max temp
+	 * tmp3 - max temp
 	 * life  - water content
 	 * tmp   - graphics
 	 */
-	if (parts[i].temp > parts[i].pavg[0])
-		parts[i].pavg[0] = parts[i].temp;
+	if (parts[i].temp > parts[i].tmp3)
+		parts[i].tmp3 = parts[i].temp;
 
 	if (parts[i].temp > 100.0f + 273.15f && parts[i].life > 0) {
 		for (int rx = -1; rx <= 1; ++rx)

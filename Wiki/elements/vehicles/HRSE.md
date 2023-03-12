@@ -35,6 +35,6 @@ Note that any heat damage can only be detected by the core (the center pixel), s
 
 **life:** = health
 
-**pavg[0]:** = rotation
+**tmp3:** = rotation
 
-**pavg[1]:** = neck rotation
+**tmp4:** = neck rotation

@@ -2,7 +2,7 @@
 
 ![Really bad gif lol](https://i.imgur.com/siF5vv7.gifv)
 
-**Description:**  *Polarized electrolytic capacitor. Stores and releases charge. pavg0 = capacitance.*
+**Description:**  *Polarized electrolytic capacitor. Stores and releases charge. tmp3 = capacitance.*
 
 Functions like an IRL capacitor. Is polarized so use PSCN / COPR as the positive terminal (INPUT) and NSCN / ZINC as negative terminal (output). When a current flows through the capacitor it will charge up until it reaches a limiting value (slows down as it approaches this limit). When not charging it discharges exponentially, acting as a voltage source.
 
@@ -33,6 +33,6 @@ Listed as PT_CAPR in the code.
 
 **tmp2:** If != 0 will explode
 
-**pavg0:** Capacitance (in farads)
+**tmp3:** Capacitance (in farads)
 
-**pavg1:** Voltage drop across capacitor, updated based on current.
+**tmp4:** Voltage drop across capacitor, updated based on current.

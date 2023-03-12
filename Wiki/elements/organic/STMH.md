@@ -15,6 +15,6 @@ Slowly absorbs food (PLNT, VINE, SEED, POTO< HONY, SPDR, ANT, BEE, SUGR), adding
 
 **tmp2:** Nutrients stored
 
-**pavg0:** Highest temperature
+**tmp3:** Highest temperature
 
-**pavg1:** 0 = Alive, 2 = Dead (if pavg1 = 1 will become 0)
+**tmp4:** 0 = Alive, 2 = Dead (if tmp4 = 1 will become 0)

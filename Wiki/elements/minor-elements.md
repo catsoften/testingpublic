@@ -14,7 +14,7 @@ Cold gas that does not lose heat, but will cool down anything it touches as long
 this also puts out fires and PLSM. Ignites C5. Undergoes cold-fusion at low temperatures and high pressures.
 
 ## BGEL (Ballistic Jelly)
-Brightens depending on the highest magnitude of the pressure it experienced, useful for bomb testing. Stores the magnitude in pavg[0].
+Brightens depending on the highest magnitude of the pressure it experienced, useful for bomb testing. Stores the magnitude in tmp3.
 
 ## DFLM (Dark Flame)
 Like a combination of CAUS and VIRS. Burns slowly through almost anything. Will decay slowly if it hasn't burnt anything in a long time. 

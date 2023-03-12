@@ -29,7 +29,7 @@ void Element::Element_TRBN() {
 	Weight = 100;
 
 	HeatConduct = 0;
-	Description = "Turbine. Makes SPRK when in moving air or particles. pavg0 = air velocity, pavg1 = particle velocity.";
+	Description = "Turbine. Makes SPRK when in moving air or particles. tmp3 = air velocity, tmp4 = particle velocity.";
 
 	Properties = TYPE_SOLID | PROP_NOCTYPEDRAW;
 
@@ -48,8 +48,8 @@ void Element::Element_TRBN() {
 }
 
 static void create(ELEMENT_CREATE_FUNC_ARGS) {
-	sim->parts[i].pavg[0] = 0.3f;
-	sim->parts[i].pavg[1] = 1.0f;
+	sim->parts[i].tmp3 = 0.3f;
+	sim->parts[i].tmp4 = 1.0f;
 }
 
 static int update(UPDATE_FUNC_ARGS) {
@@ -59,7 +59,7 @@ static int update(UPDATE_FUNC_ARGS) {
 	float air_speed = sqrtf(vx * vx + vy * vy);
 
 	int rx, ry, r;
-	bool fastpart = air_speed > sim->parts[i].pavg[0];
+	bool fastpart = air_speed > sim->parts[i].tmp3;
 	bool already_animate = false;
 	for (rx = -1; rx <= 1; ++rx)
 	for (ry = -1; ry <= 1; ++ry)
@@ -68,7 +68,7 @@ static int update(UPDATE_FUNC_ARGS) {
 			if (!r) continue;
 
 			float absv = sqrtf(parts[ID(r)].vx * parts[ID(r)].vx + parts[ID(r)].vy * parts[ID(r)].vy);
-			if (absv > sim->parts[i].pavg[1])
+			if (absv > sim->parts[i].tmp4)
 				fastpart = true;
 
 			if (fastpart && !already_animate) {

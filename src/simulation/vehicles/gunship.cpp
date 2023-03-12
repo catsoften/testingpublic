@@ -12,22 +12,22 @@ Vehicle Gunship = VehicleBuilder()
     .Build();
 
 void draw_gunship(Renderer *ren, Particle *cpart, float vx, float vy) {
-    draw_px(GUNSHIP_BASE, ren, cpart, cpart->pavg[0]);
+    draw_px(GUNSHIP_BASE, ren, cpart, cpart->tmp3);
 
     int t1x, t1y, t2x, t2y;
     float tangle = (fabs(vx) > 0.2f || fabs(vy) > 0.2f) ? atan2(vy, vx) : PI / 2;
     if (tangle > PI)
         tangle -= PI;
 
-    t1x = -Gunship.width * 0.3f * (cpart->pavg[1] ? -1 : 1);
+    t1x = -Gunship.width * 0.3f * (cpart->tmp4 ? -1 : 1);
     t1y = Gunship.height * 0.4f;
-    rotate(t1x, t1y, cpart->pavg[0]);
-    draw_px_raw(THRUSTER_FRONT, ren, cpart, cpart->x + t1x, cpart->y + t1y, cpart->pavg[1], tangle);
+    rotate(t1x, t1y, cpart->tmp3);
+    draw_px_raw(THRUSTER_FRONT, ren, cpart, cpart->x + t1x, cpart->y + t1y, cpart->tmp4, tangle);
 
-    t2x = Gunship.width * 0.4f * (cpart->pavg[1] ? -1 : 1);
+    t2x = Gunship.width * 0.4f * (cpart->tmp4 ? -1 : 1);
     t2y = -Gunship.height * 0.3f;
-    rotate(t2x, t2y, cpart->pavg[0]);
-    draw_px_raw(THRUSTER_BACK, ren, cpart, cpart->x + t2x, cpart->y + t2y, cpart->pavg[1], tangle);
+    rotate(t2x, t2y, cpart->tmp3);
+    draw_px_raw(THRUSTER_BACK, ren, cpart, cpart->x + t2x, cpart->y + t2y, cpart->tmp4, tangle);
 }
 
 std::vector<VehiclePixel> GUNSHIP_BASE({

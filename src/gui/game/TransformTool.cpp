@@ -144,8 +144,8 @@ TransformWindow::TransformWindow(TransformTool * tool_, Simulation * sim_, ui::P
             sim->parts[ni].vy = sim->parts[point.second].vy;
             sim->parts[ni].tmp = sim->parts[point.second].tmp;
             sim->parts[ni].tmp2 = sim->parts[point.second].tmp2;
-            sim->parts[ni].pavg[0] = sim->parts[point.second].pavg[0];
-            sim->parts[ni].pavg[1] = sim->parts[point.second].pavg[1];
+            sim->parts[ni].tmp3 = sim->parts[point.second].tmp3;
+            sim->parts[ni].tmp4 = sim->parts[point.second].tmp4;
             sim->parts[ni].flags = sim->parts[point.second].flags;
             sim->parts[ni].ctype = sim->parts[point.second].ctype;
             sim->parts[ni].life = sim->parts[point.second].life;
@@ -187,8 +187,8 @@ TransformWindow::TransformWindow(TransformTool * tool_, Simulation * sim_, ui::P
                         sim->parts[ni].life = sim->parts[ID(r)].life;
                         sim->parts[ni].tmp = sim->parts[ID(r)].tmp;
                         sim->parts[ni].tmp2 = sim->parts[ID(r)].tmp2;
-                        sim->parts[ni].pavg[0] = sim->parts[ID(r)].pavg[0];
-                        sim->parts[ni].pavg[1] = sim->parts[ID(r)].pavg[1];
+                        sim->parts[ni].tmp3 = sim->parts[ID(r)].tmp3;
+                        sim->parts[ni].tmp4 = sim->parts[ID(r)].tmp4;
                     }
                     failed:
                     continue;

@@ -21,11 +21,11 @@ public:
 	ConfigTool * tool;
 	Simulation * sim;
 	ui::Point pos;
-	ui::Textbox * pavg0, * pavg1;
+	ui::Textbox * tmp3, * tmp4;
 	ui::Label * messageLabel;
 
 	int pid;
-	float pavg0_val, pavg1_val;
+	float tmp3_val, tmp4_val;
 
 	ConfigTRBNWindow(ConfigTool *tool_, Simulation *sim_, ui::Point partpos);
     void DoDraw() override {
@@ -79,33 +79,33 @@ ConfigTRBNWindow::ConfigTRBNWindow(ConfigTool * tool_, Simulation * sim_, ui::Po
 	messageLabel->SetTextColour(style::Colour::InformationTitle);
 	AddComponent(messageLabel);
 
-	// Pavg0
+	// Tmp3
 	ui::Label * tempLabel = make_left_label(ui::Point(4, 24), ui::Point(100, 15), "Min air vel.");
 	AddComponent(tempLabel);
 
-    pavg0_val = sim->parts[pid].pavg[0];
-	pavg0 = make_left_textbox(ui::Point(100, 24), ui::Point(80, 15), String::Build(pavg0_val), "0.3");
-    FLOAT_INPUT(pavg0, pavg0_val)
-    AddComponent(pavg0);
+    tmp3_val = sim->parts[pid].tmp3;
+	tmp3 = make_left_textbox(ui::Point(100, 24), ui::Point(80, 15), String::Build(tmp3_val), "0.3");
+    FLOAT_INPUT(tmp3, tmp3_val)
+    AddComponent(tmp3);
 
-	// Pavg1
+	// Tmp4
 	tempLabel = make_left_label(ui::Point(4, 44), ui::Point(100, 15), "Min part. vel.");
 	AddComponent(tempLabel);
 
-	pavg1_val = sim->parts[pid].pavg[1];
-	pavg1 = make_left_textbox(ui::Point(100, 44), ui::Point(80, 15), String::Build(pavg1_val), "1.0");
-	FLOAT_INPUT(pavg1, pavg1_val)
-    AddComponent(pavg1);
+	tmp4_val = sim->parts[pid].tmp4;
+	tmp4 = make_left_textbox(ui::Point(100, 44), ui::Point(80, 15), String::Build(tmp4_val), "1.0");
+	FLOAT_INPUT(tmp4, tmp4_val)
+    AddComponent(tmp4);
 
 	// Rest of window
 	ui::Button * okayButton = make_center_button(ui::Point(Size.X / 2, Size.Y-16), ui::Point(Size.X / 2, 16), "OK");
 	okayButton->SetActionCallback({ [this] {
 		// Set property
         PropertyValue value;
-        value.Float = pavg0_val;
-        sim->flood_prop(pos.X, pos.Y, offsetof(Particle, pavg[0]), value, StructProperty::Float);
-        value.Float = pavg1_val;
-        sim->flood_prop(pos.X, pos.Y, offsetof(Particle, pavg[1]), value, StructProperty::Float);
+        value.Float = tmp3_val;
+        sim->flood_prop(pos.X, pos.Y, offsetof(Particle, tmp3), value, StructProperty::Float);
+        value.Float = tmp4_val;
+        sim->flood_prop(pos.X, pos.Y, offsetof(Particle, tmp4), value, StructProperty::Float);
 
 		CloseActiveWindow();
 		SelfDestruct();

@@ -72,11 +72,11 @@ int Element_FLSH_update(UPDATE_FUNC_ARGS) {
 	 * life:  Graphics
 	 * tmp:   Oxygen stored
 	 * tmp2:  Nutrients stored
-	 * pavg0: Highest temperature
-	 * pavg1: Type 0 = inside, 1 = skin, 2 = dead
+	 * tmp3: Highest temperature
+	 * tmp4: Type 0 = inside, 1 = skin, 2 = dead
 	 */
 
-	if (parts[i].pavg[1] != 2) {
+	if (parts[i].tmp4 != 2) {
 		if (parts[i].tmp > 0)
 			parts[i].tmp--;
 		if (parts[i].tmp2 > 0)
@@ -86,13 +86,13 @@ int Element_FLSH_update(UPDATE_FUNC_ARGS) {
 	// The randomization is to avoid easily burning meat and creating
 	// a more realistic crystallization effect
 	if (parts[i].temp > 110.0f + 273.15f && RNG::Ref().chance(1, 100))
-		parts[i].pavg[0] = parts[i].temp;
-	if (parts[i].temp > parts[i].pavg[0] && (parts[i].temp < 110.0f + 273.15f ||
+		parts[i].tmp3 = parts[i].temp;
+	if (parts[i].temp > parts[i].tmp3 && (parts[i].temp < 110.0f + 273.15f ||
 			parts[i].temp > 150.0f + 273.15f))
-		parts[i].pavg[0] = parts[i].temp;
+		parts[i].tmp3 = parts[i].temp;
 	
 	// Rot if dead and not cooked or frozen
-	if (parts[i].temp > 3.0f + 273.15f && parts[i].pavg[0] < 40.0f + 273.15f && parts[i].pavg[1] == 2
+	if (parts[i].temp > 3.0f + 273.15f && parts[i].tmp3 < 40.0f + 273.15f && parts[i].tmp4 == 2
 			&& RNG::Ref().chance(1, 5000)) {
 		sim->part_change_type(i, x, y, PT_BCTR);
 		parts[i].ctype = 512; // Meat eating gene
@@ -105,19 +105,19 @@ int Element_FLSH_update(UPDATE_FUNC_ARGS) {
 	// Radiation burns
 	int r = sim->photons[y][x];
 	if (r && TYP(r) != PT_JCB1 && TYP(r) != PT_NTRI && RNG::Ref().chance(1, 10)) {
-		parts[i].pavg[1] = 2;
+		parts[i].tmp4 = 2;
 		if (parts[ID(r)].temp > 273.15f + 110.0f)
-			parts[i].pavg[0] = 273.15f + 150.0f;
+			parts[i].tmp3 = 273.15f + 150.0f;
 	}
 	// Pressure
 	if (fabs(sim->pv[y / CELL][x / CELL]) > 10.0f)
-		parts[i].pavg[1] = 2;
+		parts[i].tmp4 = 2;
 	// Temperature
 	if (parts[i].temp < 273.15f - 5.0f || parts[i].temp > 50.0f + 273.15f)
-		parts[i].pavg[1] = 2;
+		parts[i].tmp4 = 2;
 	// Lack of oxygen or nutrients
 	if ((parts[i].tmp <= 0 || parts[i].tmp2 <= 0) && RNG::Ref().chance(1, 3000))
-		parts[i].pavg[1] = 2;
+		parts[i].tmp4 = 2;
 
 	int rx, ry, rt;
 
@@ -127,16 +127,16 @@ int Element_FLSH_update(UPDATE_FUNC_ARGS) {
 			r = pmap[y + ry][x + rx];
 			if (!r) {
 				// Alive flesh
-				if (parts[i].pavg[1] != 2 && RNG::Ref().chance(1, 1000)) {
+				if (parts[i].tmp4 != 2 && RNG::Ref().chance(1, 1000)) {
 					// Create skin
-					parts[i].pavg[1] = 1;
+					parts[i].tmp4 = 1;
 				}
 				continue;
 			}
 			rt = TYP(r);
 
 			// Alive flesh
-			if (parts[i].pavg[1] != 2) {
+			if (parts[i].tmp4 != 2) {
 				// Distribute nutrients
 				if (rt == PT_FLSH || rt == PT_UDDR || rt == PT_STMH) {
 					int diff = parts[i].tmp - parts[ID(r)].tmp;
@@ -150,7 +150,7 @@ int Element_FLSH_update(UPDATE_FUNC_ARGS) {
 				// Die if touching toxic chemicals
 				else if (rt == PT_H2O2 || rt == PT_ACID || rt == PT_CAUS || rt == PT_PLUT || rt == PT_URAN ||
 					rt == PT_ISOZ || rt == PT_ISZS || rt == PT_POLO || rt == PT_MERC) {
-					parts[i].pavg[1] = 2;
+					parts[i].tmp4 = 2;
 				}
 
 				// Absorb oxygen from blood
@@ -168,7 +168,7 @@ int Element_FLSH_update(UPDATE_FUNC_ARGS) {
 }
 
 static int graphics(GRAPHICS_FUNC_ARGS) {
-	if (cpart->pavg[1] == 1) { // Skin
+	if (cpart->tmp4 == 1) { // Skin
 		*colr = 255;
 		*colg = 226;
 		*colb = 204;
@@ -187,8 +187,8 @@ static int graphics(GRAPHICS_FUNC_ARGS) {
 
 	// Cooking
 	// Well done (Around 70 - 80 C)
-	if (cpart->pavg[0] > 273.15f + 40.0f) {
-		float percent_fade = std::min(cpart->pavg[0] - 273.15f, 80.0f) / 80.0f;
+	if (cpart->tmp3 > 273.15f + 40.0f) {
+		float percent_fade = std::min(cpart->tmp3 - 273.15f, 80.0f) / 80.0f;
 		percent_fade += ((abs(nx - ny) * (nx + ny) + nx) % 5) / 10.0f; // Noise
 
 		*colr -= (*colr - 160) * percent_fade;
@@ -201,13 +201,13 @@ static int graphics(GRAPHICS_FUNC_ARGS) {
 		}
 	}
 	// Burnt (Above 110 C)
-	if (cpart->pavg[0] > 273.15f + 110.0f) {
-		float m = 1.0f - std::min(cpart->pavg[0] - 273.15f + 90.0f, 200.0f) / 200.0f;
+	if (cpart->tmp3 > 273.15f + 110.0f) {
+		float m = 1.0f - std::min(cpart->tmp3 - 273.15f + 90.0f, 200.0f) / 200.0f;
 		m = 0.2 + 0.8 * m; // Prevent 100% black
 		*colr *= m, *colg *= m, *colb *= m;
 	}
 	// Blue when cold
-	if (cpart->temp < 273 && cpart->pavg[0] < 273.15f + 110.0f) {
+	if (cpart->temp < 273 && cpart->tmp3 < 273.15f + 110.0f) {
 		*colr -= (int)restrict_flt((273-cpart->temp)/5,0,80);
 		*colg += (int)restrict_flt((273-cpart->temp)/4,0,40);
 		*colb += (int)restrict_flt((273-cpart->temp)/1.5,0,100);

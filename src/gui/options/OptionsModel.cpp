@@ -90,6 +90,17 @@ void OptionsModel::SetEdgeMode(int edgeMode)
 	notifySettingsChanged();
 }
 
+int OptionsModel::GetTemperatureScale()
+{
+	return gModel->GetTemperatureScale();
+}
+void OptionsModel::SetTemperatureScale(int temperatureScale)
+{
+	Client::Ref().SetPref("Renderer.TemperatureScale", temperatureScale);
+	gModel->SetTemperatureScale(temperatureScale);
+	notifySettingsChanged();
+}
+
 float OptionsModel::GetAmbientAirTemperature()
 {
 	return gModel->GetSimulation()->air->ambientAirTemp;
@@ -108,6 +119,28 @@ int OptionsModel::GetGravityMode()
 void OptionsModel::SetGravityMode(int gravityMode)
 {
 	sim->gravityMode = gravityMode;
+	notifySettingsChanged();
+}
+
+float OptionsModel::GetCustomGravityX()
+{
+	return sim->customGravityX;
+}
+
+void OptionsModel::SetCustomGravityX(float x)
+{
+	sim->customGravityX = x;
+	notifySettingsChanged();
+}
+
+float OptionsModel::GetCustomGravityY()
+{
+	return sim->customGravityY;
+}
+
+void OptionsModel::SetCustomGravityY(float y)
+{
+	sim->customGravityY = y;
 	notifySettingsChanged();
 }
 
@@ -321,7 +354,7 @@ void OptionsModel::SetFasterRenderer(bool enabled) {
 }
 
 bool OptionsModel::GetSoundEnabled() {
-	return Client::Ref().GetPrefBool("SoundEnabled", true);
+	return Client::Ref().GetPrefBool("SoundEnabled", false); //true); *ULTIMATA97*
 }
 
 void OptionsModel::SetSoundEnabled(bool enabled) {

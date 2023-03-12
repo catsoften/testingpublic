@@ -1,7 +1,7 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
-#include <SDL2/SDL_audio.h>
+//#include <SDL2/SDL_audio.h> *ULTIMATA97*
 #include <SDL2/SDL.h>
 #include <list>
 #include <vector>
@@ -39,8 +39,8 @@ public:
 private:
     static void SDLAudioCallback(void *data, Uint8 *buffer, int length);
 
-    SDL_AudioDeviceID m_device;
-    SDL_AudioSpec wantSpec, haveSpec;
+    //SDL_AudioDeviceID m_device; *ULTIMATA97*
+    //SDL_AudioSpec wantSpec, haveSpec; *ULTIMATA97*
 
     double m_sampleFreq;
     unsigned int callbacks = 0;

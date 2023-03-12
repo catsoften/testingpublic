@@ -29,10 +29,10 @@ void Element::Element_CAPR() {
 	Weight = 100;
 
 	HeatConduct = 251;
-	Description = "Polarized electrolytic capacitor. Stores and releases charge. pavg0 = capacitance.";
+	Description = "Polarized electrolytic capacitor. Stores and releases charge. tmp3 = capacitance.";
 
 	Properties = TYPE_SOLID;
-	DefaultProperties.pavg[0] = 0.1f;
+	DefaultProperties.tmp3 = 0.1f;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -52,22 +52,22 @@ static int update(UPDATE_FUNC_ARGS) {
 	 * Variables:
 	 * tmp   - SPRK stored
 	 * tmp2  - Flag to explode
-	 * pavg0 - Capacitance (in F)
-	 * pavg1 - Effective voltage
+	 * tmp3 - Capacitance (in F)
+	 * tmp4 - Effective voltage
 	 */
 	int r;
 
 	// CAPR can create circuit if not currently part of one
-	if (parts[i].pavg[1])
+	if (parts[i].tmp4)
 		CIRCUITS::add_circuit(x, y, sim);
 
 	// Capacitance must be positive
-	parts[i].pavg[0] = fabs(parts[i].pavg[0]);
+	parts[i].tmp3 = fabs(parts[i].tmp3);
 
 	// Explode if wrong polarity
 	if (parts[i].tmp2 == 0 && sim->photons[y][x]) {
-		float self_volt = parts[ID(sim->photons[y][x])].pavg[0];
-		float self_current = parts[ID(sim->photons[y][x])].pavg[1];
+		float self_volt = parts[ID(sim->photons[y][x])].tmp3;
+		float self_current = parts[ID(sim->photons[y][x])].tmp4;
 
 		// This is actually a limiter from causing high current creating NaN voltages
 		if (fabs(self_current) > MAX_CAPACITOR_CURRENT)
@@ -82,7 +82,7 @@ static int update(UPDATE_FUNC_ARGS) {
 
 				// Current flows from positive into CPTR if correct polarity
 				// Thus other_v should >= self_volt
-				float other_v = parts[ID(sim->photons[y + ry][x + rx])].pavg[0];
+				float other_v = parts[ID(sim->photons[y + ry][x + rx])].tmp3;
 				if (other_v > self_volt && fabs(self_current) > MAX_CAPACITOR_REVERSE_CURRENT)
 					goto explode;
 			}
@@ -95,18 +95,18 @@ static int update(UPDATE_FUNC_ARGS) {
 	}
 
 	if (parts[i].tmp2) {
-		if (parts[i].pavg[0] < 0.01) { // Small capacitor, sizzle
+		if (parts[i].tmp3 < 0.01) { // Small capacitor, sizzle
 			sim->part_change_type(i, x, y, PT_SMKE);
 			sim->pv[y / CELL][x / CELL] += 0.05f;
 			parts[i].temp += 15.0f;
 			parts[i].life = RNG::Ref().between(10, 100);
 		}
-		else if (parts[i].pavg[0] < 10) { // Bigger capacitor, explode into BRMT and steam
+		else if (parts[i].tmp3 < 10) { // Bigger capacitor, explode into BRMT and steam
 			sim->part_change_type(i, x, y, RNG::Ref().chance(1, 2) ? PT_BRMT : PT_WTRV);
 			sim->pv[y / CELL][x / CELL] += 0.5f;
 			parts[i].temp += 100.0f;
 		}
-		else if (parts[i].pavg[0] < 100) { // Really big capacitor... it's going kaboom
+		else if (parts[i].tmp3 < 100) { // Really big capacitor... it's going kaboom
 			sim->part_change_type(i, x, y, RNG::Ref().chance(1, 2) ? PT_FIRE : PT_BRMT);
 			sim->pv[y / CELL][x / CELL] += 1.5f;
 			parts[i].temp += 1000.0f;

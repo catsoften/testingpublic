@@ -85,7 +85,7 @@ static int update(UPDATE_FUNC_ARGS) {
 
 				// Cure VIRS
 				if (TYP(r) == PT_VIRS || TYP(r) == PT_VRSG || TYP(r) == PT_VRSS)
-					parts[ID(r)].pavg[0] = 8;
+					parts[ID(r)].tmp3 = 8;
 
 				if (parts[i].tmp2 == 0) { // Block all
 					parts[ID(r)].vx = parts[ID(r)].x - parts[i].x;

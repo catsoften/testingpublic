@@ -56,12 +56,12 @@ void Branch::compute_dynamic_voltages(Simulation *sim, Circuit * c) {
     if (branch_type == CAPACITOR) {
         voltage_gain = 0.0;
         for (auto id : ids)
-            voltage_gain += sim->parts[id].pavg[1];
+            voltage_gain += sim->parts[id].tmp4;
     }
     else if (branch_type == CHIP) {
         float output_voltage = 0.0;
         if (ids.size())
-            output_voltage = sim->parts[ids[0]].pavg[1];
+            output_voltage = sim->parts[ids[0]].tmp4;
         if (c->constrained_nodes.count(node1))
             c->constrained_nodes[node1] = output_voltage;
         else if (c->constrained_nodes.count(node2))
@@ -71,5 +71,5 @@ void Branch::compute_dynamic_voltages(Simulation *sim, Circuit * c) {
 
 void Branch::compute_dynamic_currents(Simulation * sim, Circuit * c) {
     if (branch_type == INDUCTOR && ids.size())
-        current_gain = sim->parts[ids[0]].pavg[1];
+        current_gain = sim->parts[ids[0]].tmp4;
 }

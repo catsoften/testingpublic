@@ -2,7 +2,7 @@
 
 ![Really bad gif lol](https://i.imgur.com/jkdjZHv.gifv)
 
-**Description:**  *Inductor. Resists sudden changes in current. pavg0 = inductance.*
+**Description:**  *Inductor. Resists sudden changes in current. tmp3 = inductance.*
 
 An inductor effectively functions as a current source, forcing the current to slowly change 
 to its final value rather than suddenly change. Inductors are not polarized and do not have a max voltage 
@@ -16,6 +16,6 @@ Inductors melt at 1085 C.
 
 ## Technical
 #### Properties
-**pavg0:** Inductance (in henries)
+**tmp3:** Inductance (in henries)
 
-**pavg1:** Current value of inductor (in amps)
+**tmp4:** Current value of inductor (in amps)

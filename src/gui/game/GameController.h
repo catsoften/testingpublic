@@ -55,6 +55,13 @@ private:
 	
 	void OpenSaveDone();
 public:
+	enum MouseupReason
+	{
+		mouseUpNormal,
+		mouseUpBlur,
+		mouseUpDrawEnd,
+	};
+
 	bool HasDone;
 	GameController();
 	~GameController();
@@ -65,7 +72,7 @@ public:
 
 	bool MouseMove(int x, int y, int dx, int dy);
 	bool MouseDown(int x, int y, unsigned button);
-	bool MouseUp(int x, int y, unsigned button, char type);
+	bool MouseUp(int x, int y, unsigned button, MouseupReason reason);
 	bool MouseWheel(int x, int y, int d);
 	bool TextInput(String text);
 	bool TextEditing(String text);
@@ -109,6 +116,8 @@ public:
 	bool GetBrushEnable();
 	void SetDebugHUD(bool hudState);
 	bool GetDebugHUD();
+	void SetTemperatureScale(int temperatureScale);
+	int GetTemperatureScale();
 	void SetDebugFlags(unsigned int flags) { debugFlags = flags; }
 	void SetActiveMenu(int menuID);
 	std::vector<Menu*> GetMenuList();
@@ -158,6 +167,7 @@ public:
 	String BasicParticleInfo(Particle const &sample_part);
 	bool IsValidElement(int type);
 	String WallName(int type);
+	ByteString TakeScreenshot(int captureUI, int fileType);
 	int Record(bool record);
 
 	void ResetAir();

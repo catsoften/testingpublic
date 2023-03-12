@@ -12,4 +12,4 @@ A tough solid. Melts at 4027 C. Spawns in a diamond like pattern. Will burn slow
 #### Properties
 **life:** Used for burning, if > 0 will burn.
 
-**pavg[0]:** Used to determine color
+**tmp3:** Used to determine color

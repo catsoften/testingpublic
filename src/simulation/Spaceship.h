@@ -44,7 +44,7 @@ public:
 void move_ship(Simulation* sim, int id);
 void calculate_acceleration(Simulation *sim, int id);
 int create_ship(int id=-1);
-void clonePAVG(Simulation* sim, int i, int x, int y);
+void cloneTMP34(Simulation* sim, int i, int x, int y);
 }
 
 #endif

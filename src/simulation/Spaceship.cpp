@@ -10,7 +10,7 @@
 
 /**
 Properties:
-	pavg[0] - Storing ship id in componenets connected to a COTR
+	tmp3 - Storing ship id in componenets connected to a COTR
 */
 
 namespace SHIPS {
@@ -49,8 +49,8 @@ namespace SHIPS {
 	// Ship self destruction, reset all ship IDs
 	void Spaceship::destroy(Simulation* sim) {
 		for (auto i = components.begin(); i != components.end(); ++i) {
-			if (is_component(sim->parts[*i].type) && sim->parts[*i].pavg[0] == id)
-				sim->parts[*i].pavg[0] = -1;
+			if (is_component(sim->parts[*i].type) && sim->parts[*i].tmp3 == id)
+				sim->parts[*i].tmp3 = -1;
 		}
 	}
 
@@ -111,21 +111,21 @@ namespace SHIPS {
 
 
 	// --------- Sim -------------------
-	void clonePAVG(Simulation* sim, int i, int x, int y) {
+	void cloneTMP34(Simulation* sim, int i, int x, int y) {
 		// Dont scan if already has a ship ID
-		if (sim->parts[i].pavg[0] >= 0 && is_ship(sim->parts[i].pavg[0]))
+		if (sim->parts[i].tmp3 >= 0 && is_ship(sim->parts[i].tmp3))
 			return;
 		int r, rx, ry;
 		for (rx = -1; rx <= 1; rx++)
 		for (ry = -1; ry <= 1; ry++)
 			if (BOUNDS_CHECK && (rx || ry)) { // Scan around for other components
 				r = sim->pmap[y + ry][x + rx];
-				if (!r || sim->parts[ID(r)].pavg[0] < 0) continue; // Skip check if doesn't exist or other component doesn't have an id either
-				if (is_ship(sim->parts[ID(r)].pavg[0])) { // If ship id exists we can add it to this component
+				if (!r || sim->parts[ID(r)].tmp3 < 0) continue; // Skip check if doesn't exist or other component doesn't have an id either
+				if (is_ship(sim->parts[ID(r)].tmp3)) { // If ship id exists we can add it to this component
 					// Checks if component adjacent is a component type or if it's pointer is
 					if (is_component(sim->parts[ID(r)].type)) {
-						sim->parts[i].pavg[0] = sim->parts[ID(r)].pavg[0];
-						ships[sim->parts[i].pavg[0]].add_component(i, sim->parts[i].type);  // Add component to ship
+						sim->parts[i].tmp3 = sim->parts[ID(r)].tmp3;
+						ships[sim->parts[i].tmp3].add_component(i, sim->parts[i].type);  // Add component to ship
 						return;
 					}
 				}

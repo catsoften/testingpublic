@@ -64,8 +64,8 @@ static void create(ELEMENT_CREATE_FUNC_ARGS) {
 	if (RNG::Ref().chance(1, 500)) // Queen bee
 		sim->parts[i].tmp2 = 2;
 
-	sim->parts[i].pavg[0] = sim->parts[i].x;
-	sim->parts[i].pavg[1] = sim->parts[i].y;
+	sim->parts[i].tmp3 = sim->parts[i].x;
+	sim->parts[i].tmp4 = sim->parts[i].y;
 }
 
 static int update(UPDATE_FUNC_ARGS) {
@@ -75,7 +75,7 @@ static int update(UPDATE_FUNC_ARGS) {
 	 * tmp2 - working stage, bees alternate between finding food and
 	 * 		  tending for the hive. 0 = work, 1 = find
 	 * life - pollen level, 0 to 100, stops pollinating when at 100
-	 * pavg - Spawn coordinates
+	 * tmp3/4 - Spawn coordinates
 	 * flags - aggressive? SMKE sets this to 100, decrements each frame
 	 */
 	int rx, ry, r, rt;
@@ -98,8 +98,8 @@ static int update(UPDATE_FUNC_ARGS) {
 					if (!r) {
 						int ni = sim->create_part(-1, x + rx, y + ry, PT_BEE);
 						parts[ni].tmp2 = RNG::Ref().chance(1, 2); // New bee cannot be queen
-						parts[ni].pavg[0] = parts[i].pavg[0];
-						parts[ni].pavg[1] = parts[i].pavg[1];
+						parts[ni].tmp3 = parts[i].tmp3;
+						parts[ni].tmp4 = parts[i].tmp4;
 						return 0;
 					}
 				}
@@ -111,8 +111,8 @@ static int update(UPDATE_FUNC_ARGS) {
 	float tendx = 0.0f, tendy = 0.0f;
 	int object_count = 0;
 
-	bool near_hive = fabs(x - parts[i].pavg[0]) < MAX_RADIUS_TO_MAKE_WAX &&
-					 fabs(y - parts[i].pavg[1]) < MAX_RADIUS_TO_MAKE_WAX;
+	bool near_hive = fabs(x - parts[i].tmp3) < MAX_RADIUS_TO_MAKE_WAX &&
+					 fabs(y - parts[i].tmp4) < MAX_RADIUS_TO_MAKE_WAX;
 
 	// For constructing wax honeycomb, it won't construct if another
 	// solid is near (bee space)
@@ -195,9 +195,9 @@ static int update(UPDATE_FUNC_ARGS) {
 
 							// Encode dance data
 							if (parts[i].tmp == 0 || parts[i].tmp % 2 == 1) {
-								int dis = sqrt((x - parts[i].pavg[0]) * (x - parts[i].pavg[0])
-											+ (y - parts[i].pavg[1]) * (y - parts[i].pavg[1]));
-								int angle = atan2(-y + parts[i].pavg[1], x - parts[i].pavg[0]) * 180 / 3.1415f;
+								int dis = sqrt((x - parts[i].tmp3) * (x - parts[i].tmp3)
+											+ (y - parts[i].tmp4) * (y - parts[i].tmp4));
+								int angle = atan2(-y + parts[i].tmp4, x - parts[i].tmp3) * 180 / 3.1415f;
 								while (angle < 0) angle += 360;
 								while (angle > 360) angle -= 360;
 								parts[i].tmp = angle + 1000 * dis;
@@ -309,8 +309,8 @@ static int update(UPDATE_FUNC_ARGS) {
 			// If give up return to spawn
 			int m = parts[i].tmp2 && (parts[i].life < 100 || parts[i].tmp < 0) ? 1 : -1;
 			if ((m < 0 && !near_hive) || (m > 0 && near_hive)) {
-				parts[i].vx += m * (parts[i].x - parts[i].pavg[0]) / 1500.0f;
-				parts[i].vy += m * (parts[i].y - parts[i].pavg[1]) / 1500.0f;
+				parts[i].vx += m * (parts[i].x - parts[i].tmp3) / 1500.0f;
+				parts[i].vy += m * (parts[i].y - parts[i].tmp4) / 1500.0f;
 			}
 		}
 	}
