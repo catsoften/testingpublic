@@ -190,7 +190,8 @@ x86_64-linux-gnu-debug) ;&
 x86_64-windows-mingw-debug) ;&
 x86_64-windows-msvc-debug) ;&
 x86_64-darwin-macos-debug)
-	meson_configure+=$'\t'-Dbuild_render=true
+	# Causes problems with Ultimata
+	#meson_configure+=$'\t'-Dbuild_render=true
 	meson_configure+=$'\t'-Dbuild_font=true
 	;;
 esac
