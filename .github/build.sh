@@ -562,7 +562,7 @@ function compile_sdl2() {
 		cmake_configure+=$'\t'-DCMAKE_VS_PLATFORM_TOOLSET=$cmake_vs_toolset
 	fi
 	add_install_flags cmake_configure
-	cmake_configure+=$'\t'-DSDL_AUDIO=OFF
+	cmake_configure+=$'\t'-DSDL_AUDIO=ON
 	cmake_configure+=$'\t'-DSDL_POWER=OFF
 	cmake_configure+=$'\t'-DSDL_LIBC=ON
 	if [[ $BSH_HOST_PLATFORM == android ]]; then
