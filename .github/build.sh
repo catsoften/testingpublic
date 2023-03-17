@@ -94,7 +94,7 @@ esac
 case $BSH_BUILD_PLATFORM in
 linux)
 	sudo apt update
-	sudo apt install libc6-dev libc6-dev-i386 fcitx-libs-dev libibus-1.0-dev
+	sudo apt install libc6-dev libc6-dev-i386 fcitx-libs-dev libibus-1.0-dev libasound2-dev libpulse-dev
 	;;
 esac
 
