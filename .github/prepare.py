@@ -78,8 +78,8 @@ build_matrix = []
 publish_matrix = []
 # consider disabling line wrapping to edit this monstrosity
 for        arch,  platform,     libc,   statdyn, bplatform,         runson, suffix, publish, artifact, dbgsuffix,       mode,             starcatcher,    dbgrel in [
-	(  'x86_64',   'linux',    'gnu',  'static',   'linux', 'ubuntu-18.04',     '',   False,    False,      None,       None,                    None,   'debug' ),
-	(  'x86_64',   'linux',    'gnu',  'static',   'linux', 'ubuntu-18.04',     '',    True,     True,    '.dbg',       None, 'x86_64-lin-gcc-static', 'release' ),
+	(  'x86_64',   'linux',    'gnu',  'static',   'linux', 'ubuntu-20.04',     '',   False,    False,      None,       None,                    None,   'debug' ),
+	(  'x86_64',   'linux',    'gnu',  'static',   'linux', 'ubuntu-20.04',     '',    True,     True,    '.dbg',       None, 'x86_64-lin-gcc-static', 'release' ),
 	(  'x86_64', 'windows',   'msvc',  'static', 'windows', 'windows-2019', '.exe',   False,    False,      None,       None,                    None,   'debug' ),
 	(  'x86_64', 'windows',   'msvc',  'static', 'windows', 'windows-2019', '.exe',    True,     True,    '.pdb',       None,'x86_64-win-msvc-static', 'release' ),
 	(     'x86', 'windows',   'msvc',  'static', 'windows', 'windows-2019', '.exe',   False,    False,      None,       None,                    None,   'debug' ),
