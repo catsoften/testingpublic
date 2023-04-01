@@ -34,6 +34,7 @@
 #include "client/SaveFile.h"
 #include "client/SaveInfo.h"
 #include "common/Platform.h"
+#include "graphics/FontReader.h"
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 #include "simulation/Air.h"
@@ -3976,6 +3977,7 @@ void LuaScriptInterface::initRecordAPI()
 		{"bufferLimit", record_bufferLimit},
 		{"writeThread", record_writeThread},
 		{"compression", record_quality},
+		{"uwu", record_uwu},
 		{NULL, NULL}
 	};
 	luaL_register(l, "record", recordAPIMethods);
@@ -4322,6 +4324,27 @@ int LuaScriptInterface::record_quality(lua_State* l)
 	else
 	{
 		lua_pushinteger(l, rs.quality);
+		return 1;
+	}
+}
+
+int LuaScriptInterface::record_uwu(lua_State* l)
+{
+	if (lua_gettop(l))
+	{
+		if (!lua_isboolean(l, -1))
+		{
+			return luaL_typerror(l, 1, lua_typename(l, LUA_TBOOLEAN));
+		}
+		else
+		{
+			FontReader::uwu = lua_toboolean(l, -1);
+			return 0;
+		}
+	}
+	else
+	{
+		lua_pushboolean(l, FontReader::uwu);
 		return 1;
 	}
 }

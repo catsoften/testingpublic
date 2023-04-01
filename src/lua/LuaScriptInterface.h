@@ -186,6 +186,7 @@ class LuaScriptInterface: public CommandInterface
 	static int record_bufferLimit(lua_State * l);
 	static int record_writeThread(lua_State * l);
 	static int record_quality(lua_State * l);
+	static int record_uwu(lua_State * l);
 
 	void initFileSystemAPI();
 	static int fileSystem_list(lua_State * l);

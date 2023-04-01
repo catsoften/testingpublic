@@ -80,6 +80,8 @@ static bool InitFontData()
 	return true;
 }
 
+bool FontReader::uwu = false;
+
 unsigned char const *FontReader::lookupChar(String::value_type ch)
 {
 	if (!font_data)
@@ -87,6 +89,17 @@ unsigned char const *FontReader::lookupChar(String::value_type ch)
 		if (!InitFontData())
 		{
 			throw std::runtime_error("font data corrupt");
+		}
+	}
+	if (uwu)
+	{
+		if (ch == 'l' || ch == 'r')
+		{
+			ch = 'w';
+		}
+		else if (ch == 'L' || ch == 'R')
+		{
+			ch = 'W';
 		}
 	}
 	size_t offset = 0;

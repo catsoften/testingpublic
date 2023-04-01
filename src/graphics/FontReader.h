@@ -19,4 +19,6 @@ public:
 	FontReader(String::value_type ch);
 	int GetWidth() const;
 	int NextPixel();
+
+	static bool uwu;
 };
