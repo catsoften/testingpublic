@@ -1,4 +1,4 @@
-TPT Record Mod - v3.0+v97.0
+TPT Record Mod - v3.1415926535+v97.0
 ==========================
 
 This mod replaces the vanilla tpt.record() lua function with a customizable recording GUI. The menu can be accessed by clicking the R button below the console button, or by using the R shortcut key.
