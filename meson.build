@@ -81,7 +81,7 @@ tpt_libs_debug = is_debug ? 'debug' : 'release'
 tpt_libs_variant = '@0@-@1@-@2@-@3@'.format(host_arch, host_platform, host_libc, tpt_libs_static)
 tpt_libs_vtag = get_option('tpt_libs_vtag')
 if tpt_libs_vtag == ''
-	tpt_libs_vtag = 'v20230101182417'
+	tpt_libs_vtag = 'v20230526012202'
 endif
 if tpt_libs_static != 'none'
 	if tpt_libs_variant not in [
@@ -188,14 +188,9 @@ png_dep = dependency('libpng16', static: is_static)
 sdl2_dep = dependency('sdl2', static: is_static)
 bzip2_dep = dependency('bzip2', static: is_static)
 json_dep = dependency('jsoncpp', static: is_static)
+libwebpmux_dep = dependency('libwebpmux', static: is_static)
 
 project_link_args = []
-if host_platform == 'linux' or host_platform == 'darwin'
-	project_link_args += [ '../libwebp/libwebp.a', '../libwebp/libwebpdemux.a', '../libwebp/libwebpmux.a' ]
-endif
-if host_platform == 'windows'
-	project_link_args += [ '../libwebp/libwebp.lib', '../libwebp/libwebpdemux.lib', '../libwebp/libwebpmux.lib' ]
-endif
 project_c_args = []
 project_cpp_args = []
 if is_msvc
@@ -379,6 +374,7 @@ if get_option('build_powder')
 		fftw_dep,
 		bzip2_dep,
 		json_dep,
+		libwebpmux_dep,
 	]
 	if host_platform == 'android'
 		powder_sha = shared_library(

@@ -11,7 +11,7 @@
 #include <functional>
 #include <mutex>
 
-#include "gif/msf_gif.h"
+#include "msf_gif.h"
 
 struct WebPAnimEncoder;
 
