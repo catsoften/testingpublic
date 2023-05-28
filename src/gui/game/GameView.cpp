@@ -15,9 +15,6 @@
 #include "ToolButton.h"
 #include "QuickOptions.h"
 
-#include "record/RecordController.h"
-#include "record/RecordMenu.h"
-
 #include "client/SaveInfo.h"
 #include "client/SaveFile.h"
 #include "client/Client.h"
@@ -25,6 +22,8 @@
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 #include "gui/Style.h"
+#include "record/RecordController.h"
+#include "record/RecordMenu.h"
 #include "simulation/ElementClasses.h"
 #include "simulation/ElementDefs.h"
 #include "simulation/SaveRenderer.h"

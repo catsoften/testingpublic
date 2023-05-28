@@ -9,11 +9,10 @@
 
 #include "common/Platform.h"
 #include "graphics/Graphics.h"
+#include "record/RecordController.h"
 
 #include "gui/dialogues/InformationMessage.h"
 #include "gui/dialogues/ConfirmPrompt.h"
-
-#include "gui/game/record/RecordController.h"
 
 using namespace ui;
 

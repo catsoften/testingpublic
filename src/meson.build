@@ -35,6 +35,7 @@ subdir('gui')
 if lua_variant != 'none'
 	subdir('lua')
 endif
+subdir('record')
 subdir('resampler')
 subdir('simulation')
 subdir('tasks')

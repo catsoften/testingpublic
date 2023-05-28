@@ -37,6 +37,7 @@
 #include "graphics/FontReader.h"
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
+#include "record/RecordController.h"
 #include "simulation/Air.h"
 #include "simulation/ElementCommon.h"
 #include "simulation/ElementClasses.h"
@@ -53,7 +54,6 @@
 #include "gui/game/GameModel.h"
 #include "gui/game/Tool.h"
 #include "gui/game/Brush.h"
-#include "gui/game/record/RecordController.h"
 
 #ifndef WIN
 #include <unistd.h>

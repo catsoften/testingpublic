@@ -1,5 +1,3 @@
-subdir('record')
-
 powder_files += files(
 	'BitmapBrush.cpp',
 	'Brush.cpp',
