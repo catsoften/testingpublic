@@ -1,0 +1,6 @@
+[wrap-file]
+directory = tpt-libs-prebuilt-x86-android-bionic-static-release-v20230528165700
+
+source_url = https://github.com/catsoften/tpt-record-mod-libs/releases/download/v20230528165700/tpt-libs-prebuilt-x86-android-bionic-static-release-v20230528165700.zip
+source_filename = tpt-libs-prebuilt-x86-android-bionic-static-release-v20230528165700.zip
+source_hash = 027e7995ec69f0454df295199175b7fa93a05e529b0c94e23183016ed05b94ec

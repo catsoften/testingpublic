@@ -1,0 +1,6 @@
+[wrap-file]
+directory = tpt-libs-prebuilt-x86_64-linux-gnu-static-release-v20230528165700
+
+source_url = https://github.com/catsoften/tpt-record-mod-libs/releases/download/v20230528165700/tpt-libs-prebuilt-x86_64-linux-gnu-static-release-v20230528165700.zip
+source_filename = tpt-libs-prebuilt-x86_64-linux-gnu-static-release-v20230528165700.zip
+source_hash = 0904d8a2ad8f51383a77bfea66cb1babd2d6c33543b6b61fa716a39d9ed2a34b

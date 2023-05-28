@@ -1,0 +1,6 @@
+[wrap-file]
+directory = tpt-libs-prebuilt-aarch64-darwin-macos-static-debug-v20230528165700
+
+source_url = https://github.com/catsoften/tpt-record-mod-libs/releases/download/v20230528165700/tpt-libs-prebuilt-aarch64-darwin-macos-static-debug-v20230528165700.zip
+source_filename = tpt-libs-prebuilt-aarch64-darwin-macos-static-debug-v20230528165700.zip
+source_hash = a8b8ad9604c174c0c17bdbd6ee6fe51d4023a61b7ffeb4d04590c84e196a8c09

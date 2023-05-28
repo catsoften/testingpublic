@@ -1,6 +1,0 @@
-[wrap-file]
-directory = tpt-libs-prebuilt-aarch64-android-bionic-static-debug-v20230526012202
-
-source_url = https://github.com/catsoften/tpt-record-mod-libs/releases/download/v20230526012202/tpt-libs-prebuilt-aarch64-android-bionic-static-debug-v20230526012202.zip
-source_filename = tpt-libs-prebuilt-aarch64-android-bionic-static-debug-v20230526012202.zip
-source_hash = e2d0936d7358662be104192abc24846eae29f5afecdbacaf4ddb3c68854d3063

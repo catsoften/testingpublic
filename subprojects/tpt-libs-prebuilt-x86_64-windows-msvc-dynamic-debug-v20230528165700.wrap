@@ -1,0 +1,6 @@
+[wrap-file]
+directory = tpt-libs-prebuilt-x86_64-windows-msvc-dynamic-debug-v20230528165700
+
+source_url = https://github.com/catsoften/tpt-record-mod-libs/releases/download/v20230528165700/tpt-libs-prebuilt-x86_64-windows-msvc-dynamic-debug-v20230528165700.zip
+source_filename = tpt-libs-prebuilt-x86_64-windows-msvc-dynamic-debug-v20230528165700.zip
+source_hash = 485196394d1ec3a3fac7fab6499be455390bb0d739385b8f9878b63c5a273f40

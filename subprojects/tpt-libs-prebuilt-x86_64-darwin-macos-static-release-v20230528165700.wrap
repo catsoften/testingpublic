@@ -1,0 +1,6 @@
+[wrap-file]
+directory = tpt-libs-prebuilt-x86_64-darwin-macos-static-release-v20230528165700
+
+source_url = https://github.com/catsoften/tpt-record-mod-libs/releases/download/v20230528165700/tpt-libs-prebuilt-x86_64-darwin-macos-static-release-v20230528165700.zip
+source_filename = tpt-libs-prebuilt-x86_64-darwin-macos-static-release-v20230528165700.zip
+source_hash = 8ef42fbdc298f64e04fbba73ba9854a3e19eb2ebc56da11bac900e7fe6ae43d4
