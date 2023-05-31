@@ -1,26 +1,21 @@
-#ifndef RECORDCONTROLLER_H
-#define RECORDCONTROLLER_H
-#include "Config.h"
-
-#include "common/Singleton.h"
-
-#include "RecordState.h"
+#pragma once
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 #include <functional>
 #include <mutex>
 
-#include "msf_gif.h"
+#include "common/Singleton.h"
 
-struct WebPAnimEncoder;
+#include "RecordState.h"
+#include "formats/RecordWriter.h"
 
 class Graphics;
 
 class RecordController : public Singleton<RecordController>
 {
-	WebPAnimEncoder* enc;
-	MsfGifState* gifState;
+	std::shared_ptr<RecordWriter> writer;
 
 	int xs, ys, sxs, sys;
 	int bufs, sbufs;
@@ -51,6 +46,6 @@ public:
 
 	void SetCallback(RecordProgressCallback newCallback);
 	void CancelWrite();
-};
 
-#endif /* RECORDCONTROLLER_H */
+	~RecordController();
+};

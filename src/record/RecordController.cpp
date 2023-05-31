@@ -7,22 +7,13 @@
 #include <chrono>
 #include <thread>
 
+#include "formats/GifWriter.h"
+#include "formats/WebPWriter.h"
+#include "formats/OldWriter.h"
+
 #include "common/String.h"
 #include "common/Platform.h"
 #include "graphics/Graphics.h"
-
-// Gif
-#define MSF_GIF_IMPL
-#include "msf_gif.h"
-
-// WebP
-#include <webp/types.h>
-#include <webp/encode.h>
-#include <webp/mux_types.h>
-#include <webp/mux.h>
-
-// Old
-#include "Format.h"
 
 // TODO: Error handling...
 
@@ -31,25 +22,18 @@ void RecordController::StartRecordingCurrent()
 	switch (rs.format)
 	{
 		case RecordFormat::Gif:
-			gifState = new MsfGifState;
-			msf_gif_begin(gifState, sxs, sys);
+			writer = std::make_shared<GifWriter>((int)(rs.delay + 0.5f));
 			break;
 
 		case RecordFormat::WebP:
-			{
-				WebPAnimEncoderOptions enc_options;
-				WebPAnimEncoderOptionsInit(&enc_options);
-				enc_options.anim_params.bgcolor = 0xFF000000;
-				enc_options.anim_params.loop_count = 0;
-				enc_options.minimize_size = rs.quality == 10;
-				enc = WebPAnimEncoderNew(sxs, sys, &enc_options);
-			}
+			writer = std::make_shared<WebPWriter>((int)(rs.delay + 0.5f), rs.quality);
 			break;
 
 		case RecordFormat::Old:
-			Platform::MakeDirectory(ByteString::Build("recordings", PATH_SEP, rs.file).c_str());
+			writer = std::make_shared<OldWriter>();
 			break;
 	}
+	writer->Start(sxs, sys, rs.file);
 }
 
 void RecordController::WriteFrameCurrent(uint32_t* buffer)
@@ -81,100 +65,13 @@ void RecordController::WriteFrameCurrent(uint32_t* buffer)
 		}
 		delete[] oldBuffer;
 	}
-	switch (rs.format)
-	{
-		case RecordFormat::Gif:
-			msf_gif_frame(gifState, (uint8_t*)buffer, (int)rs.delay, 16, sxs * 4);
-			break;
-
-		case RecordFormat::WebP:
-			{
-				WebPConfig config;
-				WebPConfigInit(&config);
-				config.lossless = true;
-				config.quality = (float)(rs.quality * 10);
-				WebPPicture pic;
-				WebPPictureInit(&pic);
-				pic.use_argb = true;
-				pic.width = sxs;
-				pic.height = sys;
-				pic.argb = buffer;
-				pic.argb_stride = sxs;
-				WebPAnimEncoderAdd(enc, &pic, rs.frame * (int)rs.delay, &config);
-				WebPPictureFree(&pic);
-			}
-			break;
-
-			case RecordFormat::Old:
-				std::cerr << "[RECORDMOD] WARN: Attempted to call RecordController::WriteFrameCurrent with old format" << std::endl;
-				break;
-	}
+	writer->Write(buffer);
 	delete[] buffer;
 }
 
 void RecordController::StopRecordingCurrent()
 {
-	if (rs.format != RecordFormat::Old)
-	{
-		const char* extension = "";
-		switch (rs.format)
-		{
-			case RecordFormat::Gif:
-				extension = ".gif";
-				break;
-
-			case RecordFormat::WebP:
-				extension = ".webp";
-				break;
-
-			case RecordFormat::Old:
-				std::cerr << "[RECORDMOD] WARN: Attempted to call RecordController::StopRecordingCurrent with old format" << std::endl;
-				break;
-		}
-
-		try
-		{
-			std::ofstream outFile(ByteString::Build("recordings", PATH_SEP, rs.file, extension), std::ios::binary | std::ios::trunc);
-			if(outFile.is_open())
-			{
-				switch (rs.format)
-				{
-					case RecordFormat::WebP:
-						{
-							WebPAnimEncoderAdd(enc, NULL, rs.frame * (int)rs.delay, NULL);
-							WebPData webp_data;
-							WebPDataInit(&webp_data);
-							WebPAnimEncoderAssemble(enc, &webp_data);
-							WebPAnimEncoderDelete(enc);
-							outFile.write((const char*)webp_data.bytes, webp_data.size);
-							WebPDataClear(&webp_data);
-						}
-						break;
-
-					case RecordFormat::Gif:
-						{
-							MsfGifResult result = msf_gif_end(gifState);
-							delete gifState;
-							outFile.write((const char*)result.data, result.dataSize);
-							msf_gif_free(result);
-						}
-						break;
-
-					case RecordFormat::Old:
-						break; // Compiler error
-				}
-				outFile.close();
-			}
-			else
-			{
-				std::cerr << "RecordController::StopRecordingCurrent->Fail: " << std::endl;
-			}
-		}
-		catch (const std::exception& e)
-		{
-			std::cerr << "RecordController::StopRecordingCurrent->Catch: " << e.what() << std::endl;
-		}
-	}
+	writer->Stop();
 }
 
 void RecordController::StartWriteThread()
@@ -199,6 +96,7 @@ void RecordController::StartWriteThread()
 					}
 					bufferDataMutex.lock();
 					uint32_t* buffer = bufferData[rs.frame];
+					bufferData[rs.frame] = nullptr;
 					bufferDataMutex.unlock();
 					WriteFrameCurrent(buffer);
 					CallCallback();
@@ -288,15 +186,17 @@ void RecordController::CallCallback()
 
 void RecordController::FreeRemaining()
 {
-	int oldFrame = rs.frame;
 	bufferDataMutex.lock();
-	for ( ; rs.frame < rs.nextFrame; rs.frame++)
+	for (unsigned int i = 0; i < bufferData.size(); i++)
 	{
-		delete[] bufferData[rs.frame];
+		if (bufferData[i])
+		{
+			delete[] bufferData[i];
+			bufferData[i] = nullptr;
+		}
 	}
 	bufferDataMutex.unlock();
-	rs.frame = oldFrame;
-	rs.nextFrame = oldFrame + 1;
+	rs.nextFrame = rs.frame + 1;
 }
 
 void RecordController::StartRecording()
@@ -330,24 +230,12 @@ void RecordController::WriteFrame(Graphics* g)
 	switch (rs.format)
 	{
 		case RecordFormat::Gif:
-			buffer = (uint32_t*)g->DumpFrameRGBA8(rs.x1, rs.y1, rs.x2, rs.y2);
+			buffer = g->DumpFrameRGBA(rs.x1, rs.y1, rs.x2, rs.y2);
 			break;
 
 		case RecordFormat::WebP:
-			buffer = g->DumpFrameARGB32(rs.x1, rs.y1, rs.x2, rs.y2);
-			break;
-
 		case RecordFormat::Old:
-			{
-				VideoBuffer screenshot(g->DumpFrame());
-				std::vector<char> data = format::VideoBufferToPPM(screenshot);
-				int tempFrame = rs.frame;
-				ByteString filename = ByteString::Build("recordings", PATH_SEP, rs.file, PATH_SEP, "frame_", Format::Width(tempFrame, 6), ".ppm");
-				Platform::WriteFile(data, filename);
-			}
-			rs.frame++;
-			rs.nextFrame++;
-			return;
+			buffer = g->DumpFrameARGB(rs.x1, rs.y1, rs.x2, rs.y2);
 			break;
 	}
 
@@ -422,4 +310,9 @@ void RecordController::SetCallback(RecordProgressCallback newCallback)
 void RecordController::CancelWrite()
 {
 	stopWrite = true;
+}
+
+RecordController::~RecordController()
+{
+	FreeRemaining();
 }
