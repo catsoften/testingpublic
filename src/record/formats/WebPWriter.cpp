@@ -13,12 +13,12 @@
 
 WebPWriter::WebPWriter(int delay_, int quality_) :
 	delay(delay_),
-	quality(quality_),
-	frame(0)
+	quality(quality_)
 { }
 
 void WebPWriter::Start(int x_, int y_, int file_)
 {
+	frame = 0;
 	x = x_;
 	y = y_;
 	file = file_;
@@ -63,9 +63,5 @@ void WebPWriter::Stop()
 		std::cerr << "WebPWriter::Stop: " << e.what() << std::endl;
 	}
 	WebPDataClear(&webp_data);
-}
-
-WebPWriter::~WebPWriter()
-{
 	WebPAnimEncoderDelete(enc);
 }

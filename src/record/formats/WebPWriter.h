@@ -20,6 +20,4 @@ public:
 	virtual void Start(int x_, int y_, int file_) override;
 	virtual void Write(uint32_t* buffer) override;
 	virtual void Stop() override;
-
-	virtual ~WebPWriter() override;
 };

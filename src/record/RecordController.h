@@ -15,7 +15,7 @@ class Graphics;
 
 class RecordController : public Singleton<RecordController>
 {
-	std::shared_ptr<RecordWriter> writer;
+	std::unique_ptr<RecordWriter> writer;
 
 	int xs, ys, sxs, sys;
 	int bufs, sbufs;

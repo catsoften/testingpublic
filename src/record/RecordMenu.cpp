@@ -112,6 +112,7 @@ void RecordMenu::StateChanged()
 	if (old)
 	{
 		rs.scale = 1;
+		rs.spacing = false;
 	}
 	scaleDropdown->Enabled = stop && !old;
 	scaleDropdown->SetOption(rs.spacing ? -8 : rs.scale);

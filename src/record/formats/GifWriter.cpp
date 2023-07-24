@@ -11,15 +11,15 @@
 
 GifWriter::GifWriter(int delay_) :
 	delay(delay_)
-{
-	gifState = new MsfGifState;
-}
+{ }
 
 void GifWriter::Start(int x_, int y_, int file_)
 {
 	x = x_;
 	y = y_;
 	file = file_;
+	gifState = new MsfGifState;
+	msf_gif_bgra_flag = true;
 	msf_gif_begin(gifState, x, y);
 }
 
@@ -41,9 +41,5 @@ void GifWriter::Stop()
 		std::cerr << "GifWriter::Stop: " << e.what() << std::endl;
 	}
 	msf_gif_free(result);
-}
-
-GifWriter::~GifWriter()
-{
 	delete gifState;
 }

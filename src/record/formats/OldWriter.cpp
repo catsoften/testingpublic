@@ -6,12 +6,12 @@
 #include "common/String.h"
 #include "graphics/Graphics.h"
 
-OldWriter::OldWriter() :
-	frame(0)
+OldWriter::OldWriter()
 { }
 
 void OldWriter::Start(int x_, int y_, int file_)
 {
+	frame = 0;
 	x = x_;
 	y = y_;
 	file = file_;

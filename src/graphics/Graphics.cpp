@@ -754,28 +754,10 @@ uint32_t* Graphics::DumpFrameARGB(int x1, int y1, int x2, int y2)
 	{
 		for (int x = x1; x < x2; x++)
 		{
-			buffer[index++] = (vid[y * WINDOWW + x] & 0x00FFFFFF) | 0xFF000000;
+			buffer[index++] = vid[y * WINDOWW + x] | 0xFF000000;
 		}
 	}
 	return buffer;
-}
-
-uint32_t* Graphics::DumpFrameRGBA(int x1, int y1, int x2, int y2)
-{
-	uint8_t* buffer = (uint8_t*)(new uint32_t[(x2 - x1) * (y2 - y1)]);
-	int index = 0;
-	for (int y = y1; y < y2; y++)
-	{
-		for (int x = x1; x < x2; x++)
-		{
-			int val = vid[y * WINDOWW + x];
-			buffer[index++] = PIXR(val);
-			buffer[index++] = PIXG(val);
-			buffer[index++] = PIXB(val);
-			buffer[index++] = 255;
-		}
-	}
-	return (uint32_t*)buffer;
 }
 
 void Graphics::SetClipRect(int &x, int &y, int &w, int &h)

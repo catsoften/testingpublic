@@ -22,15 +22,15 @@ void RecordController::StartRecordingCurrent()
 	switch (rs.format)
 	{
 		case RecordFormat::Gif:
-			writer = std::make_shared<GifWriter>((int)(rs.delay + 0.5f));
+			writer = std::make_unique<GifWriter>((int)(rs.delay + 0.5f));
 			break;
 
 		case RecordFormat::WebP:
-			writer = std::make_shared<WebPWriter>((int)(rs.delay + 0.5f), rs.quality);
+			writer = std::make_unique<WebPWriter>((int)(rs.delay + 0.5f), rs.quality);
 			break;
 
 		case RecordFormat::Old:
-			writer = std::make_shared<OldWriter>();
+			writer = std::make_unique<OldWriter>();
 			break;
 	}
 	writer->Start(sxs, sys, rs.file);
@@ -226,20 +226,7 @@ void RecordController::StartRecording()
 
 void RecordController::WriteFrame(Graphics* g)
 {
-	uint32_t* buffer = nullptr;
-	switch (rs.format)
-	{
-		case RecordFormat::Gif:
-			buffer = g->DumpFrameRGBA(rs.x1, rs.y1, rs.x2, rs.y2);
-			break;
-
-		case RecordFormat::WebP:
-		case RecordFormat::Old:
-			buffer = g->DumpFrameARGB(rs.x1, rs.y1, rs.x2, rs.y2);
-			break;
-	}
-
-	bufferDataMutex.lock();
+	uint32_t* buffer = g->DumpFrameARGB(rs.x1, rs.y1, rs.x2, rs.y2);
 	switch (rs.buffer)
 	{
 		case RecordBuffer::Off:
@@ -248,6 +235,7 @@ void RecordController::WriteFrame(Graphics* g)
 			break;
 
 		case RecordBuffer::Ram:
+			bufferDataMutex.lock();
 			if (bufferData.size() > (unsigned int)rs.nextFrame) // This shouldnt be necessary
 			{
 				bufferData[rs.nextFrame] = buffer;
@@ -256,6 +244,7 @@ void RecordController::WriteFrame(Graphics* g)
 			{
 				bufferData.push_back(buffer);
 			}
+			bufferDataMutex.unlock();
 			break;
 
 		case RecordBuffer::Disk:
@@ -279,7 +268,6 @@ void RecordController::WriteFrame(Graphics* g)
 			delete[] buffer;
 			break;
 	}
-	bufferDataMutex.unlock();
 	rs.nextFrame++;
 }
 
