@@ -1006,7 +1006,7 @@ function compile_libx264()
 		configure+=$'\t'--disable-asm
 	fi
 	if [[ $BSH_HOST_ARCH-$BSH_HOST_PLATFORM == aarch64-darwin ]]; then
-		configure+=$'\t'--host=arm64:Darwin
+		configure+=$'\t'--host=arm64-apple-darwin
 	fi
 	# install as dependency
 	$configure
