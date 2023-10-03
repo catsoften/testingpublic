@@ -992,6 +992,7 @@ function compile_nasm() # nothing included in output libraries, just needed to c
 	else
 		make install -j$NPROC
 	fi
+	export PATH=$PATH:/usr/local/bin
 	uncd_and_unget
 }
 
