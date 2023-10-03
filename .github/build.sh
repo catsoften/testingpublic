@@ -987,7 +987,11 @@ function compile_nasm() # nothing included in output libraries, just needed to c
 	get_and_cd nasm-2.16.01.tar.gz nasm_version
 	./autogen.sh
 	./configure
-	make install -j$NPROC
+	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
+		sudo make install -j$NPROC
+	else
+		make install -j$NPROC
+	fi
 	uncd_and_unget
 }
 
