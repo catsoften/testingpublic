@@ -995,6 +995,28 @@ function compile_nasm() # nothing included in output libraries, just needed to c
 	uncd_and_unget
 }
 
+function compile_libx264()
+{
+	get_and_cd x264-r3107-a8b68eb.tar.gz libx264_version
+	local configure=./configure
+	configure+=$'\t'--enable-static
+	configure+=$'\t'--enable-pic
+	# install as dependency
+	$configure
+	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
+		sudo make install -j$NPROC
+	else
+		make install -j$NPROC
+	fi
+
+
+
+	echo 32b1062f7da84967e7019d01ab805935caa7ab7321a7ced0e30ebe75e5df1670 COPYING | sha256sum -c
+	cp COPYING $zip_root_real/licenses/libx264.LICENSE
+	uncd_and_unget
+	library_versions+="libx264_version = 'libx264_version-tpt-libs'"$'\n'
+}
+
 function compile() {
 	local what=$1 # $2 and up hold names of libraries that have to be compiled before $what
 	declare -n status=status_$what
@@ -1019,6 +1041,7 @@ function compile() {
 if [[ $BSH_HOST_ARCH == x86_64 ]]; then
 	compile nasm
 fi
+compile libx264
 
 compile nghttp2
 compile bzip2
