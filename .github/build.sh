@@ -34,7 +34,7 @@ tarball_hash() {
 	nghttp2-1.50.0.tar.gz)     sha256sum=6de469efc8e9d47059327a6736aebe0a7d73f57e5e37ab4c4f838fb1eebd7889;; # acquired from https://github.com/nghttp2/nghttp2/archive/refs/tags/v1.50.0.tar.gz
 	libwebp-1.3.0.tar.gz)      sha256sum=64ac4614db292ae8c5aa26de0295bf1623dbb3985054cb656c55e67431def17c;; # acquired from https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.3.0.tar.gz
 	nasm-2.16.01.tar.gz)       sha256sum=d833bf0f5716e89dbcd345b7f545f25fe348c6e2ef16dbc293e1027bcd22d881;; # acquired from https://www.nasm.us/pub/nasm/releasebuilds/2.16.01/nasm-2.16.01.tar.gz
-	x264-r3107-a8b68eb.tar.gz) sha256sum=31b793b83a809a1b48cfd11ce297fc51e787650fba80f90cf62a369421343c5d;; # acquired from https://code.videolan.org/videolan/x264/-/archive/master/x264-master.tar.gz commit a8b68ebfaa68621b5ac8907610d3335971839d52
+	x264-r3144-5a9dfdd.tar.gz) sha256sum=bdf78389624608e482eb049f915c45e756afd37ec4bfb95067fbee6a579e3376;; # acquired from https://code.videolan.org/videolan/x264/-/archive/master/x264-master.tar.gz commit 5a9dfddea49aae58fd18750d130301c947f7d217
 	ffmpeg-6.0.tar.gz)         sha256sum=f4ccf961403752c93961927715f524576d1f4dd02cd76d8c76aed3bbe6686656;; # acquired from https://ffmpeg.org/releases/ffmpeg-6.0.tar.gz
 	*)                                         >&2 echo "no such tarball (update tarball_hash)" && exit 1;;
 	esac
@@ -998,10 +998,13 @@ function compile_nasm() # nothing included in output libraries, just needed to c
 
 function compile_libx264()
 {
-	get_and_cd x264-r3107-a8b68eb.tar.gz libx264_version
+	get_and_cd x264-r3144-5a9dfdd.tar.gz libx264_version
 	local configure=./configure
 	configure+=$'\t'--enable-static
 	configure+=$'\t'--enable-pic
+	if [[ $BSH_HOST_ARCH != x86_64 ]]; then
+		configure+=$'\t'--disable-asm
+	fi
 	# install as dependency
 	$configure
 	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
