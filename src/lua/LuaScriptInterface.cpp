@@ -2302,7 +2302,6 @@ int LuaScriptInterface::simulation_prettyPowders(lua_State * l)
 	}
 	int prettyPowder = luaL_optint(l, 1, 0);
 	luacon_sim->pretty_powder = prettyPowder;
-	luacon_model->UpdateQuickOptions();
 	return 0;
 }
 
@@ -2315,8 +2314,7 @@ int LuaScriptInterface::simulation_gravityGrid(lua_State * l)
 		return 1;
 	}
 	int gravityGrid = luaL_optint(l, 1, 0);
-	luacon_model->ShowGravityGrid(gravityGrid);
-	luacon_model->UpdateQuickOptions();
+	luacon_model->SetGravityGrid(gravityGrid);
 	return 0;
 }
 

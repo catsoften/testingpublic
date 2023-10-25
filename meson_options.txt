@@ -280,3 +280,9 @@ option(
 	value: '',
 	description: 'Build date string, used by ghactions workflows, not useful otherwise'
 )
+option(
+	'touch_ui',
+	type: 'boolean',
+	value: false,
+	description: 'Use touchscreen-friendly ui'
+)

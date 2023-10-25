@@ -70,6 +70,16 @@ void ScrollPanel::Draw(const Point& screenPos)
 	}
 }
 
+void ScrollPanel::OnMouseHover(int localx, int localy)
+{
+	if (localx < 0 || localy < 0 || localx > Size.X || localy > Size.Y)
+	{
+		return;
+	}
+
+	Panel::OnMouseHover(localx + offsetX, localy + offsetY);
+}
+
 void ScrollPanel::XOnMouseClick(int x, int y, unsigned int button)
 {
 	if (isMouseInsideScrollbar)

@@ -9,7 +9,6 @@
 
 class Menu;
 class Tool;
-class QuickOption;
 class Brush;
 class GameView;
 class Notification;
@@ -67,7 +66,6 @@ private:
 	Simulation * sim;
 	Renderer * ren;
 	std::vector<Menu*> menuList;
-	std::vector<QuickOption*> quickOptions;
 	int activeMenu;
 	int currentBrush;
 	std::vector<std::unique_ptr<Brush>> brushList;
@@ -122,7 +120,6 @@ private:
 	void notifyLogChanged(String entry);
 	void notifyInfoTipChanged();
 	void notifyToolTipChanged();
-	void notifyQuickOptionsChanged();
 	void notifyLastToolChanged();
 
 	void SaveToSimParameters(const GameSave &saveData);
@@ -168,7 +165,6 @@ public:
 	void BuildMenus();
 	void BuildFavoritesMenu();
 	void BuildBrushList();
-	void BuildQuickOptionMenu(GameController * controller);
 
 	const Snapshot *HistoryCurrent() const;
 	bool HistoryCanRestore() const;
@@ -178,8 +174,6 @@ public:
 	void HistoryPush(std::unique_ptr<Snapshot> last);
 	unsigned int GetUndoHistoryLimit();
 	void SetUndoHistoryLimit(unsigned int undoHistoryLimit_);
-
-	void UpdateQuickOptions();
 
 	Tool * GetActiveTool(int selection);
 	void SetActiveTool(int selection, Tool * tool);
@@ -215,11 +209,10 @@ public:
 	void ResetAHeat();
 	void SetNewtonianGravity(bool newtonainGravity);
 	bool GetNewtonianGrvity();
-	void ShowGravityGrid(bool showGrid);
+	void SetGravityGrid(bool gridState);
 	bool GetGravityGrid();
 	void ClearSimulation();
 	std::vector<Menu*> GetMenuList();
-	std::vector<QuickOption*> GetQuickOptions();
 	void SetActiveMenu(int menuID);
 	int GetActiveMenu();
 	void FrameStep(int frames);

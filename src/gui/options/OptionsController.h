@@ -9,10 +9,9 @@ class OptionsController
 	GameModel * gModel;
 	OptionsView * view;
 	OptionsModel * model;
-	std::function<void ()> onDone;
 public:
 	bool HasExited;
-	OptionsController(GameModel * gModel_, std::function<void ()> onDone = nullptr);
+	OptionsController(GameModel * gModel_);
 	void SetHeatSimulation(bool state);
 	void SetAmbientHeatSimulation(bool state);
 	void SetNewtonianGravity(bool state);

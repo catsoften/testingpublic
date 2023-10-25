@@ -9,9 +9,14 @@ powder_files += files(
 	'GOLTool.cpp',
 	'Menu.cpp',
 	'PropertyTool.cpp',
-	'QuickOptions.cpp',
 	'SampleTool.cpp',
 	'SignTool.cpp',
 	'ToolButton.cpp',
 	'Tool.cpp',
 )
+
+if get_option('touch_ui')
+	powder_files += files('GameViewTouchUI.cpp')
+else
+	powder_files += files('GameViewBasic.cpp')
+endif

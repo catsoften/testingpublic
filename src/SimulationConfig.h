@@ -2,8 +2,10 @@
 #include <cstdint>
 #include <common/Vec2.h>
 
-constexpr int MENUSIZE = 40;
-constexpr int BARSIZE  = 17;
+#include "Config.h"
+
+constexpr int MENUSIZE = TOUCH_UI ? 32 : 40;
+constexpr int BARSIZE  = TOUCH_UI ? 32 : 17;
 
 constexpr float M_GRAV = 6.67300e-1f;
 

@@ -50,6 +50,7 @@ conf_data.set('ALLOW_QUIT', allow_quit.to_string())
 conf_data.set('FORCE_WINDOW_FRAME_OPS', force_window_frame_ops)
 conf_data.set('DEFAULT_TOUCH_UI', default_touch_ui.to_string())
 conf_data.set('ALLOW_DATA_FOLDER', allow_data_folder.to_string())
+conf_data.set('TOUCH_UI', get_option('touch_ui').to_string())
 conf_data.set('ENFORCE_HTTPS', enforce_https.to_string())
 conf_data.set('SECURE_CIPHERS_ONLY', secure_ciphers_only.to_string())
 

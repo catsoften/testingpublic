@@ -7,6 +7,7 @@
 
 #include "gui/interface/Textbox.h"
 #include "gui/interface/Label.h"
+#include "gui/interface/ScrollPanel.h"
 #include "gui/game/Tool.h"
 #include "gui/game/Menu.h"
 #include "gui/Style.h"
@@ -17,8 +18,10 @@
 
 #include "graphics/Graphics.h"
 
+#include "simulation/SimulationData.h"
+
 ElementSearchActivity::ElementSearchActivity(GameController * gameController, std::vector<Tool*> tools) :
-	WindowActivity(ui::Point(-1, -1), ui::Point(236, 302)),
+	WindowActivity(ui::Point(-1, -1), TOUCH_UI ? ui::Point(XRES-71, YRES-71) : ui::Point(236, 302)),
 	firstResult(NULL),
 	gameController(gameController),
 	tools(tools),
@@ -35,36 +38,136 @@ ElementSearchActivity::ElementSearchActivity(GameController * gameController, st
 	title->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	AddComponent(title);
 
-	searchField = new ui::Textbox(ui::Point(8, 23), ui::Point(Size.X-16, 17), "");
-	searchField->SetActionCallback({ [this] { searchTools(searchField->GetText()); } });
+	searchField = new ui::Textbox(ui::Point(8, 23), ui::Point(Size.X - (TOUCH_UI ? 72 : 16), 17), "");
+	searchField->SetActionCallback({ [this] { SearchTools(searchField->GetText()); } });
 	searchField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	AddComponent(searchField);
 	FocusComponent(searchField);
 
-	ui::Button * closeButton = new ui::Button(ui::Point(0, Size.Y-15), ui::Point((Size.X/2)+1, 15), "Close");
-	closeButton->SetActionCallback({ [this] { exit = true; } });
-	ui::Button * okButton = new ui::Button(ui::Point(Size.X/2, Size.Y-15), ui::Point(Size.X/2, 15), "OK");
-	okButton->SetActionCallback({ [this] {
-		if (GetFirstResult())
-			SetActiveTool(0, GetFirstResult());
-	} });
+	scrollPanel = new ui::ScrollPanel(
+		searchField->Position + Vec2{1, searchField->Size.Y + 9},
+		Size - Vec2{18, searchField->Position.Y + searchField->Size.Y + (TOUCH_UI ? 18 : 33)}
+	);
+	AddComponent(scrollPanel);
 
-	AddComponent(okButton);
+	ui::Button * closeButton;
+	if constexpr (TOUCH_UI)
+	{
+		closeButton = new ui::Button(ui::Point(Size.X - 56, 8), ui::Point(48, 32), "Close");
+	}
+	else
+	{
+		closeButton = new ui::Button(ui::Point(0, Size.Y-15), ui::Point((Size.X/2)+1, 15), "Close");
+
+		ui::Button * okButton = new ui::Button(ui::Point(Size.X/2, Size.Y-15), ui::Point(Size.X/2, 15), "OK");
+		okButton->SetActionCallback({ [this] {
+			if (GetFirstResult())
+				SetActiveTool(0, GetFirstResult());
+		} });
+		AddComponent(okButton);
+	}
+	closeButton->SetActionCallback({ [this] { exit = true; } });
 	AddComponent(closeButton);
 
-	searchTools("");
+	SearchTools("");
 }
 
-void ElementSearchActivity::searchTools(String query)
+void ElementSearchActivity::PlaceTool(Tool * tool, ui::Point position)
+{
+	position += TOUCH_UI ? Vec2{3, 3} : Vec2{1, 1};
+
+	std::unique_ptr<VideoBuffer> tempTexture = tool->GetTexture(ToolButton::DEFAULT_SIZE - Vec2{4, 4});
+	ToolButton * tempButton;
+
+	if(tempTexture)
+		tempButton = new ToolButton(position, ToolButton::DEFAULT_SIZE, "", tool->Identifier, tool->Description);
+	else
+		tempButton = new ToolButton(position, ToolButton::DEFAULT_SIZE, tool->Name, tool->Identifier, tool->Description);
+
+	tempButton->Appearance.SetTexture(std::move(tempTexture));
+	tempButton->Appearance.BackgroundInactive = tool->Colour.WithAlpha(0xFF);
+	tempButton->SetActionCallback({ [this, tempButton, tool] {
+		if (tempButton->GetSelectionState() >= 0 && tempButton->GetSelectionState() <= 2)
+			SetActiveTool(tempButton->GetSelectionState(), tool);
+	} });
+
+	if(gameController->GetActiveTool(0) == tool)
+	{
+		tempButton->SetSelectionState(0);	//Primary
+	}
+	else if(gameController->GetActiveTool(1) == tool)
+	{
+		tempButton->SetSelectionState(1);	//Secondary
+	}
+	else if(gameController->GetActiveTool(2) == tool)
+	{
+		tempButton->SetSelectionState(2);	//Tertiary
+	}
+
+	scrollPanel->AddChild(tempButton);
+	toolButtons.push_back(tempButton);
+}
+
+void ElementSearchActivity::PlaceTools() // Touch UI element selector layout
+{
+	ui::Point current = ui::Point(0, 0);
+	auto menuList = gameController->GetMenuList();
+	for (size_t i = 0; i < menuList.size(); i++)
+	{
+		auto menu = menuList[i];
+		if (menu->GetVisible() && i != SC_DECO)
+		{
+			current.Y += 5 + (current.X ? ToolButton::DEFAULT_SIZE.Y : 0);
+			current.X = 0;
+
+			ui::Label * tempLabel = new ui::Label(ui::Point(4, current.Y - 2), ui::Point(12, 15), menu->GetIcon());
+			scrollPanel->AddChild(tempLabel);
+			menuLabels.push_back(tempLabel);
+
+			tempLabel = new ui::Label(ui::Point(16, current.Y), ui::Point(scrollPanel->Size.X-20, 15), menu->GetDescription());
+			tempLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+			scrollPanel->AddChild(tempLabel);
+			menuLabels.push_back(tempLabel);
+			current.Y += 11;
+
+			for (auto tool : menu->GetToolList())
+			{
+				PlaceTool(tool, current);
+				current.X += ToolButton::DEFAULT_SIZE.X + 1;
+
+				if(current.X + ToolButton::DEFAULT_SIZE.X > scrollPanel->Size.X)
+				{
+					current.X = 0;
+					current.Y += ToolButton::DEFAULT_SIZE.Y + 1;
+				}
+			}
+		}
+	}
+	scrollPanel->InnerSize = ui::Point(scrollPanel->Size.X, current.Y + ToolButton::DEFAULT_SIZE.Y + 6);
+}
+
+void ElementSearchActivity::SearchTools(String query)
 {
 	firstResult = NULL;
-	for (auto &toolButton : toolButtons) {
-		RemoveComponent(toolButton);
+	for (auto toolButton : toolButtons) {
+		scrollPanel->RemoveChild(toolButton);
 		delete toolButton;
 	}
 	toolButtons.clear();
+	if constexpr (TOUCH_UI)
+	{
+		for (auto menuLabel : menuLabels) {
+			scrollPanel->RemoveChild(menuLabel);
+			delete menuLabel;
+		}
+		menuLabels.clear();
+		if (!query.length())
+		{
+			PlaceTools();
+			return;
+		}
+	}
 
-	ui::Point viewPosition = searchField->Position + ui::Point(2+0, searchField->Size.Y+2+8);
 	ui::Point current = ui::Point(0, 0);
 
 	String queryLower = query.ToLower();
@@ -149,47 +252,19 @@ void ElementSearchActivity::searchTools(String query)
 		if(!firstResult)
 			firstResult = tool;
 
-		std::unique_ptr<VideoBuffer> tempTexture = tool->GetTexture(Vec2(26, 14));
-		ToolButton * tempButton;
+		PlaceTool(tool, current);
+		current.X += ToolButton::DEFAULT_SIZE.X + 1;
 
-		if(tempTexture)
-			tempButton = new ToolButton(current+viewPosition, ui::Point(30, 18), "", tool->Identifier, tool->Description);
-		else
-			tempButton = new ToolButton(current+viewPosition, ui::Point(30, 18), tool->Name, tool->Identifier, tool->Description);
-
-		tempButton->Appearance.SetTexture(std::move(tempTexture));
-		tempButton->Appearance.BackgroundInactive = tool->Colour.WithAlpha(0xFF);
-		tempButton->SetActionCallback({ [this, tempButton, tool] {
-			if (tempButton->GetSelectionState() >= 0 && tempButton->GetSelectionState() <= 2)
-				SetActiveTool(tempButton->GetSelectionState(), tool);
-		} });
-
-		if(gameController->GetActiveTool(0) == tool)
+		if(current.X + ToolButton::DEFAULT_SIZE.X > scrollPanel->Size.X)
 		{
-			tempButton->SetSelectionState(0);	//Primary
-		}
-		else if(gameController->GetActiveTool(1) == tool)
-		{
-			tempButton->SetSelectionState(1);	//Secondary
-		}
-		else if(gameController->GetActiveTool(2) == tool)
-		{
-			tempButton->SetSelectionState(2);	//Tertiary
-		}
-
-		toolButtons.push_back(tempButton);
-		AddComponent(tempButton);
-
-		current.X += 31;
-
-		if(current.X + 30 > searchField->Size.X) {
 			current.X = 0;
-			current.Y += 19;
+			current.Y += ToolButton::DEFAULT_SIZE.Y + 1;
 		}
 
-		if(current.Y + viewPosition.Y + 18 > Size.Y-23)
+		if(current.Y + ToolButton::DEFAULT_SIZE.Y > scrollPanel->Size.Y)
 			break;
 	}
+	scrollPanel->InnerSize = scrollPanel->Size;
 }
 
 void ElementSearchActivity::SetActiveTool(int selectionState, Tool * tool)
@@ -216,12 +291,12 @@ void ElementSearchActivity::OnDraw()
 	g->DrawRect(RectSized(Position, Size), 0xFFFFFF_rgb);
 
 	g->BlendRect(
-		RectSized(Position + searchField->Position + Vec2{ 0, searchField->Size.Y+8 },
-		{ searchField->Size.X, Size.Y-(searchField->Position.Y+searchField->Size.Y+8)-23 }),
-		0xFFFFFF_rgb .WithAlpha(180));
+		RectSized(Position + scrollPanel->Position - Vec2{1, 1}, scrollPanel->Size + Vec2{2, 2}),
+		0xFFFFFF_rgb .WithAlpha(180)
+	);
 	if (toolTipPresence && toolTip.length())
 	{
-		g->BlendText({ 10, Size.Y+70 }, toolTip, 0xFFFFFF_rgb .WithAlpha(toolTipPresence>51?255:toolTipPresence*5));
+		g->BlendText({ 10, WINDOWH-MENUSIZE-12 }, toolTip, 0xFFFFFF_rgb .WithAlpha(toolTipPresence>51?255:toolTipPresence*5));
 	}
 }
 

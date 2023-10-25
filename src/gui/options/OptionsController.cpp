@@ -5,9 +5,8 @@
 
 #include "Controller.h"
 
-OptionsController::OptionsController(GameModel * gModel_, std::function<void ()> onDone_):
+OptionsController::OptionsController(GameModel * gModel_):
 	gModel(gModel_),
-	onDone(onDone_),
 	HasExited(false)
 {
 	view = new OptionsView();
@@ -151,8 +150,6 @@ void OptionsController::Exit()
 {
 	view->CloseActiveWindow();
 
-	if (onDone)
-		onDone();
 	HasExited = true;
 }
 

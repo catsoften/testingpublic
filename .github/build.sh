@@ -331,6 +331,7 @@ if [[ $RELEASE_TYPE == tptlibsdev ]] && ([[ $BSH_HOST_PLATFORM == windows ]] || 
 fi
 if [[ $BSH_HOST_PLATFORM == android ]]; then
 	android_platform=android-30
+	meson_configure+=$'\t'-Dtouch_ui=true
 	meson_configure+=$'\t'--cross-file=android/cross/$BSH_HOST_ARCH.ini
 	cat << ANDROID_INI > .github/android-ghactions.ini
 [constants]

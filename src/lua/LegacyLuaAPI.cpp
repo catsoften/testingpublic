@@ -1099,7 +1099,6 @@ int luatpt_gravity(lua_State* l)
 		luacon_sim->grav->start_grav_async();
 	else
 		luacon_sim->grav->stop_grav_async();
-	luacon_model->UpdateQuickOptions();
 	return 0;
 }
 
@@ -1113,7 +1112,6 @@ int luatpt_airheat(lua_State* l)
 	}
 	int aheatstate = luaL_checkint(l, 1);
 	luacon_sim->aheat_enable = (aheatstate==0?0:1);
-	luacon_model->UpdateQuickOptions();
 	return 0;
 }
 
@@ -1174,7 +1172,6 @@ int luatpt_decorations_enable(lua_State* l)
 	}
 	int decostate = luaL_checkint(l, 1);
 	luacon_model->SetDecoration(decostate==0?false:true);
-	luacon_model->UpdateQuickOptions();
 	return 0;
 }
 

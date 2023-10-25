@@ -23,6 +23,7 @@ constexpr bool FFTW_PLAN_MEASURE        = @FFTW_PLAN_MEASURE@;
 constexpr bool ALLOW_QUIT               = @ALLOW_QUIT@;
 constexpr bool DEFAULT_TOUCH_UI         = @DEFAULT_TOUCH_UI@;
 constexpr bool ALLOW_DATA_FOLDER        = @ALLOW_DATA_FOLDER@;
+constexpr bool TOUCH_UI                 = @TOUCH_UI@;
 constexpr char PATH_SEP_CHAR            = '@PATH_SEP_CHAR@';
 
 enum ForceWindowFrameOps

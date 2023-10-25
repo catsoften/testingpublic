@@ -82,5 +82,7 @@ public:
 
 protected:
 	bool isButtonDown, state, isMouseInside, selected, selectable;
+	Point lastClickPos;
+	float holdingTime;
 };
 }

@@ -10,6 +10,8 @@ class GameController;
 
 namespace ui
 {
+	class Label;
+	class ScrollPanel;
 	class Textbox;
 }
 
@@ -19,6 +21,8 @@ class ElementSearchActivity: public WindowActivity
 	GameController * gameController;
 	std::vector<Tool*> tools;
 	ui::Textbox * searchField;
+	ui::ScrollPanel * scrollPanel;
+	std::vector<ui::Label*> menuLabels;
 	std::vector<ToolButton*> toolButtons;
 	String toolTip;
 	int toolTipPresence;
@@ -26,7 +30,9 @@ class ElementSearchActivity: public WindowActivity
 	bool ctrlPressed;
 	bool altPressed;
 	bool isToolTipFadingIn;
-	void searchTools(String query);
+	void PlaceTool(Tool * tool, ui::Point position);
+	void PlaceTools();
+	void SearchTools(String query);
 
 public:
 	bool exit;
