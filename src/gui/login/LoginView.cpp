@@ -21,7 +21,10 @@ LoginView::LoginView():
 	targetSize(0, 0)
 {
 	targetSize = Size;
-	FocusComponent(usernameField);
+	if constexpr (!TOUCH_UI)
+	{
+		FocusComponent(usernameField);
+	}
 
 	infoLabel->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
 	infoLabel->Appearance.VerticalAlign = ui::Appearance::AlignTop;

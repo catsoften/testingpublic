@@ -19,7 +19,10 @@ ConsoleView::ConsoleView():
 	commandField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	commandField->SetActionCallback({ [this] { commandField->SetDisplayText(c->FormatCommand(commandField->GetText())); } });
 	AddComponent(commandField);
-	FocusComponent(commandField);
+	if constexpr (!TOUCH_UI)
+	{
+		FocusComponent(commandField);
+	}
 	commandField->SetBorder(false);
 }
 

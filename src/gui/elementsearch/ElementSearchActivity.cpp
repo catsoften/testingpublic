@@ -42,7 +42,10 @@ ElementSearchActivity::ElementSearchActivity(GameController * gameController, st
 	searchField->SetActionCallback({ [this] { SearchTools(searchField->GetText()); } });
 	searchField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	AddComponent(searchField);
-	FocusComponent(searchField);
+	if constexpr (!TOUCH_UI)
+	{
+		FocusComponent(searchField);
+	}
 
 	scrollPanel = new ui::ScrollPanel(
 		searchField->Position + Vec2{1, searchField->Size.Y + 9},

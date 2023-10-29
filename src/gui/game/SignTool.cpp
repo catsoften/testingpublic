@@ -112,7 +112,10 @@ SignWindow::SignWindow(SignTool * tool_, Simulation * sim_, int signID_, ui::Poi
 		}
 	} });
 	AddComponent(textField);
-	FocusComponent(textField);
+	if constexpr (!TOUCH_UI)
+	{
+		FocusComponent(textField);
+	}
 
 	if(signID!=-1)
 	{

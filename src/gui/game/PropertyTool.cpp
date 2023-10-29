@@ -92,7 +92,10 @@ sim(sim_)
 		Update();
 	} });
 	AddComponent(textField);
-	FocusComponent(textField);
+	if constexpr (!TOUCH_UI)
+	{
+		FocusComponent(textField);
+	}
 	Update();
 
 	MakeActiveWindow();

@@ -44,7 +44,10 @@ TextPrompt::TextPrompt(String title, String message, String text, String placeho
 	}
 	textField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	AddComponent(textField);
-	FocusComponent(textField);
+	if constexpr (!TOUCH_UI)
+	{
+		FocusComponent(textField);
+	}
 
 	ui::Button * cancelButton = new ui::Button(ui::Point(0, Size.Y-16), ui::Point((Size.X/2)+1, 16), "Cancel");
 	cancelButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;

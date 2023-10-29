@@ -52,7 +52,10 @@ SearchView::SearchView():
 	searchField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	searchField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	searchField->SetActionCallback({ [this] { doSearch(); } });
-	FocusComponent(searchField);
+	if constexpr (!TOUCH_UI)
+	{
+		FocusComponent(searchField);
+	}
 
 	sortButton = new ui::Button(ui::Point(WINDOWW-140, 10), ui::Point(61, 17), "Sort");
 	sortButton->SetIcon(IconVoteSort);

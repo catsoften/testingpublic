@@ -80,7 +80,10 @@ ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, OnUplo
 	nameField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	nameField->SetActionCallback({ [this] { CheckName(nameField->GetText()); } });
 	AddComponent(nameField);
-	FocusComponent(nameField);
+	if constexpr (!TOUCH_UI)
+	{
+		FocusComponent(nameField);
+	}
 
 	descriptionField = new ui::Textbox(ui::Point(8, 65), ui::Point((Size.X/2)-16, Size.Y-(65+16+4)), save->GetDescription(), "[save description]");
 	descriptionField->SetMultiline(true);
