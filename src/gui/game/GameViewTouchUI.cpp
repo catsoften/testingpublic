@@ -90,7 +90,7 @@ void GameView::InitUI()
 	currentY = Size.Y-MENUSIZE-38;
 
 	// Stamp Browser
-	tempButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(130, 30), "Stamp Browser", "");
+	tempButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(130, 30), "Stamp Browser", "Open the stamp browser");
 	tempButton->SetIcon(IconStamp);
 	tempButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	tempButton->Appearance.Margin.Left+=2;
@@ -103,7 +103,7 @@ void GameView::InitUI()
 	currentY-=31;
 
 	// Show HUD
-	tempButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(130, 30), "Show HUD", "");
+	tempButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(130, 30), "Show HUD", "Show or hide the HUD");
 	tempButton->SetIcon(IconHUD);
 	tempButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	tempButton->Appearance.Margin.Left+=2;
@@ -115,7 +115,7 @@ void GameView::InitUI()
 	currentY-=31;
 
 	// Debug HUD
-	tempButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(130, 30), "Debug HUD", "");
+	tempButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(130, 30), "Debug HUD", "Display extra information in the HUD");
 	tempButton->SetIcon(IconDebugHUD);
 	tempButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	tempButton->Appearance.Margin.Left+=2;
@@ -127,7 +127,7 @@ void GameView::InitUI()
 	currentY-=31;
 
 	// Toggle Grid
-	tempButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(70, 30), "Grid", "");
+	tempButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(70, 30), "Grid", "Toggle grid overlay");
 	tempButton->SetIcon(IconGrid);
 	tempButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	tempButton->Appearance.Margin.Left+=2;
@@ -138,20 +138,20 @@ void GameView::InitUI()
 	mainMenuButtons.push_back(tempButton);
 
 	// Smaller Grid
-	tempButton = new ui::Button(ui::Point(currentX + 70, currentY), ui::Point(30, 30), "-", "");
+	tempButton = new ui::Button(ui::Point(currentX + 70, currentY), ui::Point(30, 30), "-", "Decrease grid overlay spacing");
 	tempButton->SetActionCallback({ [this] { c->AdjustGridSize(-1); } });
 	AddComponent(tempButton);
 	mainMenuButtons.push_back(tempButton);
 
 	// Larger Grid
-	tempButton = new ui::Button(ui::Point(currentX + 100, currentY), ui::Point(30, 30), "+", "");
+	tempButton = new ui::Button(ui::Point(currentX + 100, currentY), ui::Point(30, 30), "+", "Increase grid overlay spacing");
 	tempButton->SetActionCallback({ [this] { c->AdjustGridSize(1); } });
 	AddComponent(tempButton);
 	mainMenuButtons.push_back(tempButton);
 	currentY-=31;
 
 	// Find Element
-	tempButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(130, 30), "Find Element", "");
+	tempButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(130, 30), "Find Element", "Highlight the selected element in the simulation");
 	tempButton->SetIcon(IconFind);
 	tempButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	tempButton->Appearance.Margin.Left+=2;
@@ -163,7 +163,7 @@ void GameView::InitUI()
 	currentY-=31;
 
 	// Single-Step Frame
-	tempButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(130, 30), "Single-Step Frame", "");
+	tempButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(130, 30), "Single-Step Frame", "Advance the simulation by a single frame");
 	tempButton->SetIcon(IconFrameStep);
 	tempButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	tempButton->Appearance.Margin.Left+=2;
@@ -186,7 +186,7 @@ void GameView::InitUI()
 	currentY-=31;
 
 	// Exit Game
-	tempButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(130, 30), "Exit Game", "");
+	tempButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(130, 30), "Exit Game", "Exit the game");
 	tempButton->SetIcon(IconExit);
 	tempButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	tempButton->Appearance.Margin.Left+=2;
@@ -196,7 +196,7 @@ void GameView::InitUI()
 	currentY-=31;
 
 	// Authorship Info
-	authorshipInfoButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(130, 30), "Authorship Info", "");
+	authorshipInfoButton = new ui::Button(ui::Point(currentX, currentY), ui::Point(130, 30), "Authorship Info", "Bagels");
 	authorshipInfoButton->SetIcon(Icon1984);
 	authorshipInfoButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	authorshipInfoButton->Appearance.Margin.Left+=2;
@@ -303,7 +303,7 @@ void GameView::InitUI()
 	AddComponent(tempButton);
 
 	// Circle Brush
-	tempButton = new ui::Button(ui::Point(currentX - 131, currentY), ui::Point(50, 30), "", "");
+	tempButton = new ui::Button(ui::Point(currentX - 131, currentY), ui::Point(50, 30), "", "Change to circle brush");
 	tempButton->SetIcon(IconBrushCircle);
 	tempButton->SetTogglable(true);
 	tempButton->SetActionCallback({ [this] { c->SetBrushID(0); } });
@@ -312,7 +312,7 @@ void GameView::InitUI()
 	brushOptionsMenuButtons.push_back(tempButton);
 
 	// Square Brush
-	tempButton = new ui::Button(ui::Point(currentX - 81, currentY), ui::Point(40, 30), "", "");
+	tempButton = new ui::Button(ui::Point(currentX - 81, currentY), ui::Point(40, 30), "", "Change to square brush");
 	tempButton->SetIcon(IconBrushSquare);
 	tempButton->SetTogglable(true);
 	tempButton->SetActionCallback({ [this] { c->SetBrushID(1); } });
@@ -321,7 +321,7 @@ void GameView::InitUI()
 	brushOptionsMenuButtons.push_back(tempButton);
 
 	// Triangle Brush
-	tempButton = new ui::Button(ui::Point(currentX - 41, currentY), ui::Point(40, 30), "", "");
+	tempButton = new ui::Button(ui::Point(currentX - 41, currentY), ui::Point(40, 30), "", "Change to triangle brush");
 	tempButton->SetIcon(IconBrushTriangle);
 	tempButton->SetTogglable(true);
 	tempButton->SetActionCallback({ [this] { c->SetBrushID(2); } });
@@ -331,20 +331,20 @@ void GameView::InitUI()
 	currentY+=31;
 
 	// Smaller Brush
-	smallerBrushButton = new ui::Button(ui::Point(currentX - 131, currentY), ui::Point(65, 30), "-", "");
+	smallerBrushButton = new ui::Button(ui::Point(currentX - 131, currentY), ui::Point(65, 30), "-", "Decrease brush size");
 	smallerBrushButton->SetActionCallback({ [this] { c->AdjustBrushSize(-1); } });
 	AddComponent(smallerBrushButton);
 	brushOptionsMenuButtons.push_back(smallerBrushButton);
 
 	// Larger Brush
-	largerBrushButton = new ui::Button(ui::Point(currentX - 66, currentY), ui::Point(65, 30), "+", "");
+	largerBrushButton = new ui::Button(ui::Point(currentX - 66, currentY), ui::Point(65, 30), "+", "Increase brush size");
 	largerBrushButton->SetActionCallback({ [this] { c->AdjustBrushSize(1); } });
 	AddComponent(largerBrushButton);
 	brushOptionsMenuButtons.push_back(largerBrushButton);
 	currentY+=31;
 
 	// Replace Mode
-	tempButton = new ui::Button(ui::Point(currentX - 131, currentY), ui::Point(65, 30), "Replace", "");
+	tempButton = new ui::Button(ui::Point(currentX - 131, currentY), ui::Point(65, 30), "Replace", "Replace existing particles instead of creating new ones");
 	tempButton->SetIcon(IconReplace);
 	tempButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	tempButton->Appearance.Margin.Left+=2;
@@ -354,7 +354,7 @@ void GameView::InitUI()
 	AddComponent(tempButton);
 	brushOptionsMenuButtons.push_back(tempButton);
 
-	// Specific Delete Mode
+	// Specific Delete Mode TODO: Make this do something or remove it
 	tempButton = new ui::Button(ui::Point(currentX - 66, currentY), ui::Point(65, 30), "Specific\nDelete", "");
 	tempButton->SetIcon(IconSpecificDelete);
 	tempButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
@@ -367,21 +367,21 @@ void GameView::InitUI()
 	currentY+=31;
 
 	// Copy
-	tempButton = new ui::Button(ui::Point(currentX - 131, currentY), ui::Point(40, 30), "", "");
+	tempButton = new ui::Button(ui::Point(currentX - 131, currentY), ui::Point(40, 30), "", "Copy a part of the simulation");
 	tempButton->SetIcon(IconCopy);
 	tempButton->SetActionCallback({ [this] { BeginCopy(); } });
 	AddComponent(tempButton);
 	brushOptionsMenuButtons.push_back(tempButton);
 
 	// Cut
-	tempButton = new ui::Button(ui::Point(currentX - 91, currentY), ui::Point(40, 30), "", "");
+	tempButton = new ui::Button(ui::Point(currentX - 91, currentY), ui::Point(40, 30), "", "Cut a part of the simulation");
 	tempButton->SetIcon(IconCut);
 	tempButton->SetActionCallback({ [this] { BeginCut(); } });
 	AddComponent(tempButton);
 	brushOptionsMenuButtons.push_back(tempButton);
 
 	// Paste
-	pasteButton = new ui::Button(ui::Point(currentX - 51, currentY), ui::Point(50, 30), "Paste", "");
+	pasteButton = new ui::Button(ui::Point(currentX - 51, currentY), ui::Point(50, 30), "Paste", "Paste into the simulation");
 	pasteButton->SetIcon(IconStamp);
 	pasteButton->SetActionCallback({ [this] { BeginPaste(); } });
 	AddComponent(pasteButton);
@@ -389,7 +389,7 @@ void GameView::InitUI()
 	currentY+=31;
 
 	// Create Stamp
-	tempButton = new ui::Button(ui::Point(currentX - 131, currentY), ui::Point(130, 30), "Create Stamp", "");
+	tempButton = new ui::Button(ui::Point(currentX - 131, currentY), ui::Point(130, 30), "Create Stamp", "Create a new stamp from part of the simulation");
 	tempButton->SetIcon(IconStamp);
 	tempButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	tempButton->Appearance.Margin.Left+=2;
@@ -399,7 +399,7 @@ void GameView::InitUI()
 	currentY+=31;
 
 	// Undo
-	undoButton = new ui::Button(ui::Point(currentX - 131, currentY), ui::Point(65, 30), "Undo", "");
+	undoButton = new ui::Button(ui::Point(currentX - 131, currentY), ui::Point(65, 30), "Undo", "Undo the last action");
 	undoButton->SetIcon(IconUndo);
 	undoButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	undoButton->Appearance.Margin.Left+=2;
@@ -409,7 +409,7 @@ void GameView::InitUI()
 	AddComponent(undoButton);
 
 	// Redo
-	redoButton = new ui::Button(ui::Point(currentX - 66, currentY), ui::Point(65, 30), "Redo", "");
+	redoButton = new ui::Button(ui::Point(currentX - 66, currentY), ui::Point(65, 30), "Redo", "Redo the last undone action");
 	redoButton->SetIcon(IconRedo);
 	redoButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	redoButton->Appearance.Margin.Left+=2;
