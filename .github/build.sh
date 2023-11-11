@@ -1025,9 +1025,9 @@ function compile_x264()
 		$configure
 	fi
 	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
-		sudo make install -j$NPROC
+		sudo make install-lib-shared -j$NPROC
 	else
-		make install -j$NPROC
+		make install-lib-shared -j$NPROC
 	fi
 
 	# install as library
@@ -1056,6 +1056,10 @@ function compile_ffmpeg()
 	get_and_cd ffmpeg-6.0.tar.gz ffmpeg_version
 	local configure=./configure
 	configure+=$'\t'--prefix=$zip_root_real
+	if [[ $BSH_STATIC_DYNAMIC != static ]]; then
+		configure+=$'\t'--disable-static
+		configure+=$'\t'--enable-shared
+	fi
 	if [[ $BSH_HOST_ARCH != x86_64 ]]; then
 		configure+=$'\t'--disable-x86asm
 	fi
