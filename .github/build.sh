@@ -1019,9 +1019,9 @@ function compile_x264()
 
 	# install as dependency
 	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
-		CC=cl $configure --enable-shared
+		CC=cl $configure --enable-static
 	else
-		$configure --enable-shared
+		$configure --enable-static
 	fi
 	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
 		sudo make install -j$NPROC
@@ -1052,6 +1052,7 @@ function compile_x264()
 
 function compile_ffmpeg()
 {
+	pkg-config --list-all
 	get_and_cd ffmpeg-6.0.tar.gz ffmpeg_version
 	local configure=./configure
 	configure+=$'\t'--prefix=$zip_root_real
