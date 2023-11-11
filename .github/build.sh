@@ -1056,6 +1056,9 @@ function compile_ffmpeg()
 	get_and_cd ffmpeg-6.0.tar.gz ffmpeg_version
 	local configure=./configure
 	configure+=$'\t'--prefix=$zip_root_real
+	if [[ $BSH_HOST_ARCH != x86_64 ]]; then
+		configure+=$'\t'--disable-x86asm
+	fi
 	if [[ $BSH_HOST_PLATFORM == windows ]]; then
 		configure+=$'\t'--toolchain=msvc
 		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
