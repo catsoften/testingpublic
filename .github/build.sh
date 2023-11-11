@@ -968,6 +968,11 @@ function compile_libwebpmux()
 	cmake_configure+=$'\t'-DWEBP_BUILD_WEBPMUX=OFF
 	cmake_configure+=$'\t'-DWEBP_BUILD_EXTRAS=OFF
 	add_install_flags cmake_configure
+	if [[ $BSH_STATIC_DYNAMIC == static ]]; then
+		cmake_configure+=$'\t'-DWEBP_LINK_STATIC=ON
+	else
+		cmake_configure+=$'\t'-DWEBP_LINK_STATIC=OFF
+	fi
 	if [[ $BSH_HOST_PLATFORM == android ]]; then
 		add_android_flags cmake_configure
 	fi
@@ -1002,6 +1007,15 @@ function compile_libx264()
 	local configure=./configure
 	configure+=$'\t'--enable-static
 	configure+=$'\t'--enable-pic
+	configure+=$'\t'--disable-cli
+	configure+=$'\t'--disable-bashcompletion
+	configure+=$'\t'--disable-interlaced
+	configure+=$'\t'--bit-depth=8
+	if [[ $BSH_STATIC_DYNAMIC == static ]]; then
+		configure+=$'\t'--enable-static
+	else
+		configure+=$'\t'--enable-shared
+	fi
 	if [[ $BSH_HOST_ARCH != x86_64 ]]; then
 		configure+=$'\t'--disable-asm
 	fi
@@ -1009,7 +1023,7 @@ function compile_libx264()
 		configure+=$'\t'--host=arm64-apple-darwin
 	fi
 	# install as dependency
-	$configure
+	CC=cl $configure
 	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
 		sudo make install -j$NPROC
 	else
@@ -1049,6 +1063,7 @@ if [[ $BSH_HOST_ARCH == x86_64 ]]; then
 	compile nasm
 fi
 compile libx264
+exit
 
 compile nghttp2
 compile bzip2

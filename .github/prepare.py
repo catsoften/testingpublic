@@ -19,17 +19,17 @@ set_output('vtag', vtag)
 
 configurations = []
 for bsh_host_arch, bsh_host_platform, bsh_host_libc, bsh_static_dynamic, bsh_build_platform,        runs_on in [
-	(   'x86_64' ,           'linux',         'gnu',           'static',            'linux', 'ubuntu-20.04' ),
+#	(   'x86_64' ,           'linux',         'gnu',           'static',            'linux', 'ubuntu-20.04' ),
 # mingw doesn't like libwebp
 #	(   'x86_64' ,         'windows',       'mingw',           'static',          'windows', 'windows-2019' ),
 #	(   'x86_64' ,         'windows',       'mingw',          'dynamic',          'windows', 'windows-2019' ),
 	(   'x86_64' ,         'windows',        'msvc',           'static',          'windows', 'windows-2019' ),
-	(   'x86_64' ,         'windows',        'msvc',          'dynamic',          'windows', 'windows-2019' ),
+#	(   'x86_64' ,         'windows',        'msvc',          'dynamic',          'windows', 'windows-2019' ),
 # libwebp doesn't support win32
 #	(      'x86' ,         'windows',        'msvc',           'static',          'windows', 'windows-2019' ),
 #	(      'x86' ,         'windows',        'msvc',          'dynamic',          'windows', 'windows-2019' ),
-	(   'x86_64' ,          'darwin',       'macos',           'static',           'darwin',   'macos-11.0' ),
-	(  'aarch64' ,          'darwin',       'macos',           'static',           'darwin',   'macos-11.0' ),
+#	(   'x86_64' ,          'darwin',       'macos',           'static',           'darwin',   'macos-11.0' ),
+#	(  'aarch64' ,          'darwin',       'macos',           'static',           'darwin',   'macos-11.0' ),
 # not worth trying to get ffmpeg (and deps) to build for android
 #	(      'x86' ,         'android',      'bionic',           'static',            'linux', 'ubuntu-20.04' ),
 #	(   'x86_64' ,         'android',      'bionic',           'static',            'linux', 'ubuntu-20.04' ),
