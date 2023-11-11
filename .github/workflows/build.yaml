@@ -3,7 +3,7 @@ name: build
 on:
   push:
     branches:
-      - 'test'
+      - '*'
     tags:
       - 'v*' # TAGNAME=`date +v%Y%m%d%H%M%S` bash -c 'git tag -s -a $TAGNAME -m $TAGNAME'
 
