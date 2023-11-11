@@ -1019,9 +1019,9 @@ function compile_x264()
 
 	# install as dependency
 	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
-		CC=cl $configure
+		CC=cl $configure --enable-shared
 	else
-		$configure
+		$configure --enable-shared
 	fi
 	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
 		sudo make install -j$NPROC
