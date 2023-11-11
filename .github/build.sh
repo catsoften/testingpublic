@@ -1003,6 +1003,7 @@ function compile_nasm() # nothing included in output libraries, just needed to c
 
 function compile_x264()
 {
+	pkg-config --list-all
 	get_and_cd x264-r3144-5a9dfdd.tar.gz x264_version
 	local configure=./configure
 	configure+=$'\t'--enable-pic
