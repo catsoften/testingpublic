@@ -1035,6 +1035,7 @@ function compile_libx264()
 	fi
 
 	# install as library
+	make clean
 	configure+=$'\t'--prefix=$zip_root_real
 	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
 		CC=cl $configure
