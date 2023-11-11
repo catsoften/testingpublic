@@ -1023,14 +1023,25 @@ function compile_libx264()
 		configure+=$'\t'--host=arm64-apple-darwin
 	fi
 	# install as dependency
-	CC=cl $configure
+	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
+		CC=cl $configure
+	else
+		$configure
+	fi
 	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
 		sudo make install -j$NPROC
 	else
 		make install -j$NPROC
 	fi
 
-
+	# install as library
+	configure+=$'\t'--prefix$'\t'$(export_path $zip_root_real/$subdir)
+	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
+		CC=cl $configure
+	else
+		$configure
+	fi
+	make install -j$NPROC
 
 	echo 32b1062f7da84967e7019d01ab805935caa7ab7321a7ced0e30ebe75e5df1670 COPYING | sha256sum -c
 	cp COPYING $zip_root_real/licenses/libx264.LICENSE
@@ -1063,21 +1074,20 @@ if [[ $BSH_HOST_ARCH == x86_64 ]]; then
 	compile nasm
 fi
 compile libx264
-exit
 
-compile nghttp2
-compile bzip2
-compile jsoncpp
-compile mbedtls
-compile zlib
-compile curl zlib mbedtls nghttp2
-compile libpng zlib
-compile sdl2
-compile fftw
-compile lua51
-compile lua52
-compile luajit
-compile libwebpmux
+#compile nghttp2
+#compile bzip2
+#compile jsoncpp
+#compile mbedtls
+#compile zlib
+#compile curl zlib mbedtls nghttp2
+#compile libpng zlib
+#compile sdl2
+#compile fftw
+#compile lua51
+#compile lua52
+#compile luajit
+#compile libwebpmux
 
 cat - << MESON > $temp_dir/$zip_root/meson.build
 project('tpt-libs-prebuilt', [ 'c', 'cpp' ])
