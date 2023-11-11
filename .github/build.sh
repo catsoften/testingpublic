@@ -1005,7 +1005,6 @@ function compile_x264()
 {
 	get_and_cd x264-r3144-5a9dfdd.tar.gz x264_version
 	local configure=./configure
-	configure+=$'\t'--enable-static
 	configure+=$'\t'--enable-pic
 	configure+=$'\t'--disable-cli
 	configure+=$'\t'--disable-bashcompletion
@@ -1031,19 +1030,19 @@ function compile_x264()
 	fi
 
 	# install as library
-	#make clean
-	#configure+=$'\t'--prefix=$zip_root_real
-	#if [[ $BSH_STATIC_DYNAMIC == static ]]; then
-	#	configure+=$'\t'--enable-static
-	#else
-	#	configure+=$'\t'--enable-shared
-	#fi
-	#if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
-	#	CC=cl $configure
-	#else
-	#	$configure
-	#fi
-	#make install -j$NPROC
+	make clean
+	configure+=$'\t'--prefix=$zip_root_real
+	if [[ $BSH_STATIC_DYNAMIC == static ]]; then
+		configure+=$'\t'--enable-static
+	else
+		configure+=$'\t'--enable-shared
+	fi
+	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
+		CC=cl $configure
+	else
+		$configure
+	fi
+	make install -j$NPROC
 
 	echo 32b1062f7da84967e7019d01ab805935caa7ab7321a7ced0e30ebe75e5df1670 COPYING | sha256sum -c
 	cp COPYING $zip_root_real/licenses/libx264.LICENSE
