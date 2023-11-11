@@ -1001,9 +1001,9 @@ function compile_nasm() # nothing included in output libraries, just needed to c
 	uncd_and_unget
 }
 
-function compile_libx264()
+function compile_x264()
 {
-	get_and_cd x264-r3144-5a9dfdd.tar.gz libx264_version
+	get_and_cd x264-r3144-5a9dfdd.tar.gz x264_version
 	local configure=./configure
 	configure+=$'\t'--enable-static
 	configure+=$'\t'--enable-pic
@@ -1011,17 +1011,13 @@ function compile_libx264()
 	configure+=$'\t'--disable-bashcompletion
 	configure+=$'\t'--disable-interlaced
 	configure+=$'\t'--bit-depth=8
-	if [[ $BSH_STATIC_DYNAMIC == static ]]; then
-		configure+=$'\t'--enable-static
-	else
-		configure+=$'\t'--enable-shared
-	fi
 	if [[ $BSH_HOST_ARCH != x86_64 ]]; then
 		configure+=$'\t'--disable-asm
 	fi
 	if [[ $BSH_HOST_ARCH-$BSH_HOST_PLATFORM == aarch64-darwin ]]; then
 		configure+=$'\t'--host=arm64-apple-darwin
 	fi
+
 	# install as dependency
 	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
 		CC=cl $configure
@@ -1037,6 +1033,11 @@ function compile_libx264()
 	# install as library
 	make clean
 	configure+=$'\t'--prefix=$zip_root_real
+	if [[ $BSH_STATIC_DYNAMIC == static ]]; then
+		configure+=$'\t'--enable-static
+	else
+		configure+=$'\t'--enable-shared
+	fi
 	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
 		CC=cl $configure
 	else
@@ -1047,7 +1048,51 @@ function compile_libx264()
 	echo 32b1062f7da84967e7019d01ab805935caa7ab7321a7ced0e30ebe75e5df1670 COPYING | sha256sum -c
 	cp COPYING $zip_root_real/licenses/libx264.LICENSE
 	uncd_and_unget
-	library_versions+="libx264_version = 'libx264_version-tpt-libs'"$'\n'
+	library_versions+="x264_version = 'x264_version-tpt-libs'"$'\n'
+}
+
+function compile_ffmpeg()
+{
+	get_and_cd ffmpeg-6.0.tar.gz ffmpeg_version
+	local configure=./configure
+	configure+=$'\t'--prefix=$zip_root_real
+	if [[ $BSH_HOST_PLATFORM == windows ]]; then
+		configure+=$'\t'--toolchain=msvc
+		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
+			configure+=$'\t'--target-os=win64
+			configure+=$'\t'--arch=x86_64
+		fi
+	fi
+	configure+=$'\t'--enable-gpl
+	configure+=$'\t'--enable-libx264
+	configure+=$'\t'--disable-programs
+	configure+=$'\t'--disable-doc
+	configure+=$'\t'--disable-avdevice
+	configure+=$'\t'--disable-swresample
+	configure+=$'\t'--disable-postproc
+	configure+=$'\t'--disable-avfilter
+	configure+=$'\t'--disable-network
+	configure+=$'\t'--disable-encoders
+	configure+=$'\t'--enable-encoder=libx264
+	configure+=$'\t'--disable-decoders
+	configure+=$'\t'--disable-muxers
+	configure+=$'\t'--enable-muxer=mp4
+	configure+=$'\t'--disable-demuxers
+	configure+=$'\t'--disable-parsers
+	configure+=$'\t'--disable-bsfs
+	configure+=$'\t'--disable-protocols
+	configure+=$'\t'--enable-protocol=file
+	configure+=$'\t'--disable-devices
+	configure+=$'\t'--disable-filters
+	$configure
+	make install -j$NPROC
+	echo 8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643 COPYING.GPLv2 | sha256sum -c
+	cp COPYING.GPLv2 $zip_root_real/licenses/ffmpeg.LICENSE
+	uncd_and_unget
+	library_versions+="libavcodec_version = '60.3.100-tpt-libs'"$'\n'
+	library_versions+="libavformat_version = '60.3.100-tpt-libs'"$'\n'
+	library_versions+="libavutil_version = '58.2.100-tpt-libs'"$'\n'
+	library_versions+="libswscale_version = '7.1.100-tpt-libs'"$'\n'
 }
 
 function compile() {
@@ -1075,6 +1120,7 @@ if [[ $BSH_HOST_ARCH == x86_64 ]]; then
 	compile nasm
 fi
 compile libx264
+compile ffmpeg
 
 #compile nghttp2
 #compile bzip2
