@@ -1119,7 +1119,7 @@ function compile() {
 if [[ $BSH_HOST_ARCH == x86_64 ]]; then
 	compile nasm
 fi
-compile libx264
+compile x264
 compile ffmpeg
 
 #compile nghttp2
