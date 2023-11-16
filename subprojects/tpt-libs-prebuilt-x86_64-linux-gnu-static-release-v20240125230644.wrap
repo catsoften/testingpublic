@@ -1,0 +1,6 @@
+[wrap-file]
+directory = tpt-libs-prebuilt-x86_64-linux-gnu-static-release-v20240125230644
+
+source_url = https://github.com/catsoften/testingpublic/releases/download/v20240125230644/tpt-libs-prebuilt-x86_64-linux-gnu-static-release-v20240125230644.zip
+source_filename = tpt-libs-prebuilt-x86_64-linux-gnu-static-release-v20240125230644.zip
+source_hash = 3f67fa906b968a9b06d71c10b78f2a24fe0af99c2b65ae5d2e8395a1af95f75e

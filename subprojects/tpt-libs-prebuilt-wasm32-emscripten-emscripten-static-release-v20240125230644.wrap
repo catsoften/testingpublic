@@ -1,0 +1,6 @@
+[wrap-file]
+directory = tpt-libs-prebuilt-wasm32-emscripten-emscripten-static-release-v20240125230644
+
+source_url = https://github.com/catsoften/testingpublic/releases/download/v20240125230644/tpt-libs-prebuilt-wasm32-emscripten-emscripten-static-release-v20240125230644.zip
+source_filename = tpt-libs-prebuilt-wasm32-emscripten-emscripten-static-release-v20240125230644.zip
+source_hash = 6628bfab999e153bcebb38e106a52ac93e1448132cfa8caaa5aa2c91179fb05c

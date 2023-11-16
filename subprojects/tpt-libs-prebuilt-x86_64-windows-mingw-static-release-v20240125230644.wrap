@@ -1,0 +1,6 @@
+[wrap-file]
+directory = tpt-libs-prebuilt-x86_64-windows-mingw-static-release-v20240125230644
+
+source_url = https://github.com/catsoften/testingpublic/releases/download/v20240125230644/tpt-libs-prebuilt-x86_64-windows-mingw-static-release-v20240125230644.zip
+source_filename = tpt-libs-prebuilt-x86_64-windows-mingw-static-release-v20240125230644.zip
+source_hash = 652cceebd8a7e4291033b114e31c7f716770fd5fe3f109be43f50eaf534e6748

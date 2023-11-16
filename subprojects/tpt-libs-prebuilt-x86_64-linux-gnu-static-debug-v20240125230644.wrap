@@ -1,0 +1,6 @@
+[wrap-file]
+directory = tpt-libs-prebuilt-x86_64-linux-gnu-static-debug-v20240125230644
+
+source_url = https://github.com/catsoften/testingpublic/releases/download/v20240125230644/tpt-libs-prebuilt-x86_64-linux-gnu-static-debug-v20240125230644.zip
+source_filename = tpt-libs-prebuilt-x86_64-linux-gnu-static-debug-v20240125230644.zip
+source_hash = f417cd9cdbf0058e55500083a72e66d751513c61b595b230c0a705c6531b8f4d

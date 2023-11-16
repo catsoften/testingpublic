@@ -1,0 +1,6 @@
+[wrap-file]
+directory = tpt-libs-prebuilt-x86-windows-msvc-dynamic-release-v20240125230644
+
+source_url = https://github.com/catsoften/testingpublic/releases/download/v20240125230644/tpt-libs-prebuilt-x86-windows-msvc-dynamic-release-v20240125230644.zip
+source_filename = tpt-libs-prebuilt-x86-windows-msvc-dynamic-release-v20240125230644.zip
+source_hash = efacd06e927e0ed26f668cbdd4730ada97b5da499c1b7ed5aaa031ab142edd42

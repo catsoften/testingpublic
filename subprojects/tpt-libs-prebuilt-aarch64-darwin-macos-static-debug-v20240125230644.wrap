@@ -1,0 +1,6 @@
+[wrap-file]
+directory = tpt-libs-prebuilt-aarch64-darwin-macos-static-debug-v20240125230644
+
+source_url = https://github.com/catsoften/testingpublic/releases/download/v20240125230644/tpt-libs-prebuilt-aarch64-darwin-macos-static-debug-v20240125230644.zip
+source_filename = tpt-libs-prebuilt-aarch64-darwin-macos-static-debug-v20240125230644.zip
+source_hash = f03745e8534df765a5a4bc9f4547d97523794683b4b864c9ca77caed87b537cc

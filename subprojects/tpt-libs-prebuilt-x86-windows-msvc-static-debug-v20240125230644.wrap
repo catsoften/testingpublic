@@ -1,0 +1,6 @@
+[wrap-file]
+directory = tpt-libs-prebuilt-x86-windows-msvc-static-debug-v20240125230644
+
+source_url = https://github.com/catsoften/testingpublic/releases/download/v20240125230644/tpt-libs-prebuilt-x86-windows-msvc-static-debug-v20240125230644.zip
+source_filename = tpt-libs-prebuilt-x86-windows-msvc-static-debug-v20240125230644.zip
+source_hash = b62dbf1397def4bfd987dab3ebdea9a3c06109afb7d2804474aeb23ac27dc420
