@@ -13,6 +13,7 @@
 #include "gui/interface/Button.h"
 #include "gui/interface/Textbox.h"
 #include "gui/interface/Label.h"
+#include "gui/interface/Engine.h"
 
 #include <SDL.h>
 
@@ -32,7 +33,10 @@ TagsView::TagsView():
 	tagInput->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	tagInput->SetLimit(16);
 	AddComponent(tagInput);
-	FocusComponent(tagInput);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(tagInput);
+	}
 
 	addButton = new ui::Button(ui::Point(tagInput->Position.X+tagInput->Size.X+4, tagInput->Position.Y), ui::Point(40, 16), "Add");
 	addButton->Appearance.icon = IconAdd;

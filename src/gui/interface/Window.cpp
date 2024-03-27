@@ -48,7 +48,7 @@ void Window::AddComponent(Component* c)
 		Components.push_back(c);
 
 		if (Engine::Ref().GetMouseX() > Position.X + c->Position.X && Engine::Ref().GetMouseX() < Position.X + c->Position.X + c->Size.X &&
-			Engine::Ref().GetMouseY() > Position.Y + c->Position.Y && Engine::Ref().GetMouseY() < Position.Y + c->Position.Y + c->Size.Y)
+			Engine::Ref().GetMouseY() > Position.Y + c->Position.Y && Engine::Ref().GetMouseY() < Position.Y + c->Position.Y + c->Size.Y && !Engine::Ref().TouchUI)
 		{
 			c->MouseInside = true;
 			c->OnMouseEnter(Engine::Ref().GetMouseX() - (Position.X + c->Position.X), Engine::Ref().GetMouseY() - (Position.Y + c->Position.Y));
@@ -495,7 +495,7 @@ void Window::DoMouseMove(int x_, int y_, int dx, int dy)
 			if (local.X >= 0 &&
 			    local.Y >= 0 &&
 			    local.X < Components[i]->Size.X &&
-			    local.Y < Components[i]->Size.Y && !halt)
+			    local.Y < Components[i]->Size.Y && !halt && !Engine::Ref().TouchUI)
 			{
 				// entering?
 				if (!Components[i]->MouseInside)

@@ -8,7 +8,6 @@
 #include "GameView.h"
 #include "Menu.h"
 #include "Notification.h"
-#include "QuickOptions.h"
 #include "RenderPreset.h"
 #include "Tool.h"
 
@@ -81,9 +80,8 @@ GameController::GameController():
 	debugFlags(0),
 	HasDone(false)
 {
-	gameView = new GameView();
+	gameView = ui::Engine::Ref().TouchUI ? (GameView*)(new GameViewTouchUI()) : (GameView*)(new GameViewBasic());
 	gameModel = new GameModel();
-	gameModel->BuildQuickOptionMenu(this);
 
 	gameView->AttachController(this);
 	gameModel->AddObserver(gameView);
@@ -136,11 +134,6 @@ GameController::~GameController()
 		delete options;
 	}
 	debugInfo.clear();
-	std::vector<QuickOption*> quickOptions = gameModel->GetQuickOptions();
-	for(std::vector<QuickOption*>::iterator iter = quickOptions.begin(), end = quickOptions.end(); iter != end; ++iter)
-	{
-		delete *iter;
-	}
 	std::vector<Notification*> notifications = gameModel->GetNotifications();
 	for(std::vector<Notification*>::iterator iter = notifications.begin(); iter != notifications.end(); ++iter)
 	{
@@ -152,6 +145,16 @@ GameController::~GameController()
 	{
 		delete gameView;
 	}
+}
+
+bool GameController::HistoryCanRestore()
+{
+	return gameModel->HistoryCanRestore();
+}
+
+bool GameController::HistoryCanForward()
+{
+	return gameModel->HistoryCanForward();
 }
 
 bool GameController::HistoryRestore()
@@ -291,6 +294,11 @@ void GameController::SetBrushSize(ui::Point newSize)
 	gameModel->GetBrush().SetRadius(newSize);
 }
 
+ui::Point GameController::GetBrushSize()
+{
+	return gameModel->GetBrush().GetRadius();
+}
+
 void GameController::AdjustZoomSize(int delta, bool logarithmic)
 {
 	int newSize;
@@ -404,6 +412,11 @@ void GameController::DrawPoints(int toolSelection, ui::Point oldPos, ui::Point n
 		activeTool->Draw(sim, cBrush, newPos);
 	else
 		activeTool->DrawLine(sim, cBrush, oldPos, newPos, true);
+}
+
+bool GameController::HaveClipboard()
+{
+	return gameModel->GetClipboard();
 }
 
 bool GameController::LoadClipboard()
@@ -848,6 +861,11 @@ void GameController::ToggleNewtonianGravity()
 	gameModel->SetNewtonianGravity(!gameModel->GetNewtonianGrvity());
 }
 
+bool GameController::GetNewtonianGravity()
+{
+	return gameModel->GetNewtonianGrvity();
+}
+
 void GameController::LoadRenderPreset(int presetNum)
 {
 	Renderer * renderer = gameModel->GetRenderer();
@@ -978,10 +996,29 @@ void GameController::SetDecoration()
 	gameModel->SetDecoration(!gameModel->GetDecoration());
 }
 
-void GameController::ShowGravityGrid()
+bool GameController::GetDecoration()
 {
-	gameModel->ShowGravityGrid(!gameModel->GetGravityGrid());
-	gameModel->UpdateQuickOptions();
+	return gameModel->GetDecoration();
+}
+
+void GameController::SetGravityGrid()
+{
+	gameModel->SetGravityGrid(!gameModel->GetGravityGrid());
+}
+
+bool GameController::GetGravityGrid()
+{
+	return gameModel->GetGravityGrid();
+}
+
+void GameController::SetPrettyPowder()
+{
+	gameModel->GetSimulation()->pretty_powder = !gameModel->GetSimulation()->pretty_powder;
+}
+
+bool GameController::GetPrettyPowder()
+{
+	return gameModel->GetSimulation()->pretty_powder;
 }
 
 void GameController::SetHudEnable(bool hudState)
@@ -1063,6 +1100,8 @@ void GameController::SetColour(ui::Colour colour)
 
 void GameController::SetActiveMenu(int menuID)
 {
+	if (ui::Engine::Ref().TouchUI)
+		return;
 	gameModel->SetActiveMenu(menuID);
 	if(menuID == SC_DECO)
 		gameModel->SetColourSelectorVisibility(true);
@@ -1379,9 +1418,7 @@ void GameController::OpenStamps()
 
 void GameController::OpenOptions()
 {
-	options = new OptionsController(gameModel, [this] {
-		gameModel->UpdateQuickOptions();
-	});
+	options = new OptionsController(gameModel);
 	ui::Engine::Ref().ShowWindow(options->GetView());
 
 }
@@ -1504,6 +1541,16 @@ void GameController::Vote(int direction)
 void GameController::ChangeBrush()
 {
 	gameModel->SetBrushID(gameModel->GetBrushID()+1);
+}
+
+void GameController::SetBrushID(int id)
+{
+	gameModel->SetBrushID(id);
+}
+
+int GameController::GetBrushID()
+{
+	return gameModel->GetBrushID();
 }
 
 void GameController::ClearSim()

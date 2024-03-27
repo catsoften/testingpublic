@@ -12,6 +12,7 @@
 #include "gui/interface/Label.h"
 #include "gui/interface/Textbox.h"
 #include "gui/interface/DropDown.h"
+#include "gui/interface/Engine.h"
 #include "gui/dialogues/ErrorMessage.h"
 
 #include "simulation/GOLString.h"
@@ -103,7 +104,10 @@ sim(sim_)
 		textField->SetText(valueString);
 	}
 
-	FocusComponent(textField);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(textField);
+	}
 	Update();
 
 	MakeActiveWindow();

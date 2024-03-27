@@ -10,7 +10,6 @@
 #include "Notification.h"
 #include "RectangleBrush.h"
 #include "TriangleBrush.h"
-#include "QuickOptions.h"
 #include "lua/CommandInterface.h"
 #include "prefs/GlobalPrefs.h"
 #include "client/Client.h"
@@ -189,34 +188,6 @@ GameModel::~GameModel()
 	delete ren;
 	//if(activeTools)
 	//	delete[] activeTools;
-}
-
-void GameModel::UpdateQuickOptions()
-{
-	for(std::vector<QuickOption*>::iterator iter = quickOptions.begin(), end = quickOptions.end(); iter != end; ++iter)
-	{
-		QuickOption * option = *iter;
-		option->Update();
-	}
-}
-
-void GameModel::BuildQuickOptionMenu(GameController * controller)
-{
-	for(std::vector<QuickOption*>::iterator iter = quickOptions.begin(), end = quickOptions.end(); iter != end; ++iter)
-	{
-		delete *iter;
-	}
-	quickOptions.clear();
-
-	quickOptions.push_back(new SandEffectOption(this));
-	quickOptions.push_back(new DrawGravOption(this));
-	quickOptions.push_back(new DecorationsOption(this));
-	quickOptions.push_back(new NGravityOption(this));
-	quickOptions.push_back(new AHeatOption(this));
-	quickOptions.push_back(new ConsoleShowOption(this, controller));
-
-	notifyQuickOptionsChanged();
-	UpdateQuickOptions();
 }
 
 void GameModel::BuildMenus()
@@ -858,9 +829,7 @@ void GameModel::AddObserver(GameView * observer){
 	observer->NotifyColourSelectorColourChanged(this);
 	observer->NotifyColourPresetsChanged(this);
 	observer->NotifyColourActivePresetChanged(this);
-	observer->NotifyQuickOptionsChanged(this);
 	observer->NotifyLastToolChanged(this);
-	UpdateQuickOptions();
 }
 
 void GameModel::SetToolStrength(float value)
@@ -932,11 +901,6 @@ void GameModel::SetActiveTool(int selection, Tool * tool)
 {
 	activeTools[selection] = tool;
 	notifyActiveToolsChanged();
-}
-
-std::vector<QuickOption*> GameModel::GetQuickOptions()
-{
-	return quickOptions;
 }
 
 std::vector<Menu*> GameModel::GetMenuList()
@@ -1024,7 +988,6 @@ void GameModel::SetSave(std::unique_ptr<SaveInfo> newSave, bool invertIncludePre
 		Client::Ref().OverwriteAuthorInfo(saveData->authors);
 	}
 	notifySaveChanged();
-	UpdateQuickOptions();
 }
 
 const SaveFile *GameModel::GetSaveFile() const
@@ -1054,7 +1017,6 @@ void GameModel::SetSaveFile(std::unique_ptr<SaveFile> newSave, bool invertInclud
 	}
 
 	notifySaveChanged();
-	UpdateQuickOptions();
 }
 
 Simulation * GameModel::GetSimulation()
@@ -1261,7 +1223,6 @@ void GameModel::SetDecoration(bool decorationState)
 	{
 		ren->decorations_enable = decorationState?1:0;
 		notifyDecorationChanged();
-		UpdateQuickOptions();
 		if (decorationState)
 			SetInfoTip("Decorations Layer: On");
 		else
@@ -1277,7 +1238,6 @@ bool GameModel::GetDecoration()
 void GameModel::SetAHeatEnable(bool aHeat)
 {
 	sim->aheat_enable = aHeat;
-	UpdateQuickOptions();
 	if (aHeat)
 		SetInfoTip("Ambient Heat: On");
 	else
@@ -1306,7 +1266,6 @@ void GameModel::SetNewtonianGravity(bool newtonainGravity)
         sim->grav->stop_grav_async();
         SetInfoTip("Newtonian Gravity: Off");
     }
-    UpdateQuickOptions();
 }
 
 bool GameModel::GetNewtonianGrvity()
@@ -1314,10 +1273,10 @@ bool GameModel::GetNewtonianGrvity()
     return sim->grav->IsEnabled();
 }
 
-void GameModel::ShowGravityGrid(bool showGrid)
+void GameModel::SetGravityGrid(bool gridState)
 {
-	ren->gravityFieldEnabled = showGrid;
-	if (showGrid)
+	ren->gravityFieldEnabled = gridState;
+	if (gridState)
 		SetInfoTip("Gravity Grid: On");
 	else
 		SetInfoTip("Gravity Grid: Off");
@@ -1350,7 +1309,6 @@ void GameModel::ClearSimulation()
 	Client::Ref().ClearAuthorInfo();
 
 	notifySaveChanged();
-	UpdateQuickOptions();
 }
 
 void GameModel::SetPlaceSave(std::unique_ptr<GameSave> save)
@@ -1616,14 +1574,6 @@ void GameModel::notifyToolTipChanged()
 	for (size_t i = 0; i < observers.size(); i++)
 	{
 		observers[i]->NotifyToolTipChanged(this);
-	}
-}
-
-void GameModel::notifyQuickOptionsChanged()
-{
-	for (size_t i = 0; i < observers.size(); i++)
-	{
-		observers[i]->NotifyQuickOptionsChanged(this);
 	}
 }
 

@@ -133,8 +133,8 @@ std::unique_ptr<VideoBuffer> Renderer::WallIcon(int wallID, Vec2<int> size)
 		break;
 	case WL_STREAM:
 		texture->DrawRect(size.OriginRect(), 0xA0A0A0_rgb);
-		texture->AddChar(Vec2(4, 2), 0xE00D, 0xFFFFFF_rgb .WithAlpha(0xFF));
-		texture->AddChar(Vec2(8, 2), 0xE06D, 0xFFFFFF_rgb .WithAlpha(0xFF));
+		texture->AddChar(Vec2(size.X / 2 - 11, size.Y / 2 - 5), 0xE00D, 0xFFFFFF_rgb .WithAlpha(0xFF));
+		texture->AddChar(Vec2(size.X / 2 - 7, size.Y / 2 - 5), 0xE06D, 0xFFFFFF_rgb .WithAlpha(0xFF));
 		break;
 	}
 	return texture;

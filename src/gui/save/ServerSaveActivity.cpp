@@ -4,6 +4,7 @@
 #include "gui/interface/Textbox.h"
 #include "gui/interface/Button.h"
 #include "gui/interface/Checkbox.h"
+#include "gui/interface/Engine.h"
 #include "gui/dialogues/ErrorMessage.h"
 #include "gui/dialogues/SaveIDMessage.h"
 #include "gui/dialogues/ConfirmPrompt.h"
@@ -81,7 +82,10 @@ ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, OnUplo
 	nameField->SetActionCallback({ [this] { CheckName(nameField->GetText()); } });
 	nameField->SetLimit(50);
 	AddComponent(nameField);
-	FocusComponent(nameField);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(nameField);
+	}
 
 	descriptionField = new ui::Textbox(ui::Point(8, 65), ui::Point((Size.X/2)-16, Size.Y-(65+16+4)), save->GetDescription(), "[save description]");
 	descriptionField->SetMultiline(true);

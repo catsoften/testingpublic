@@ -10,6 +10,7 @@
 #include "gui/dialogues/ConfirmPrompt.h"
 #include "gui/dialogues/ErrorMessage.h"
 #include "gui/dialogues/TextPrompt.h"
+#include "gui/interface/Engine.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/ProgressBar.h"
 #include "gui/interface/SaveButton.h"
@@ -87,7 +88,10 @@ FileBrowserActivity::FileBrowserActivity(ByteString directory, OnSelected onSele
 	textField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	textField->SetActionCallback({ [this, textField] { DoSearch(textField->GetText().ToUtf8()); } });
 	AddComponent(textField);
-	FocusComponent(textField);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(textField);
+	}
 
 	itemList = new ui::ScrollPanel(ui::Point(4, 45), ui::Point(Size.X-8, Size.Y-53));
 	itemList->Visible = false;

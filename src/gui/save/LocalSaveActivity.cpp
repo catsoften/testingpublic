@@ -10,6 +10,7 @@
 #include "gui/dialogues/ConfirmPrompt.h"
 #include "gui/dialogues/ErrorMessage.h"
 #include "gui/interface/Button.h"
+#include "gui/interface/Engine.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/Textbox.h"
 
@@ -31,7 +32,10 @@ LocalSaveActivity::LocalSaveActivity(std::unique_ptr<SaveFile> newSave, OnSaved 
 	filenameField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	filenameField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	AddComponent(filenameField);
-	FocusComponent(filenameField);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(filenameField);
+	}
 
 	ui::Button * cancelButton = new ui::Button(ui::Point(0, Size.Y-16), ui::Point(Size.X-75, 16), "Cancel");
 	cancelButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;

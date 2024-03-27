@@ -25,6 +25,7 @@ public:
 	void OnMouseHover(int x, int y) override;
 	void OnMouseLeave(int x, int y) override;
 
+	void Tick(float dt) override;
 	void Draw(const Point& screenPos) override;
 
 	void TextPosition(String) override;
@@ -37,6 +38,7 @@ public:
 	void SetToggleState(bool state);
 	inline void SetActionCallback(ButtonAction const &action) { actionCallback = action; }
 	// inline ButtonAction const &GetActionCallback() const { return actionCallback; }
+	inline void SetStateFunction(std::function<bool ()> func) { stateFunction = func; }
 	void SetText(String buttonText);
 	void SetIcon(Icon icon);
 	inline String GetText() { return ButtonText; }
@@ -48,6 +50,8 @@ protected:
 	String buttonDisplayText;
 
 	bool isButtonDown, isAltButtonDown, state, isMouseInside, isTogglable, toggle;
+	float holdingTime;
 	ButtonAction actionCallback;
+	std::function<bool ()> stateFunction;
 };
 }

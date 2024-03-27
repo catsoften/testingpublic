@@ -9,6 +9,7 @@
 #include "gui/interface/RichLabel.h"
 #include "gui/interface/Textbox.h"
 #include "gui/interface/Spinner.h"
+#include "gui/interface/Engine.h"
 #include "PowderToySDL.h"
 #include "graphics/Graphics.h"
 #include "SimulationConfig.h"
@@ -49,7 +50,10 @@ SearchView::SearchView():
 	searchField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	searchField->SetActionCallback({ [this] { doSearch(); } });
 	searchField->SetLimit(100);
-	FocusComponent(searchField);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(searchField);
+	}
 
 	sortButton = new ui::Button(ui::Point(WINDOWW-140, 10), ui::Point(61, 17), "Sort");
 	sortButton->SetIcon(IconVoteSort);

@@ -445,6 +445,7 @@ int Main(int argc, char *argv[])
 	engine.Begin();
 	engine.SetFastQuit(prefs.Get("FastQuit", true));
 	engine.TouchUI = prefs.Get("TouchUI", DEFAULT_TOUCH_UI);
+	engine.TouchUINew = engine.TouchUI;
 	engine.windowFrameOps = windowFrameOps;
 
 	SDLOpen();

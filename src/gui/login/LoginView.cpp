@@ -4,6 +4,7 @@
 #include "LoginController.h"
 #include "graphics/Graphics.h"
 #include "gui/interface/Button.h"
+#include "gui/interface/Engine.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/RichLabel.h"
 #include "gui/interface/Textbox.h"
@@ -24,7 +25,10 @@ LoginView::LoginView():
 	passwordField(new ui::Textbox(ui::Point(8, 46), ui::Point(200-16, 17), "", "[password]")),
 	targetSize(defaultSize)
 {
-	FocusComponent(usernameField);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(usernameField);
+	}
 
 	infoLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	infoLabel->Appearance.VerticalAlign = ui::Appearance::AlignTop;

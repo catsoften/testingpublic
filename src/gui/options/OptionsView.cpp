@@ -262,6 +262,9 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 			c->SetScale(scale->GetOption().second);
 		});
 	}
+	touchUI = addCheckbox(0, "Touchscreen Friendly UI \bg- requires restart", "", [this] {
+		c->SetTouchUI(touchUI->GetChecked());
+	});
 	if (FORCE_WINDOW_FRAME_OPS == forceWindowFrameOpsNone)
 	{
 		resizable = addCheckbox(0, "Resizable \bg- allow resizing and maximizing window", "", [this] {
@@ -457,6 +460,7 @@ void OptionsView::NotifySettingsChanged(OptionsModel * sender)
 	{
 		scale->SetOption(sender->GetScale());
 	}
+	touchUI->SetChecked(sender->GetTouchUI());
 	if (resizable)
 	{
 		resizable->SetChecked(sender->GetResizable());

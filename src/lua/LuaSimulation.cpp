@@ -27,7 +27,6 @@ static int ambientHeatSim(lua_State *L)
 	}
 	auto aheatstate = lua_toboolean(L, 1);
 	lsi->sim->aheat_enable = aheatstate;
-	lsi->gameModel->UpdateQuickOptions();
 
 	return 0;
 }
@@ -60,7 +59,6 @@ static int newtonianGravity(lua_State *L)
 		lsi->sim->grav->start_grav_async();
 	else
 		lsi->sim->grav->stop_grav_async();
-	lsi->gameModel->UpdateQuickOptions();
 	return 0;
 }
 
@@ -1082,7 +1080,6 @@ static int prettyPowders(lua_State *L)
 	}
 	int prettyPowder = luaL_optint(L, 1, 0);
 	lsi->sim->pretty_powder = prettyPowder;
-	lsi->gameModel->UpdateQuickOptions();
 	return 0;
 }
 
@@ -1096,8 +1093,7 @@ static int gravityGrid(lua_State *L)
 		return 1;
 	}
 	int gravityGrid = luaL_optint(L, 1, 0);
-	lsi->gameModel->ShowGravityGrid(gravityGrid);
-	lsi->gameModel->UpdateQuickOptions();
+	lsi->gameModel->SetGravityGrid(gravityGrid);
 	return 0;
 }
 

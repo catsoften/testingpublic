@@ -27,6 +27,7 @@ class OptionsView: public ui::Window
 	ui::DropDown *edgeMode{};
 	ui::DropDown *temperatureScale{};
 	ui::DropDown *scale{};
+	ui::Checkbox *touchUI{};
 	ui::Checkbox *resizable{};
 	ui::Checkbox *fullscreen{};
 	ui::Checkbox *changeResolution{};

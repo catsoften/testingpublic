@@ -153,6 +153,18 @@ void OptionsModel::SetScale(int scale)
 	notifySettingsChanged();
 }
 
+bool OptionsModel::GetTouchUI()
+{
+	return ui::Engine::Ref().TouchUINew;
+}
+
+void OptionsModel::SetTouchUI(bool touchUI)
+{
+	ui::Engine::Ref().TouchUINew = touchUI;
+	// Should only take effect after restart
+	GlobalPrefs::Ref().Set("TouchUI", touchUI);
+}
+
 bool OptionsModel::GetGraveExitsConsole()
 {
 	return ui::Engine::Ref().GraveExitsConsole;

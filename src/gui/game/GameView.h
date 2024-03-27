@@ -19,14 +19,18 @@ enum SelectMode
 	SelectNone, SelectStamp, SelectCopy, SelectCut, PlaceSave
 };
 
+enum TouchMenu
+{
+	MenuNone, MenuMain, MenuBrushOptions, MenuQuickOptions
+};
+
 namespace ui
 {
 	class Button;
 	class Slider;
+	class SplitButton;
 	class Textbox;
 }
-
-class SplitButton;
 
 class MenuButton;
 class Renderer;
@@ -37,12 +41,13 @@ class Brush;
 class GameModel;
 class GameView: public ui::Window
 {
-private:
+protected:
 	bool isMouseDown;
 	bool skipDraw;
 	bool zoomEnabled;
 	bool zoomCursorFixed;
 	bool mouseInZoom;
+	bool enableZoomOnTouch;
 	bool drawSnap;
 	bool shiftBehaviour;
 	bool ctrlBehaviour;
@@ -58,6 +63,8 @@ private:
 	int toolIndex;
 	int currentSaveType;
 	int lastMenu;
+
+	TouchMenu touchMenu;
 
 	int toolTipPresence;
 	String toolTip;
@@ -83,30 +90,45 @@ private:
 	Renderer * ren;
 	Brush const *activeBrush;
 	//UI Elements
-	std::vector<ui::Button*> quickOptionButtons;
+	std::vector<ui::Button*> touchMenuButtons;
+
+	std::vector<ui::Button*> mainMenuButtons;
+	ui::Button * authorshipInfoButton{};
+
+	std::vector<ui::Button*> brushOptionsMenuButtons;
+	ui::Button * smallerBrushButton{};
+	ui::Button * largerBrushButton{};
+	ui::Button * pasteButton{};
+	ui::Button * undoButton{};
+	ui::Button * redoButton{};
+
+	std::vector<ui::Button*> quickOptionsMenuButtons;
 
 	std::vector<MenuButton*> menuButtons;
 
 	std::vector<ToolButton*> toolButtons;
 	std::vector<ui::Component*> notificationComponents;
 	std::deque<std::pair<String, int> > logEntries;
-	ui::Button * scrollBar;
+	ui::Button * scrollBar{};
 	ui::Button * searchButton;
 	ui::Button * reloadButton;
-	SplitButton * saveSimulationButton;
+	ui::SplitButton * saveSimulationButton{};
+	ui::Button * touchSaveSimulationButton{};
 	bool saveSimulationButtonEnabled;
 	bool saveReuploadAllowed;
 	ui::Button * downVoteButton;
 	ui::Button * upVoteButton;
 	ui::Button * tagSimulationButton;
 	ui::Button * clearSimButton;
-	SplitButton * loginButton;
+	ui::SplitButton * loginButton;
 	ui::Button * simulationOptionButton;
 	ui::Button * displayModeButton;
 	ui::Button * pauseButton;
 
 	ui::Button * colourPicker;
 	std::vector<ToolButton*> colourPresets;
+
+	virtual void SetTouchMenu(TouchMenu newTouchMenu) = 0;
 
 	DrawMode drawMode;
 	ui::Point drawPoint1;
@@ -128,9 +150,11 @@ private:
 
 	SimulationSample sample;
 
-	void updateToolButtonScroll();
+	virtual void updateToolButtonScroll() = 0;
 
-	void SetSaveButtonTooltips();
+	virtual void SetSaveButtonTooltips() = 0;
+	virtual void SetSaveButtonShowSplit(bool split) = 0;
+	virtual ui::Button * GetSaveButton() = 0;
 
 	void enableShiftBehaviour();
 	void disableShiftBehaviour();
@@ -165,7 +189,13 @@ public:
 	bool ShiftBehaviour(){ return shiftBehaviour; }
 	bool AltBehaviour(){ return altBehaviour; }
 	SelectMode GetSelectMode() { return selectMode; }
+	void ShowAuthorshipInfo();
+	void ToggleFind();
 	void BeginStampSelection();
+	void BeginCopy();
+	void BeginCut();
+	void BeginPaste();
+	void TryLoadLatestStamp();
 	ByteString TakeScreenshot(int captureUI, int fileType);
 	int Record(bool record);
 
@@ -185,8 +215,8 @@ public:
 	void NotifyPausedChanged(GameModel * sender);
 	void NotifySaveChanged(GameModel * sender);
 	void NotifyBrushChanged(GameModel * sender);
-	void NotifyMenuListChanged(GameModel * sender);
-	void NotifyToolListChanged(GameModel * sender);
+	virtual void NotifyMenuListChanged(GameModel * sender) = 0;
+	virtual void NotifyToolListChanged(GameModel * sender) = 0;
 	void NotifyActiveToolsChanged(GameModel * sender);
 	void NotifyUserChanged(GameModel * sender);
 	void NotifyZoomChanged(GameModel * sender);
@@ -200,11 +230,10 @@ public:
 	void NotifyLogChanged(GameModel * sender, String entry);
 	void NotifyToolTipChanged(GameModel * sender);
 	void NotifyInfoTipChanged(GameModel * sender);
-	void NotifyQuickOptionsChanged(GameModel * sender);
 	void NotifyLastToolChanged(GameModel * sender);
 
 
-	void ToolTip(ui::Point senderPosition, String toolTip) override;
+	virtual void ToolTip(ui::Point senderPosition, String toolTip) = 0;
 
 	void OnMouseMove(int x, int y, int dx, int dy) override;
 	void OnMouseDown(int x, int y, unsigned button) override;
@@ -229,7 +258,36 @@ public:
 	void DoKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) override;
 	void DoKeyRelease(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt) override;
 
-	class OptionListener;
-
 	void SkipIntroText();
 };
+
+class GameViewBasic : public GameView
+{
+	void SetTouchMenu(TouchMenu newTouchMenu) override;
+	void updateToolButtonScroll() override;
+	void SetSaveButtonTooltips() override;
+	void SetSaveButtonShowSplit(bool split) override;
+	ui::Button * GetSaveButton() override;
+
+public:
+	GameViewBasic();
+	void NotifyMenuListChanged(GameModel * sender) override;
+	void NotifyToolListChanged(GameModel * sender) override;
+	void ToolTip(ui::Point senderPosition, String toolTip) override;
+};
+
+class GameViewTouchUI : public GameView
+{
+	void SetTouchMenu(TouchMenu newTouchMenu) override;
+	void updateToolButtonScroll() override;
+	void SetSaveButtonTooltips() override;
+	void SetSaveButtonShowSplit(bool split) override;
+	ui::Button * GetSaveButton() override;
+
+public:
+	GameViewTouchUI();
+	void NotifyMenuListChanged(GameModel * sender) override;
+	void NotifyToolListChanged(GameModel * sender) override;
+	void ToolTip(ui::Point senderPosition, String toolTip) override;
+};
+
