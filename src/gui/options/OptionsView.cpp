@@ -28,6 +28,8 @@
 
 OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 {
+	bool TOUCH_UI = ui::Engine::Ref().TouchUI; // Would be "touchUI", but that's the Checkbox
+
 	auto autoWidth = [this](ui::Component *c, int extra) {
 		c->Size.X = Size.X - c->Position.X - 12 - extra;
 	};
@@ -61,8 +63,8 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 	AddComponent(scrollPanel);
 
 	int currentY = 8;
-	auto addLabel = [this, &currentY, &autoWidth](int indent, String text) {
-		auto *label = new ui::Label(ui::Point(22 + indent * 15, currentY), ui::Point(1, 16), "");
+	auto addLabel = [this, &currentY, &autoWidth, &TOUCH_UI](int indent, String text) {
+		auto *label = new ui::Label(ui::Point((TOUCH_UI ? 40 : 22) + indent * 15, currentY), ui::Point(1, 16), "");
 		autoWidth(label, 0);
 		label->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		label->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
@@ -72,8 +74,12 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		scrollPanel->AddChild(label);
 		currentY += label->Size.Y - 1;
 	};
-	auto addCheckbox = [this, &currentY, &autoWidth, &addLabel](int indent, String text, String info, std::function<void ()> action) {
-		auto *checkbox = new ui::Checkbox(ui::Point(8 + indent * 15, currentY), ui::Point(1, 16), text, "");
+	auto addCheckbox = [this, &currentY, &autoWidth, &addLabel, &TOUCH_UI](int indent, String text, String info, std::function<void ()> action) {
+		auto *checkbox = new ui::Checkbox(ui::Point(8 + indent * 15, currentY), ui::Point(1, TOUCH_UI ? 32 : 16), text, "");
+		if (TOUCH_UI)
+		{
+			checkbox->SetTextOffset(ui::Point(0, 6));
+		}
 		autoWidth(checkbox, 0);
 		checkbox->SetActionCallback({ action });
 		currentY += 14;
@@ -81,24 +87,29 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		{
 			addLabel(indent, info);
 		}
+		else if (TOUCH_UI)
+		{
+			checkbox->SetTextOffset(ui::Point(0, 12));
+			currentY += 15;
+		}
 		currentY += 4;
 		scrollPanel->AddChild(checkbox);
 		return checkbox;
 	};
-	auto addDropDown = [this, &currentY, &autoWidth](String info, std::vector<std::pair<String, int>> options, std::function<void ()> action) {
-		auto *dropDown = new ui::DropDown(ui::Point(Size.X - 95, currentY), ui::Point(80, 16));
+	auto addDropDown = [this, &currentY, &autoWidth, &TOUCH_UI](String info, std::vector<std::pair<String, int>> options, std::function<void ()> action) {
+		auto *dropDown = new ui::DropDown(ui::Point(Size.X - 95, currentY), ui::Point(80, TOUCH_UI ? 24 : 16));
 		scrollPanel->AddChild(dropDown);
 		for (auto &option : options)
 		{
 			dropDown->AddOption(option);
 		}
 		dropDown->SetActionCallback({ action });
-		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X - 96, 16), info);
+		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X - 96, TOUCH_UI ? 24 : 16), info);
 		label->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		label->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 		scrollPanel->AddChild(label);
 		autoWidth(label, 85);
-		currentY += 20;
+		currentY += TOUCH_UI ? 28 : 20;
 		return dropDown;
 	};
 	auto addSeparator = [this, &currentY]() {
@@ -130,7 +141,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		c->SetAirMode(airMode->GetOption().second);
 	});
 	{
-		ambientAirTemp = new ui::Textbox(ui::Point(Size.X-95, currentY), ui::Point(60, 16));
+		ambientAirTemp = new ui::Textbox(ui::Point(Size.X-95, currentY), ui::Point(60, TOUCH_UI ? 24 : 16));
 		ambientAirTemp->SetActionCallback({ [this] {
 			UpdateAirTemp(ambientAirTemp->GetText(), false);
 		} });
@@ -139,13 +150,13 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		}});
 		ambientAirTemp->SetLimit(9);
 		scrollPanel->AddChild(ambientAirTemp);
-		ambientAirTempPreview = new ui::Button(ui::Point(Size.X-31, currentY), ui::Point(16, 16), "", "Preview");
+		ambientAirTempPreview = new ui::Button(ui::Point(Size.X-31, currentY), ui::Point(16, TOUCH_UI ? 24 : 16), "", "Preview");
 		scrollPanel->AddChild(ambientAirTempPreview);
-		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X-105, 16), "Ambient air temperature");
+		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X-105, TOUCH_UI ? 24 : 16), "Ambient air temperature");
 		label->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		label->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 		scrollPanel->AddChild(label);
-		currentY += 20;
+		currentY += TOUCH_UI ? 28 : 20;
 	}
 	class GravityWindow : public ui::Window
 	{
@@ -333,7 +344,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 	currentY += 4;
 	if (ALLOW_DATA_FOLDER)
 	{
-		auto *dataFolderButton = new ui::Button(ui::Point(10, currentY), ui::Point(90, 16), "Open data folder");
+		auto *dataFolderButton = new ui::Button(ui::Point(10, currentY), TOUCH_UI ? ui::Point(98, 24) : ui::Point(90, 16), "Open data folder");
 		dataFolderButton->SetActionCallback({ [] {
 			ByteString cwd = Platform::GetCwd();
 			if (!cwd.empty())
@@ -346,7 +357,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 			}
 		} });
 		scrollPanel->AddChild(dataFolderButton);
-		auto *migrationButton = new ui::Button(ui::Point(Size.X - 178, currentY), ui::Point(163, 16), "Migrate to shared data directory");
+		auto *migrationButton = new ui::Button(ui::Point(Size.X - (TOUCH_UI ? 186 : 178), currentY), TOUCH_UI ? ui::Point(171, 24) : ui::Point(163, 16), "Migrate to shared data directory");
 		migrationButton->SetActionCallback({ [] {
 			ByteString from = Platform::originalCwd;
 			ByteString to = Platform::sharedCwd;
@@ -356,7 +367,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 			} });
 		} });
 		scrollPanel->AddChild(migrationButton);
-		currentY += 26;
+		currentY += TOUCH_UI ? 34 : 26;
 	}
 	{
 		ui::Button *ok = new ui::Button(ui::Point(0, Size.Y-16), ui::Point(Size.X, 16), "OK");
