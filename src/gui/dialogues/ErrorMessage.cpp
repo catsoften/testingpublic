@@ -11,7 +11,7 @@
 #include "graphics/Graphics.h"
 
 ErrorMessage::ErrorMessage(String title, String message, DismissCallback callback_):
-	ui::Window(ui::Point(-1, -1), ui::Point(200, 35)),
+	ui::Window(ui::Point(-1, -1), ui::Point(200, ui::IfTouchUI(45, 35))),
 	callback(callback_)
 {
 	ui::Label * titleLabel = new ui::Label(ui::Point(4, 5), ui::Point(Size.X-8, 16), title);
@@ -29,7 +29,7 @@ ErrorMessage::ErrorMessage(String title, String message, DismissCallback callbac
 	Size.Y += messageLabel->Size.Y+12;
 	Position.Y = (GetGraphics()->Size().Y - Size.Y)/2;
 
-	ui::Button * okayButton = new ui::Button(ui::Point(0, Size.Y-16), ui::Point(Size.X, 16), "Dismiss");
+	ui::Button * okayButton = new ui::Button(ui::Point(0, Size.Y - ui::StandardSize()), ui::Point(Size.X, ui::StandardSize()), "Dismiss");
 	okayButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	okayButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	okayButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);

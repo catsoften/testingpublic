@@ -6,6 +6,7 @@
 #include "simulation/SimulationData.h"
 #include "gui/Style.h"
 #include "gui/interface/Button.h"
+#include "gui/interface/Engine.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/Textbox.h"
 #include "gui/interface/Window.h"
@@ -70,13 +71,15 @@ GOLWindow::GOLWindow(GameModel &gameModel_, int toolSelection, int rule, RGB col
 	nameField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	nameField->SetLimit(7);
 	AddComponent(nameField);
-	FocusComponent(nameField);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(nameField);
+	}
 
 	ruleField = new ui::Textbox(ui::Point(8, 46), ui::Point(Size.X-16, 16), "", "[rule]");
 	ruleField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	ruleField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(ruleField);
-	FocusComponent(ruleField);
 
 	highColourButton = new ui::Button(ui::Point(8, 67), ui::Point(16, 16), "");
 	highColourButton->SetActionCallback({ [this] {

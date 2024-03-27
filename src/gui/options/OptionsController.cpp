@@ -5,9 +5,8 @@
 
 #include "Controller.h"
 
-OptionsController::OptionsController(GameModel * gModel_, std::function<void ()> onDone_):
+OptionsController::OptionsController(GameModel * gModel_):
 	gModel(gModel_),
-	onDone(onDone_),
 	HasExited(false)
 {
 	view = new OptionsView();
@@ -112,6 +111,11 @@ void OptionsController::SetScale(int scale)
 	model->SetScale(scale);
 }
 
+void OptionsController::SetTouchUI(bool touchUI)
+{
+	model->SetTouchUI(touchUI);
+}
+
 void OptionsController::SetGraveExitsConsole(bool graveExitsConsole)
 {
 	model->SetGraveExitsConsole(graveExitsConsole);
@@ -181,8 +185,6 @@ void OptionsController::Exit()
 {
 	view->CloseActiveWindow();
 
-	if (onDone)
-		onDone();
 	HasExited = true;
 }
 

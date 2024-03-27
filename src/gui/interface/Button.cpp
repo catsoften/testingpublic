@@ -16,7 +16,8 @@ Button::Button(Point position, Point size, String buttonText, String toolTip):
 	isButtonDown(false),
 	isMouseInside(false),
 	isTogglable(false),
-	toggle(false)
+	toggle(false),
+	holdStartTick(0)
 {
 	TextPosition(ButtonText);
 }
@@ -62,7 +63,7 @@ bool Button::GetTogglable()
 
 bool Button::GetToggleState()
 {
-	return toggle;
+	return stateFunction ? stateFunction() : toggle;
 }
 
 void Button::SetToggleState(bool state)
@@ -70,8 +71,22 @@ void Button::SetToggleState(bool state)
 	toggle = state;
 }
 
+void Button::Tick()
+{
+	if (ui::Engine::Ref().TouchUI && isButtonDown && holdStartTick && ui::Engine::Ref().LastTick() - holdStartTick >= 500)
+	{
+		DoAltAction();
+		isButtonDown = false;
+		holdStartTick = 0;
+	}
+}
+
 void Button::Draw(const Point& screenPos)
 {
+	if (!Visible)
+	{
+		return;
+	}
 	if(!drawn)
 	{
 		TextPosition(ButtonText);
@@ -87,7 +102,7 @@ void Button::Draw(const Point& screenPos)
 
 	if (Enabled)
 	{
-		if ((isButtonDown && MouseDownInside) || (isTogglable && toggle))
+		if ((isButtonDown && MouseDownInside) || (isTogglable && GetToggleState()))
 		{
 			textColour = Appearance.TextActive;
 			borderColour = Appearance.BorderActive;
@@ -185,6 +200,7 @@ void Button::OnMouseDown(int x, int y, unsigned int button)
 		if(button == 1)
 		{
 			isButtonDown = true;
+			holdStartTick = ui::Engine::Ref().LastTick();
 		}
 		else if(button == 3)
 		{

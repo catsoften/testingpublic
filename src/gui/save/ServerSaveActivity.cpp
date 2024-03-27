@@ -5,6 +5,7 @@
 #include "gui/interface/Textbox.h"
 #include "gui/interface/Button.h"
 #include "gui/interface/Checkbox.h"
+#include "gui/interface/Engine.h"
 #include "gui/dialogues/ErrorMessage.h"
 #include "gui/dialogues/SaveIDMessage.h"
 #include "gui/dialogues/ConfirmPrompt.h"
@@ -57,7 +58,7 @@ public:
 };
 
 ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, OnUploaded onUploaded_) :
-	WindowActivity(ui::Point(-1, -1), ui::Point(440, 200)),
+	WindowActivity(ui::Point(-1, -1), ui::Point(440, ui::IfTouchUI(236, 200))),
 	thumbnailRenderer(nullptr),
 	save(std::move(newSave)),
 	onUploaded(onUploaded_),
@@ -76,22 +77,25 @@ ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, OnUplo
 	previewLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(previewLabel);
 
-	nameField = new ui::Textbox(ui::Point(8, 25), ui::Point((Size.X/2)-16, 16), save->GetName(), "[save name]");
+	nameField = new ui::Textbox(ui::Point(8, 25), ui::Point((Size.X / 2) - 16, ui::StandardSize()), save->GetName(), "[save name]");
 	nameField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	nameField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	nameField->SetActionCallback({ [this] { CheckName(nameField->GetText()); } });
 	nameField->SetLimit(50);
 	AddComponent(nameField);
-	FocusComponent(nameField);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(nameField);
+	}
 
-	descriptionField = new ui::Textbox(ui::Point(8, 65), ui::Point((Size.X/2)-16, Size.Y-(65+16+4)), save->GetDescription(), "[save description]");
+	descriptionField = new ui::Textbox(ui::Point(8, ui::IfTouchUI(91, 65)), ui::Point((Size.X / 2) - 16, Size.Y - ui::IfTouchUI(127, 85)), save->GetDescription(), "[save description]");
 	descriptionField->SetMultiline(true);
 	descriptionField->SetLimit(254);
 	descriptionField->Appearance.VerticalAlign = ui::Appearance::AlignTop;
 	descriptionField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	AddComponent(descriptionField);
 
-	publishedCheckbox = new ui::Checkbox(ui::Point(8, 45), ui::Point((Size.X/2)-80, 16), "Publish", "");
+	publishedCheckbox = new ui::Checkbox(ui::Point(8, ui::IfTouchUI(55, 45)), ui::Point(73, ui::IfTouchUI(32, 16)), "Publish", "");
 	if(Client::Ref().GetAuthUser().Username != save->GetUserName())
 	{
 		//Save is not owned by the user, disable by default
@@ -104,11 +108,17 @@ ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, OnUplo
 	}
 	AddComponent(publishedCheckbox);
 
-	pausedCheckbox = new ui::Checkbox(ui::Point(160, 45), ui::Point(55, 16), "Paused", "");
+	pausedCheckbox = new ui::Checkbox(ui::IfTouchUI<ui::Point>({ 142, 55 }, { 160, 45 }), ui::Point(70, ui::IfTouchUI(32, 16)), "Paused", "");
 	pausedCheckbox->SetChecked(save->GetGameSave()->paused);
 	AddComponent(pausedCheckbox);
 
-	ui::Button * cancelButton = new ui::Button(ui::Point(0, Size.Y-16), ui::Point((Size.X/2)-75, 16), "Cancel");
+	if (ui::Engine::Ref().TouchUI)
+	{
+		publishedCheckbox->SetTextOffset(ui::Point(0, 12));
+		pausedCheckbox->SetTextOffset(ui::Point(0, 12));
+	}
+
+	ui::Button * cancelButton = new ui::Button(ui::Point(0, Size.Y - ui::StandardSize()), ui::Point((Size.X / 2) - 75, ui::StandardSize()), "Cancel");
 	cancelButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	cancelButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	cancelButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
@@ -118,7 +128,7 @@ ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, OnUplo
 	AddComponent(cancelButton);
 	SetCancelButton(cancelButton);
 
-	ui::Button * okayButton = new ui::Button(ui::Point((Size.X/2)-76, Size.Y-16), ui::Point(76, 16), "Save");
+	ui::Button * okayButton = new ui::Button(ui::Point((Size.X / 2) - 76, Size.Y - ui::StandardSize()), ui::Point(76, ui::StandardSize()), "Save");
 	okayButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	okayButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	okayButton->Appearance.TextInactive = style::Colour::InformationTitle;
@@ -128,7 +138,7 @@ ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, OnUplo
 	AddComponent(okayButton);
 	SetOkayButton(okayButton);
 
-	ui::Button * PublishingInfoButton = new ui::Button(ui::Point((Size.X*3/4)-75, Size.Y-42), ui::Point(150, 16), "Publishing Info");
+	ui::Button * PublishingInfoButton = new ui::Button(ui::Point((Size.X * 3 / 4) - 75, Size.Y - ui::IfTouchUI(62, 42)), ui::Point(150, ui::StandardSize()), "Publishing Info");
 	PublishingInfoButton->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
 	PublishingInfoButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	PublishingInfoButton->Appearance.TextInactive = style::Colour::InformationTitle;
@@ -137,7 +147,7 @@ ServerSaveActivity::ServerSaveActivity(std::unique_ptr<SaveInfo> newSave, OnUplo
 	} });
 	AddComponent(PublishingInfoButton);
 
-	ui::Button * RulesButton = new ui::Button(ui::Point((Size.X*3/4)-75, Size.Y-22), ui::Point(150, 16), "Save Uploading Rules");
+	ui::Button * RulesButton = new ui::Button(ui::Point((Size.X * 3 / 4) - 75, Size.Y - ui::IfTouchUI(32, 22)), ui::Point(150, ui::StandardSize()), "Save Uploading Rules");
 	RulesButton->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
 	RulesButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	RulesButton->Appearance.TextInactive = style::Colour::InformationTitle;

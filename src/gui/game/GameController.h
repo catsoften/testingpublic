@@ -95,6 +95,8 @@ public:
 
 	void Install();
 
+	bool HistoryCanRestore();
+	bool HistoryCanForward();
 	bool HistoryRestore();
 	void HistorySnapshot();
 	bool HistoryForward();
@@ -106,6 +108,7 @@ public:
 	void SetZoomPosition(ui::Point position);
 	void AdjustBrushSize(int direction, bool logarithmic = false, bool xAxis = false, bool yAxis = false);
 	void SetBrushSize(ui::Point newSize);
+	ui::Point GetBrushSize();
 	void AdjustZoomSize(int direction, bool logarithmic = false);
 	void ToolClick(int toolSelection, ui::Point point);
 	void ToolDrag(int toolSelection, ui::Point point1, ui::Point point2);
@@ -123,7 +126,11 @@ public:
 	void SetPaused();
 	void SetDecoration(bool decorationState);
 	void SetDecoration();
-	void ShowGravityGrid();
+	bool GetDecoration();
+	void SetGravityGrid();
+	bool GetGravityGrid();
+	void SetPrettyPowder();
+	bool GetPrettyPowder();
 	void SetHudEnable(bool hudState);
 	bool GetHudEnable();
 	void SetBrushEnable(bool brushState);
@@ -172,6 +179,8 @@ public:
 	void ReloadSim();
 	void Vote(int direction);
 	void ChangeBrush();
+	void SetBrushID(int id);
+	int GetBrushID();
 	void ShowConsole();
 	void HideConsole();
 	void FrameStep();
@@ -194,7 +203,9 @@ public:
 	bool GetAHeatEnable();
 	void ResetAHeat();
 	void ToggleNewtonianGravity();
+	bool GetNewtonianGravity();
 
+	bool HaveClipboard();
 	bool LoadClipboard();
 	void LoadStamp(std::unique_ptr<GameSave> stamp);
 

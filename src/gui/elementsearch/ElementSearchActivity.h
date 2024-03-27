@@ -11,6 +11,7 @@ class GameController;
 
 namespace ui
 {
+	class Label;
 	class ScrollPanel;
 	class Textbox;
 }
@@ -21,15 +22,20 @@ class ElementSearchActivity: public WindowActivity
 	GameController * gameController;
 	std::vector<Tool*> tools;
 	ui::Textbox * searchField;
+	ui::ScrollPanel * scrollPanel = nullptr;
+	std::vector<ui::Label*> menuLabels;
 	std::vector<ToolButton*> toolButtons;
-	ui::ScrollPanel *scrollPanel = nullptr;
 	String toolTip;
 	ui::Fade toolTipPresence{ ui::Fade::LinearProfile{ 120.f, 60.f }, 0, 0 };
 	bool shiftPressed;
 	bool ctrlPressed;
 	bool altPressed;
 	bool isToolTipFadingIn;
-	void searchTools(String query);
+	void PlaceTool(Tool * tool, ui::Point position);
+	void PlaceTools();
+	void SearchTools(String query);
+
+	const ui::Point toolButtonSize;
 
 public:
 	bool exit;

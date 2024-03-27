@@ -4,6 +4,7 @@
 #include "LoginController.h"
 #include "graphics/Graphics.h"
 #include "gui/interface/Button.h"
+#include "gui/interface/Engine.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/RichLabel.h"
 #include "gui/interface/Textbox.h"
@@ -13,53 +14,61 @@
 #include <SDL.h>
 
 constexpr auto defaultSize = ui::Point(200, 87);
+constexpr auto touchDefaultSize = defaultSize + Vec2{ 0, 28 };
 
 LoginView::LoginView():
-	ui::Window(ui::Point(-1, -1), defaultSize),
-	loginButton(new ui::Button(ui::Point(200-100, 87-17), ui::Point(100, 17), "Sign in")),
-	cancelButton(new ui::Button(ui::Point(0, 87-17), ui::Point(101, 17), "Sign Out")),
-	titleLabel(new ui::Label(ui::Point(4, 5), ui::Point(200-16, 16), "Server login")),
-	infoLabel(new ui::RichLabel(ui::Point(6, 67), ui::Point(200-12, 16), "")),
-	usernameField(new ui::Textbox(ui::Point(8, 25), ui::Point(200-16, 17), Client::Ref().GetAuthUser().Username.FromUtf8(), "[username]")),
-	passwordField(new ui::Textbox(ui::Point(8, 46), ui::Point(200-16, 17), "", "[password]"))
+	ui::Window(ui::Point(-1, -1), ui::IfTouchUI(touchDefaultSize, defaultSize))
 {
 	targetSize.SetTarget(float(Size.Y));
 	targetSize.SetValue(float(Size.Y));
-	FocusComponent(usernameField);
 
+	titleLabel = new ui::Label(ui::Point(4, 5), ui::Point(Size.X - 16, 16), "Server login");
+	titleLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+	titleLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+	AddComponent(titleLabel);
+
+	usernameField = new ui::Textbox(ui::Point(8, 25), ui::IfTouchUI<ui::Point>({ Size.X - 16, 26 }, { Size.X - 16, 17 }), Client::Ref().GetAuthUser().Username.FromUtf8(), "[username]");
+	usernameField->Appearance.icon = IconUsername;
+	usernameField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+	usernameField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+	AddComponent(usernameField);
+
+	passwordField = new ui::Textbox(ui::IfTouchUI<ui::Point>({ 8, 55 }, { 8, 46 }), ui::IfTouchUI<ui::Point>({ Size.X - 16, 26 }, { Size.X - 16, 17 }), "", "[password]");
+	passwordField->Appearance.icon = IconPassword;
+	passwordField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+	passwordField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+	passwordField->SetHidden(true);
+	AddComponent(passwordField);
+
+	infoLabel = new ui::RichLabel(ui::IfTouchUI<ui::Point>({ 6, 85 }, { 6, 67 }), ui::Point(Size.X - 12, 16), "");
 	infoLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	infoLabel->Appearance.VerticalAlign = ui::Appearance::AlignTop;
 	infoLabel->SetMultiline(true);
 	infoLabel->Visible = false;
 	AddComponent(infoLabel);
 
-	AddComponent(loginButton);
-	SetOkayButton(loginButton);
+	cancelButton = new ui::Button(ui::IfTouchUI<ui::Point>({ 0, Size.Y - 26 }, { 0, Size.Y - 17 }), ui::IfTouchUI<ui::Point>({ 101, 26 }, { 101, 17 }), "Sign out");
+	cancelButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+	cancelButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+	cancelButton->SetActionCallback({ [this] {
+		c->Logout();
+	} });
+	AddComponent(cancelButton);
+
+	loginButton = new ui::Button(ui::IfTouchUI<ui::Point>({ Size.X - 100, Size.Y - 26 }, { Size.X - 100, Size.Y - 17 }), ui::IfTouchUI<ui::Point>({ 100, 26 }, { 100, 17 }), "Sign in");
 	loginButton->Appearance.HorizontalAlign = ui::Appearance::AlignRight;
 	loginButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	loginButton->Appearance.TextInactive = style::Colour::ConfirmButton;
 	loginButton->SetActionCallback({ [this] {
 		c->Login(usernameField->GetText().ToUtf8(), passwordField->GetText().ToUtf8());
 	} });
-	AddComponent(cancelButton);
-	cancelButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-	cancelButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
-	cancelButton->SetActionCallback({ [this] {
-		c->Logout();
-	} });
-	AddComponent(titleLabel);
-	titleLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-	titleLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
+	AddComponent(loginButton);
+	SetOkayButton(loginButton);
 
-	AddComponent(usernameField);
-	usernameField->Appearance.icon = IconUsername;
-	usernameField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-	usernameField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
-	AddComponent(passwordField);
-	passwordField->Appearance.icon = IconPassword;
-	passwordField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
-	passwordField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
-	passwordField->SetHidden(true);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(usernameField);
+	}
 }
 
 void LoginView::OnKeyPress(int key, int scan, bool repeat, bool shift, bool ctrl, bool alt)
@@ -116,8 +125,8 @@ void LoginView::OnTick()
 {
 	c->Tick();
 	Size.Y = int(targetSize.GetValue());
-	loginButton->Position.Y = Size.Y-17;
-	cancelButton->Position.Y = Size.Y-17;
+	loginButton->Position.Y = Size.Y - ui::IfTouchUI(26, 17);
+	cancelButton->Position.Y = Size.Y - ui::IfTouchUI(26, 17);
 }
 
 void LoginView::OnDraw()

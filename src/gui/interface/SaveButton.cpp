@@ -9,6 +9,7 @@
 #include "client/SaveInfo.h"
 
 #include "gui/dialogues/ErrorMessage.h"
+#include "gui/interface/Engine.h"
 #include "graphics/Graphics.h"
 #include "graphics/VideoBuffer.h"
 
@@ -28,7 +29,9 @@ SaveButton::SaveButton(Point position, Point size) :
 	isButtonDown(false),
 	isMouseInside(false),
 	selected(false),
-	selectable(false)
+	selectable(false),
+	lastClickPos(position),
+	holdStartTick(0)
 {
 }
 
@@ -180,6 +183,14 @@ void SaveButton::Tick()
 		file->LazyUnload();
 	}
 	wantsDraw = false;
+
+	if (ui::Engine::Ref().TouchUI && isButtonDown && holdStartTick && ui::Engine::Ref().LastTick() - holdStartTick >= 500)
+	{
+		if(menu)
+			menu->Show(lastClickPos);
+		isButtonDown = false;
+		holdStartTick = 0;
+	}
 }
 
 void SaveButton::Draw(const Point& screenPos)
@@ -269,11 +280,6 @@ void SaveButton::OnMouseClick(int x, int y, unsigned int button)
 	{
 		return; //left click only!
 	}
-	if (file && !file->LazyGetGameSave())
-	{
-		new ErrorMessage("Error loading save", file->GetError());
-		return;
-	}
 
 	if(x>=Size.X-20 && y>=6 && y<=20 && x<=Size.X-6 && selectable)
 	{
@@ -284,6 +290,12 @@ void SaveButton::OnMouseClick(int x, int y, unsigned int button)
 
 	if(isButtonDown)
 	{
+		if (file && !file->LazyGetGameSave())
+		{
+			new ErrorMessage("Error loading save", file->GetError());
+			return;
+		}
+
 		isButtonDown = false;
 		if(isMouseInsideHistory)
 			DoAltAction();
@@ -346,6 +358,8 @@ void SaveButton::OnMouseDown(int x, int y, unsigned int button)
 		else
 		{
 			isButtonDown = true;
+			lastClickPos = GetContainerPos() + Point(x, y);
+			holdStartTick = ui::Engine::Ref().LastTick();
 			if(button !=1 && selectable)
 			{
 				selected = !selected;
@@ -354,6 +368,11 @@ void SaveButton::OnMouseDown(int x, int y, unsigned int button)
 
 		}
 	}
+}
+
+void SaveButton::OnMouseUp(int x, int y, unsigned int button)
+{
+	isButtonDown = false;
 }
 
 void SaveButton::OnMouseMoved(int x, int y)
@@ -378,6 +397,7 @@ void SaveButton::OnMouseEnter(int x, int y)
 void SaveButton::OnMouseLeave(int x, int y)
 {
 	isMouseInside = false;
+	isButtonDown = false;
 	isMouseInsideAuthor = false;
 	isMouseInsideHistory = false;
 }

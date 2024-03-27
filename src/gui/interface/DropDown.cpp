@@ -15,15 +15,15 @@ class DropDownWindow : public ui::Window
 
 public:
 	DropDownWindow(DropDown * dropDown):
-		Window(dropDown->GetScreenPos() + ui::Point(-1, -1 - (dropDown->optionIndex*16 < dropDown->GetScreenPos().Y ? dropDown->optionIndex*16 : 0)),
-						  ui::Point(dropDown->Size.X+2, 2+dropDown->options.size()*16)),
+		Window(dropDown->GetScreenPos() + ui::Point(-1, -1 - (dropDown->optionIndex * (dropDown->Size.Y-1) < dropDown->GetScreenPos().Y ? dropDown->optionIndex * (dropDown->Size.Y-1) : 0)),
+						  ui::Point(dropDown->Size.X+2, 2+dropDown->options.size() * (dropDown->Size.Y-1))),
 		dropDown(dropDown),
 		appearance(dropDown->Appearance)
 	{
 		int currentY = 1;
 		for (size_t i = 0; i < dropDown->options.size(); i++)
 		{
-			Button * tempButton = new Button(Point(1, currentY), Point(Size.X-2, 16), dropDown->options[i].first);
+			Button * tempButton = new Button(Point(1, currentY), Point(Size.X-2, dropDown->Size.Y), dropDown->options[i].first);
 			tempButton->Appearance = appearance;
 			if (i)
 				tempButton->Appearance.Border = ui::Border(0, 1, 1, 1);
@@ -34,7 +34,7 @@ public:
 				SelfDestruct();
 			} });
 			AddComponent(tempButton);
-			currentY += 16;
+			currentY += dropDown->Size.Y-1;
 		}
 	}
 	void OnDraw() override

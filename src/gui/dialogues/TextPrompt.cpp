@@ -10,7 +10,7 @@
 #include "graphics/Graphics.h"
 
 TextPrompt::TextPrompt(String title, String message, String text, String placeholder, bool multiline, TextDialogueCallback callback_):
-	ui::Window(ui::Point(-1, -1), ui::Point(200, 65)),
+	ui::Window(ui::Point(-1, -1), ui::Point(200, ui::IfTouchUI(85, 65))),
 	callback(callback_)
 {
 	if(multiline)
@@ -30,12 +30,12 @@ TextPrompt::TextPrompt(String title, String message, String text, String placeho
 
 	Size.Y += messageLabel->Size.Y+4;
 
-	textField = new ui::Textbox(ui::Point(4, messageLabel->Position.Y + messageLabel->Size.Y + 7), ui::Point(Size.X-8, 16), text, placeholder);
+	textField = new ui::Textbox(ui::Point(4, messageLabel->Position.Y + messageLabel->Size.Y + 7), ui::Point(Size.X - 8, ui::StandardSize()), text, placeholder);
 	if(multiline)
 	{
 		textField->SetMultiline(true);
 		textField->Size.Y = 60;
-		Size.Y += 45;
+		Size.Y += ui::IfTouchUI(35, 45);
 		textField->Appearance.VerticalAlign = ui::Appearance::AlignTop;
 	}
 	else
@@ -44,9 +44,12 @@ TextPrompt::TextPrompt(String title, String message, String text, String placeho
 	}
 	textField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	AddComponent(textField);
-	FocusComponent(textField);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(textField);
+	}
 
-	ui::Button * cancelButton = new ui::Button(ui::Point(0, Size.Y-16), ui::Point((Size.X/2)+1, 16), "Cancel");
+	ui::Button * cancelButton = new ui::Button(ui::Point(0, Size.Y - ui::StandardSize()), ui::Point((Size.X / 2) + 1, ui::StandardSize()), "Cancel");
 	cancelButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	cancelButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	cancelButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
@@ -59,7 +62,7 @@ TextPrompt::TextPrompt(String title, String message, String text, String placeho
 	AddComponent(cancelButton);
 	SetCancelButton(cancelButton);
 
-	ui::Button * okayButton = new ui::Button(ui::Point(Size.X/2, Size.Y-16), ui::Point(Size.X/2, 16), "Okay");
+	ui::Button * okayButton = new ui::Button(ui::Point(Size.X / 2, Size.Y - ui::StandardSize()), ui::Point(Size.X / 2, ui::StandardSize()), "Okay");
 	okayButton->Appearance.HorizontalAlign = ui::Appearance::AlignRight;
 	okayButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	okayButton->Appearance.TextInactive = style::Colour::WarningTitle;

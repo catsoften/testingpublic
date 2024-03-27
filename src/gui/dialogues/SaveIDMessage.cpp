@@ -3,12 +3,13 @@
 #include "graphics/Graphics.h"
 #include "gui/interface/Button.h"
 #include "gui/interface/CopyTextButton.h"
+#include "gui/interface/Engine.h"
 #include "gui/interface/Label.h"
 #include "Format.h"
 #include "SimulationConfig.h"
 
 SaveIDMessage::SaveIDMessage(int id):
-	ui::Window(ui::Point((XRES-244)/2, (YRES-90)/2), ui::Point(244, 90))
+	ui::Window(ui::Point((XRES - 244) / 2, (YRES - 90) / 2), ui::Point(244, ui::IfTouchUI(110, 90)))
 {
 	int textWidth = Graphics::TextSize("Save ID").X - 1;
 	ui::Label * titleLabel = new ui::Label(ui::Point(4, 5), ui::Point(textWidth+20, 16), "Save ID");
@@ -30,10 +31,10 @@ SaveIDMessage::SaveIDMessage(int id):
 	AddComponent(copyTextLabel);
 
 	textWidth = Graphics::TextSize(String::Build(id)).X - 1;
-	ui::CopyTextButton * copyTextButton = new ui::CopyTextButton(ui::Point((Size.X-textWidth-10)/2, 50), ui::Point(textWidth+10, 18), String::Build(id), copyTextLabel);
+	ui::CopyTextButton * copyTextButton = new ui::CopyTextButton(ui::Point((Size.X - textWidth - 10) / 2, 50), ui::Point(textWidth + 10, ui::IfTouchUI(28, 18)), String::Build(id), copyTextLabel);
 	AddComponent(copyTextButton);
 
-	ui::Button * okayButton = new ui::Button(ui::Point(0, Size.Y-16), ui::Point(Size.X, 16), "OK");
+	ui::Button * okayButton = new ui::Button(ui::Point(0, Size.Y - ui::StandardSize()), ui::Point(Size.X, ui::StandardSize()), "OK");
 	okayButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	okayButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	okayButton->SetActionCallback({ [this] {

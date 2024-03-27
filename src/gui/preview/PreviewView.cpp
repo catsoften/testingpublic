@@ -29,13 +29,14 @@
 #include "common/platform/Platform.h"
 #include "Format.h"
 #include "Misc.h"
+#include "PowderToySDL.h"
 
 #include "graphics/VideoBuffer.h"
 #include "SimulationConfig.h"
 #include <SDL.h>
 
 PreviewView::PreviewView(std::unique_ptr<VideoBuffer> newSavePreview):
-	ui::Window(ui::Point(-1, -1), ui::Point((XRES/2)+210, (YRES/2)+150)),
+	ui::Window(ui::Point(-1, -1), ui::Point((XRES / 2) + 210, (YRES / 2) + ui::IfTouchUI(157, 150))),
 	submitCommentButton(nullptr),
 	addCommentBox(nullptr),
 	commentWarningLabel(nullptr),
@@ -55,7 +56,9 @@ PreviewView::PreviewView(std::unique_ptr<VideoBuffer> newSavePreview):
 	}
 	showAvatars = ui::Engine::Ref().ShowAvatars;
 
-	favButton = new ui::Button(ui::Point(50, Size.Y-19), ui::Point(51, 19), "Fav");
+	int buttonY = ui::IfTouchUI(26, 19);
+
+	favButton = new ui::Button(ui::Point(50, Size.Y - buttonY), ui::Point(51, buttonY), "Fav");
 	favButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	favButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	favButton->SetTogglable(true);
@@ -68,7 +71,7 @@ PreviewView::PreviewView(std::unique_ptr<VideoBuffer> newSavePreview):
 	favButton->Enabled = Client::Ref().GetAuthUser().UserID?true:false;
 	AddComponent(favButton);
 
-	reportButton = new ui::Button(ui::Point(100, Size.Y-19), ui::Point(51, 19), "Report");
+	reportButton = new ui::Button(ui::Point(100, Size.Y - buttonY), ui::Point(51, buttonY), "Report");
 	reportButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	reportButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	reportButton->SetIcon(IconReport);
@@ -85,21 +88,21 @@ PreviewView::PreviewView(std::unique_ptr<VideoBuffer> newSavePreview):
 	reportButton->Enabled = Client::Ref().GetAuthUser().UserID?true:false;
 	AddComponent(reportButton);
 
-	openButton = new ui::Button(ui::Point(0, Size.Y-19), ui::Point(51, 19), "Open");
+	openButton = new ui::Button(ui::Point(0, Size.Y - buttonY), ui::Point(51, buttonY), "Open");
 	openButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	openButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	openButton->SetIcon(IconOpen);
 	openButton->SetActionCallback({ [this] { c->DoOpen(); } });
 	AddComponent(openButton);
 
-	browserOpenButton = new ui::Button(ui::Point((XRES/2)-107, Size.Y-19), ui::Point(108, 19), "Open in browser");
+	browserOpenButton = new ui::Button(ui::Point((XRES / 2) - 107, Size.Y - buttonY), ui::Point(108, buttonY), "Open in browser");
 	browserOpenButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	browserOpenButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	browserOpenButton->SetIcon(IconOpen);
 	browserOpenButton->SetActionCallback({ [this] { c->OpenInBrowser(); } });
 	AddComponent(browserOpenButton);
 
-	loadErrorButton = new ui::Button({ 0, 0 }, ui::Point(148, 19), "Error loading save");
+	loadErrorButton = new ui::Button({ 0, 0 }, ui::Point(148, buttonY), "Error loading save");
 	loadErrorButton->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
 	loadErrorButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	loadErrorButton->SetIcon(IconDelete);
@@ -107,7 +110,7 @@ PreviewView::PreviewView(std::unique_ptr<VideoBuffer> newSavePreview):
 	loadErrorButton->Visible = false;
 	AddComponent(loadErrorButton);
 
-	missingElementsButton = new ui::Button({ 0, 0 }, ui::Point(148, 19), "Missing custom elements");
+	missingElementsButton = new ui::Button({ 0, 0 }, ui::Point(148, buttonY), "Missing custom elements");
 	missingElementsButton->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
 	missingElementsButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	missingElementsButton->SetIcon(IconReport);
@@ -180,18 +183,50 @@ void PreviewView::AttachController(PreviewController * controller)
 {
 	c = controller;
 
-	int textWidth = Graphics::TextSize("Click the box below to copy the save ID").X - 1;
-	saveIDLabel = new ui::Label(ui::Point((Size.X-textWidth-20)/2, Size.Y+5), ui::Point(textWidth+20, 16), "Click the box below to copy the save ID");
-	saveIDLabel->SetTextColour(ui::Colour(150, 150, 150));
-	saveIDLabel->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
-	AddComponent(saveIDLabel);
+	if (ui::Engine::Ref().TouchUI)
+	{
+		String temp = String::Build("\bgID:\x0E ", c->SaveID());
+		int textWidth = Graphics::TextSize(temp).X + 24;
+		copyIDButton = new ui::Button(ui::Point(4, 4), ui::Point(textWidth, 26), temp);
+		copyIDButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
+		copyIDButton->SetIcon(IconCopy);
+		copyIDButton->SetActionCallback({
+			[this] {
+				ClipboardPush(String::Build(c->SaveID()).ToUtf8());
+				copyIDFade.SetValue(127.0f);
+				copyIDBlue = false;
+			},
+			[this] {
+				ClipboardPush(String::Build("id:", c->SaveID()).ToUtf8());
+				copyIDFade.SetValue(127.0f);
+				copyIDBlue = true;
+			}
+		});
+		AddComponent(copyIDButton);
 
-	textWidth = Graphics::TextSize(String::Build(c->SaveID())).X - 1;
-	saveIDLabel2 = new ui::Label(ui::Point((Size.X-textWidth-20)/2-37, Size.Y+22), ui::Point(40, 16), "Save ID:");
-	AddComponent(saveIDLabel2);
+		shareIDButton = new ui::Button(ui::Point(textWidth + 3, 4), ui::Point(26, 26), "");
+		shareIDButton->SetIcon(IconShare);
+		shareIDButton->SetActionCallback({
+			[this] { Platform::ShareText(ByteString::Build("https://tpt.io/~", c->SaveID())); },
+			[this] { Platform::ShareText(ByteString::Build("id:", c->SaveID())); }
+		});
+		AddComponent(shareIDButton);
+	}
+	else
+	{
+		int textWidth = Graphics::TextSize("Click the box below to copy the save ID").X - 1;
+		saveIDLabel = new ui::Label(ui::Point((Size.X-textWidth-20)/2, Size.Y+5), ui::Point(textWidth+20, 16), "Click the box below to copy the save ID");
+		saveIDLabel->SetTextColour(ui::Colour(150, 150, 150));
+		saveIDLabel->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
+		AddComponent(saveIDLabel);
 
-	saveIDButton = new ui::CopyTextButton(ui::Point((Size.X-textWidth-10)/2, Size.Y+20), ui::Point(textWidth+10, 18), String::Build(c->SaveID()), saveIDLabel);
-	AddComponent(saveIDButton);
+		textWidth = Graphics::TextSize(String::Build(c->SaveID())).X - 1;
+		saveIDLabel2 = new ui::Label(ui::Point((Size.X-textWidth-20)/2-37, Size.Y+22), ui::Point(40, 16), "Save ID:");
+		AddComponent(saveIDLabel2);
+
+		saveIDButton = new ui::CopyTextButton(ui::Point((Size.X-textWidth-10)/2, Size.Y+20), ui::Point(textWidth+10, 18), String::Build(c->SaveID()), saveIDLabel);
+		AddComponent(saveIDButton);
+	}
 }
 
 void PreviewView::commentBoxAutoHeight()
@@ -385,6 +420,12 @@ void PreviewView::OnTick()
 		commentsPanel->Size.Y = addCommentBox->Position.Y-1;
 	}
 
+	if (copyIDButton)
+	{
+		int value = copyIDFade.GetValue();
+		copyIDButton->Appearance.TextInactive = copyIDBlue ? ui::Colour(value, value, 255) : ui::Colour(value, 255, value);
+	}
+
 	c->Update();
 	if (doError)
 	{
@@ -499,7 +540,7 @@ void PreviewView::ShowMissingCustomElements()
 
 void PreviewView::UpdateLoadStatus()
 {
-	auto y = YRES / 2 - 22;
+	auto y = YRES / 2 - ui::IfTouchUI(29, 22);
 	auto showButton = [&y](ui::Button *button) {
 		if (button->Visible)
 		{
@@ -633,9 +674,12 @@ void PreviewView::NotifyCommentBoxEnabledChanged(PreviewModel * sender)
 		delete submitCommentButton;
 		submitCommentButton = nullptr;
 	}
+
+	int buttonY = ui::IfTouchUI(26, 19);
+
 	if(sender->GetCommentBoxEnabled())
 	{
-		addCommentBox = new ui::Textbox(ui::Point((XRES/2)+4, Size.Y-19), ui::Point(Size.X-(XRES/2)-48, 17), "", "Add Comment");
+		addCommentBox = new ui::Textbox(ui::Point((XRES / 2) + 4, Size.Y - buttonY), ui::Point(Size.X - (XRES / 2) - 48, ui::IfTouchUI(24, 17)), "", "Add Comment");
 		commentBoxPositionX.SetTarget(float(addCommentBox->Position.X));
 		commentBoxPositionX.SetValue(float(addCommentBox->Position.X));
 		commentBoxPositionY.SetTarget(float(addCommentBox->Position.Y));
@@ -652,11 +696,11 @@ void PreviewView::NotifyCommentBoxEnabledChanged(PreviewModel * sender)
 		addCommentBox->SetMultiline(true);
 		addCommentBox->SetLimit(1000);
 		AddComponent(addCommentBox);
-		submitCommentButton = new ui::Button(ui::Point(Size.X-40, Size.Y-19), ui::Point(40, 19), "Submit");
+		submitCommentButton = new ui::Button(ui::Point(Size.X - 40, Size.Y - buttonY), ui::Point(40, buttonY), "Submit");
 		submitCommentButton->SetActionCallback({ [this] { submitComment(); } });
 		AddComponent(submitCommentButton);
 
-		commentWarningLabel = new ui::Label(ui::Point((XRES/2)+4, Size.Y-19), ui::Point(Size.X-(XRES/2)-48, 16), "If you see this it is a bug");
+		commentWarningLabel = new ui::Label(ui::Point((XRES / 2) + 4, Size.Y - buttonY), ui::Point(Size.X - (XRES / 2) - 48, 16), "If you see this it is a bug");
 		commentWarningLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		commentWarningLabel->SetTextColour(ui::Colour(255, 0, 0));
 		commentWarningLabel->Visible = false;
@@ -664,7 +708,7 @@ void PreviewView::NotifyCommentBoxEnabledChanged(PreviewModel * sender)
 	}
 	else
 	{
-		submitCommentButton = new ui::Button(ui::Point(XRES/2, Size.Y-19), ui::Point(Size.X-(XRES/2), 19), "Login to comment");
+		submitCommentButton = new ui::Button(ui::Point(XRES / 2, Size.Y - buttonY), ui::Point(Size.X - (XRES / 2), buttonY), "Login to comment");
 		submitCommentButton->SetActionCallback({ [this] { c->ShowLogin(); } });
 		AddComponent(submitCommentButton);
 	}

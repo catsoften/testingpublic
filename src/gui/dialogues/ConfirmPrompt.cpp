@@ -12,7 +12,7 @@
 #include "graphics/Graphics.h"
 
 ConfirmPrompt::ConfirmPrompt(String title, String message, ResultCallback callback_, String buttonText):
-	ui::Window(ui::Point(-1, -1), ui::Point(250, 50)),
+	ui::Window(ui::Point(-1, -1), ui::Point(250, ui::IfTouchUI(60, 50))),
 	callback(callback_)
 {
 	ui::Label * titleLabel = new ui::Label(ui::Point(4, 5), ui::Point(Size.X-8, 15), title);
@@ -38,7 +38,7 @@ ConfirmPrompt::ConfirmPrompt(String title, String message, ResultCallback callba
 	Size.Y += messagePanel->Size.Y+12;
 	Position.Y = (GetGraphics()->Size().Y - Size.Y)/2;
 
-	ui::Button * cancelButton = new ui::Button(ui::Point(0, Size.Y-16), ui::Point(Size.X-75, 16), "Cancel");
+	ui::Button * cancelButton = new ui::Button(ui::Point(0, Size.Y - ui::StandardSize()), ui::Point(Size.X - 75, ui::StandardSize()), "Cancel");
 	cancelButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	cancelButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	cancelButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
@@ -51,7 +51,7 @@ ConfirmPrompt::ConfirmPrompt(String title, String message, ResultCallback callba
 	AddComponent(cancelButton);
 	SetCancelButton(cancelButton);
 
-	ui::Button * okayButton = new ui::Button(ui::Point(Size.X-76, Size.Y-16), ui::Point(76, 16), buttonText);
+	ui::Button * okayButton = new ui::Button(ui::Point(Size.X - 76, Size.Y - ui::StandardSize()), ui::Point(76, ui::StandardSize()), buttonText);
 	okayButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	okayButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	okayButton->Appearance.TextInactive = style::Colour::WarningTitle;

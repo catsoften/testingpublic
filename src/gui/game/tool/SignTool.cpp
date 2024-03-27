@@ -6,6 +6,7 @@
 #include "gui/interface/Label.h"
 #include "gui/interface/Textbox.h"
 #include "gui/interface/DropDown.h"
+#include "gui/interface/Engine.h"
 #include "gui/game/GameModel.h"
 #include "graphics/Graphics.h"
 
@@ -109,7 +110,10 @@ SignWindow::SignWindow(SignTool * tool_, Simulation * sim_, int signID_, ui::Poi
 		}
 	} });
 	AddComponent(textField);
-	FocusComponent(textField);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(textField);
+	}
 
 	if(signID!=-1)
 	{

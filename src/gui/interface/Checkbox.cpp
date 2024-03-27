@@ -10,6 +10,7 @@ Checkbox::Checkbox(ui::Point position, ui::Point size, String text, String toolT
 	Component(position, size),
 	text(text),
 	toolTip(toolTip),
+	textOffset(0, 4),
 	checked(false),
 	isMouseOver(false)
 {
@@ -31,6 +32,11 @@ void Checkbox::SetIcon(Icon icon)
 	Appearance.icon = icon;
 	iconPosition.X = 16;
 	iconPosition.Y = 3;
+}
+
+void Checkbox::SetTextOffset(ui::Point offset)
+{
+	textOffset = offset;
 }
 
 void Checkbox::OnMouseClick(int x, int y, unsigned int button)
@@ -73,25 +79,29 @@ void Checkbox::OnMouseLeave(int x, int y)
 
 void Checkbox::Draw(const Point& screenPos)
 {
+	auto scale = [this](Vec2<int> vec) {
+		return Vec2<int>{vec.X * Size.Y / 16, vec.Y * Size.Y / 16};
+	};
+
 	Graphics * g = GetGraphics();
 	if(checked)
 	{
-		g->DrawFilledRect(RectSized(screenPos + Vec2{ 5, 5 }, Vec2{ 6, 6 }), 0xFFFFFF_rgb);
+		g->DrawFilledRect(RectSized(screenPos + scale(Vec2{ 5, 5 }), scale(Vec2{ 6, 6 })), 0xFFFFFF_rgb);
 	}
 	if(isMouseOver)
 	{
-		g->DrawRect(RectSized(screenPos + Vec2{ 2, 2 }, Vec2{ 12, 12 }), 0xFFFFFF_rgb);
-		g->BlendFilledRect(RectSized(screenPos + Vec2{ 5, 5 }, Vec2{ 6, 6 }), 0xFFFFFF_rgb .WithAlpha(170));
+		g->DrawRect(RectSized(screenPos + scale(Vec2{ 2, 2 }), scale(Vec2{ 12, 12 })), 0xFFFFFF_rgb);
+		g->BlendFilledRect(RectSized(screenPos + scale(Vec2{ 5, 5 }), scale(Vec2{ 6, 6 })), 0xFFFFFF_rgb .WithAlpha(170));
 		if (!Appearance.icon)
-			g->BlendText(screenPos + Vec2{ 18, 4 }, text, 0xFFFFFF_rgb .WithAlpha(255));
+			g->BlendText(screenPos + scale(Vec2{ 18, 0 }) + textOffset, text, 0xFFFFFF_rgb .WithAlpha(255));
 		else
 			g->draw_icon(screenPos.X+iconPosition.X, screenPos.Y+iconPosition.Y, Appearance.icon, 255);
 	}
 	else
 	{
-		g->BlendRect(RectSized(screenPos + Vec2{ 2, 2 }, Vec2{ 12, 12 }), 0xFFFFFF_rgb .WithAlpha(200));
+		g->BlendRect(RectSized(screenPos + scale(Vec2{ 2, 2 }), scale(Vec2{ 12, 12 })), 0xFFFFFF_rgb .WithAlpha(200));
 		if (!Appearance.icon)
-			g->BlendText(screenPos + Vec2{ 18, 4 }, text, 0xFFFFFF_rgb .WithAlpha(200));
+			g->BlendText(screenPos + scale(Vec2{ 18, 0 }) + textOffset, text, 0xFFFFFF_rgb .WithAlpha(200));
 		else
 			g->draw_icon(screenPos.X+iconPosition.X, screenPos.Y+iconPosition.Y, Appearance.icon, 200);
 	}

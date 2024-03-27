@@ -13,28 +13,32 @@
 #include "gui/interface/Button.h"
 #include "gui/interface/Textbox.h"
 #include "gui/interface/Label.h"
+#include "gui/interface/Engine.h"
 
 #include <SDL.h>
 
 TagsView::TagsView():
-	ui::Window(ui::Point(-1, -1), ui::Point(195, 250))
+	ui::Window(ui::Point(-1, -1), ui::Point(195, ui::IfTouchUI(270, 250)))
 {
-	closeButton = new ui::Button(ui::Point(0, Size.Y-16), ui::Point(195, 16), "Close");
+	closeButton = new ui::Button(ui::Point(0, Size.Y - ui::StandardSize()), ui::Point(195, ui::StandardSize()), "Close");
 	closeButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	closeButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	closeButton->SetActionCallback({ [this] { c->Exit(); } });
 	AddComponent(closeButton);
 	SetCancelButton(closeButton);
 
-	tagInput = new ui::Textbox(ui::Point(8, Size.Y-40), ui::Point(Size.X-60, 16), "", "[new tag]");
+	tagInput = new ui::Textbox(ui::Point(8, Size.Y - ui::IfTouchUI(60, 40)), ui::Point(Size.X - 60, ui::StandardSize()), "", "[new tag]");
 	tagInput->Appearance.icon = IconTag;
 	tagInput->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	tagInput->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	tagInput->SetLimit(16);
 	AddComponent(tagInput);
-	FocusComponent(tagInput);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(tagInput);
+	}
 
-	addButton = new ui::Button(ui::Point(tagInput->Position.X+tagInput->Size.X+4, tagInput->Position.Y), ui::Point(40, 16), "Add");
+	addButton = new ui::Button(ui::Point(tagInput->Position.X + tagInput->Size.X + 4, tagInput->Position.Y), ui::Point(40, ui::StandardSize()), "Add");
 	addButton->Appearance.icon = IconAdd;
 	addButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	addButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;

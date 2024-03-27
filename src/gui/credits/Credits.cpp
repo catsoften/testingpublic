@@ -25,7 +25,7 @@ Credits::Credits():
 		return;
 	}
 
-	auto *scrollPanel = new ui::ScrollPanel(ui::Point(0, 0), ui::Point(Size.X, Size.Y - 12));
+	auto *scrollPanel = new ui::ScrollPanel(ui::Point(0, 0), ui::Point(Size.X, Size.Y - ui::StandardSize()));
 	AddComponent(scrollPanel);
 
 	int xPos = 0, yPos = 0, row = 0;
@@ -141,9 +141,9 @@ Credits::Credits():
 	}
 
 
-	scrollPanel->InnerSize = ui::Point(scrollPanel->Size.X, nextY);
+	scrollPanel->InnerSize = ui::Point(scrollPanel->Size.X, nextY + 11);
 
-	auto *closeButton = new ui::Button({ 0, Size.Y - 12 }, { Size.X, 12 }, "Close");
+	auto *closeButton = new ui::Button({ 0, Size.Y - ui::StandardSize() }, { Size.X, ui::StandardSize() }, "Close");
 	closeButton->SetActionCallback({
 	[this] {
 		CloseActiveWindow();

@@ -114,7 +114,6 @@ static int decorations(lua_State *L)
 	}
 	int decostate = lua_toboolean(L, 1);
 	lsi->gameModel->SetDecoration(decostate);
-	lsi->gameModel->UpdateQuickOptions();
 	return 0;
 }
 

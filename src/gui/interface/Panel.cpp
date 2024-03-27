@@ -191,13 +191,14 @@ void Panel::PropagateMouseMove()
 		{
 			Point local	(localx - children[i]->Position.X - ViewportPosition.X, localy - children[i]->Position.Y - ViewportPosition.Y);
 
+			children[i]->OnMouseMoved(localx - children[i]->Position.X - ViewportPosition.X, localy - children[i]->Position.Y - ViewportPosition.Y);
+
 			// mouse currently inside?
 			if( local.X >= 0 &&
 				local.Y >= 0 &&
 				local.X < children[i]->Size.X &&
-				local.Y < children[i]->Size.Y )
+				local.Y < children[i]->Size.Y && !Engine::Ref().TouchUI)
 			{
-				children[i]->OnMouseMoved(localx - children[i]->Position.X - ViewportPosition.X, localy - children[i]->Position.Y - ViewportPosition.Y);
 
 				// was the mouse outside?
 				if (!children[i]->MouseInside)

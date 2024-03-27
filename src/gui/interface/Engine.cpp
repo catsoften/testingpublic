@@ -410,3 +410,8 @@ bool Engine::GetContributesToFps() const
 	}
 	return false;
 }
+
+int ui::StandardSize()
+{
+	return IfTouchUI(26, 16);
+}

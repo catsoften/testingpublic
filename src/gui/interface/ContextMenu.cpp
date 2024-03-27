@@ -1,5 +1,6 @@
 #include "ContextMenu.h"
 #include "graphics/Graphics.h"
+#include "gui/interface/Engine.h"
 #include "SimulationConfig.h"
 #include <algorithm>
 
@@ -22,7 +23,7 @@ void ContextMenu::Show(ui::Point position)
 	buttons.clear();
 
 	Size.X = 100;
-	Size.Y = items.size()*16-1;
+	Size.Y = items.size() * ui::StandardSize() - 1;
 
 	if(position.X+Size.X > WINDOWW)
 		position.X -= std::min(position.X, Size.X);
@@ -33,7 +34,7 @@ void ContextMenu::Show(ui::Point position)
 	int currentY = 1;
 	for (size_t i = 0; i < items.size(); i++)
 	{
-		Button * tempButton = new Button(Point(1, currentY), Point(Size.X-2, 16), items[i].Text);
+		Button * tempButton = new Button(Point(1, currentY), Point(Size.X - 2, ui::StandardSize()), items[i].Text);
 		tempButton->Appearance = Appearance;
 		tempButton->Enabled = items[i].Enabled;
 		auto item = items[i].ID;
@@ -42,7 +43,7 @@ void ContextMenu::Show(ui::Point position)
 		} });
 		buttons.push_back(tempButton);
 		AddComponent(tempButton);
-		currentY += 15;
+		currentY += ui::IfTouchUI(25, 16);
 	}
 
 	MakeActiveWindow();

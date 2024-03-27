@@ -1,6 +1,7 @@
 #include "ToolButton.h"
 #include "graphics/Graphics.h"
 #include "graphics/VideoBuffer.h"
+#include "gui/interface/Engine.h"
 #include "Favorite.h"
 #include <SDL.h>
 
@@ -65,7 +66,7 @@ void ToolButton::Draw(const ui::Point& screenPos)
 		g->BlendFilledRect(RectSized(screenPos + Vec2{ 2, 2 }, Size - Vec2{ 4, 4 }), Appearance.BackgroundInactive);
 	}
 
-	if (isMouseInside && currentSelection == -1)
+	if (isMouseInside && currentSelection == -1 && !ui::Engine::Ref().TouchUI)
 	{
 		g->BlendRect(RectSized(screenPos, Size), Appearance.BorderActive);
 	}

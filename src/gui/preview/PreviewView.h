@@ -49,6 +49,10 @@ class PreviewView: public ui::Window
 	ui::Label *saveIDLabel{};
 	ui::Label *saveIDLabel2{};
 	ui::CopyTextButton *saveIDButton{};
+	ui::Fade copyIDFade{ ui::Fade::LinearProfile{ 48.0f }, 255.0f };
+	bool copyIDBlue = false;
+	ui::Button *copyIDButton{};
+	ui::Button *shareIDButton{};
 	ui::ScrollPanel *commentsPanel{};
 	std::vector<ui::Component*> commentComponents;
 	std::vector<ui::Component*> commentTextComponents;

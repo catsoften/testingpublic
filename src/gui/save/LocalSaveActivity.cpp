@@ -11,13 +11,14 @@
 #include "gui/dialogues/ConfirmPrompt.h"
 #include "gui/dialogues/ErrorMessage.h"
 #include "gui/interface/Button.h"
+#include "gui/interface/Engine.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/Textbox.h"
 
 #include "Config.h"
 
 LocalSaveActivity::LocalSaveActivity(std::unique_ptr<SaveFile> newSave, OnSaved onSaved_) :
-	WindowActivity(ui::Point(-1, -1), ui::Point(220, 200)),
+	WindowActivity(ui::Point(-1, -1), ui::Point(220, ui::IfTouchUI(220, 200))),
 	save(std::move(newSave)),
 	thumbnailRenderer(nullptr),
 	onSaved(onSaved_)
@@ -28,13 +29,16 @@ LocalSaveActivity::LocalSaveActivity(std::unique_ptr<SaveFile> newSave, OnSaved 
 	titleLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(titleLabel);
 
-	filenameField = new ui::Textbox(ui::Point(8, 25), ui::Point(Size.X-16, 16), save->GetDisplayName(), "[filename]");
+	filenameField = new ui::Textbox(ui::Point(8, 25), ui::Point(Size.X - 16, ui::StandardSize()), save->GetDisplayName(), "[filename]");
 	filenameField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	filenameField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	AddComponent(filenameField);
-	FocusComponent(filenameField);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(filenameField);
+	}
 
-	ui::Button * cancelButton = new ui::Button(ui::Point(0, Size.Y-16), ui::Point(Size.X-75, 16), "Cancel");
+	ui::Button * cancelButton = new ui::Button(ui::Point(0, Size.Y - ui::StandardSize()), ui::Point(Size.X - 75, ui::StandardSize()), "Cancel");
 	cancelButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	cancelButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	cancelButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
@@ -44,7 +48,7 @@ LocalSaveActivity::LocalSaveActivity(std::unique_ptr<SaveFile> newSave, OnSaved 
 	AddComponent(cancelButton);
 	SetCancelButton(cancelButton);
 
-	ui::Button * okayButton = new ui::Button(ui::Point(Size.X-76, Size.Y-16), ui::Point(76, 16), "Save");
+	ui::Button * okayButton = new ui::Button(ui::Point(Size.X - 76, Size.Y - ui::StandardSize()), ui::Point(76, ui::StandardSize()), "Save");
 	okayButton->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	okayButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	okayButton->Appearance.TextInactive = style::Colour::InformationTitle;
@@ -141,7 +145,7 @@ void LocalSaveActivity::OnDraw()
 
 	if (thumbnail)
 	{
-		auto rect = RectSized(Position + Vec2((Size.X - thumbnail->Size().X) / 2, 45), thumbnail->Size());
+		auto rect = RectSized(Position + Vec2((Size.X - thumbnail->Size().X) / 2, ui::IfTouchUI(55, 45)), thumbnail->Size());
 		g->BlendImage(thumbnail->Data(), 0xFF, rect);
 		g->DrawRect(rect, 0xB4B4B4_rgb);
 	}

@@ -9,9 +9,82 @@
 
 namespace Platform
 {
+void SendIntent(ByteString action, std::optional<ByteString> data, std::optional<ByteString> extra, std::optional<ByteString> mimeType)
+{
+	struct CheckFailed : public std::runtime_error
+	{
+		using runtime_error::runtime_error;
+	};
+	try
+	{
+		auto CHECK = [](auto thing, const char *what) {
+			if (!thing)
+			{
+				throw CheckFailed(what);
+			}
+			return thing;
+		};
+#define CHECK(a) CHECK(a, #a)
+		auto *env                   = CHECK((JNIEnv *)SDL_AndroidGetJNIEnv());
+		auto activityInst           = CHECK((jobject)SDL_AndroidGetActivity());
+		auto activityCls            = CHECK(env->GetObjectClass(activityInst));
+
+		auto intentCls              = CHECK(env->FindClass("android/content/Intent"));
+		auto newIntent              = CHECK(env->GetMethodID(intentCls, "<init>", "()V"));
+		auto intentInst             = CHECK(env->NewObject(intentCls, newIntent));
+
+		auto intentActionFld        = CHECK(env->GetStaticFieldID(intentCls, action.c_str(), "Ljava/lang/String;"));
+		auto intentAction           = CHECK(env->GetStaticObjectField(intentCls, intentActionFld));
+		auto intentSetActionMth     = CHECK(env->GetMethodID(intentCls, "setAction", "(Ljava/lang/String;)Landroid/content/Intent;"));
+		CHECK(env->CallObjectMethod(intentInst, intentSetActionMth, intentAction));
+
+		if (data)
+		{
+			auto uriCls           = CHECK(env->FindClass("android/net/Uri"));
+			auto uriParseMth      = CHECK(env->GetStaticMethodID(uriCls, "parse", "(Ljava/lang/String;)Landroid/net/Uri;"));
+			auto dataStr          = CHECK((jstring)env->NewStringUTF(data->c_str()));
+			auto dataUri          = CHECK(env->CallStaticObjectMethod(uriCls, uriParseMth, dataStr));
+			auto intentSetDataMth = CHECK(env->GetMethodID(intentCls, "setData", "(Landroid/net/Uri;)Landroid/content/Intent;"));
+			CHECK(env->CallObjectMethod(intentInst, intentSetDataMth, dataUri));
+		}
+
+		if (extra)
+		{
+			auto intentExtraTextFld = CHECK(env->GetStaticFieldID(intentCls, "EXTRA_TEXT", "Ljava/lang/String;"));
+			auto intentExtraText    = CHECK(env->GetStaticObjectField(intentCls, intentExtraTextFld));
+			auto intentPutExtraMth  = CHECK(env->GetMethodID(intentCls, "putExtra", "(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;"));
+			auto extraStr           = CHECK((jstring)env->NewStringUTF(extra->c_str()));
+			CHECK(env->CallObjectMethod(intentInst, intentPutExtraMth, intentExtraText, extraStr));
+
+			if (mimeType)
+			{
+				auto mimeTypeStr      = CHECK((jstring)env->NewStringUTF(mimeType->c_str()));
+				auto intentSetTypeMth = CHECK(env->GetMethodID(intentCls, "setType", "(Ljava/lang/String;)Landroid/content/Intent;"));
+				CHECK(env->CallObjectMethod(intentInst, intentSetTypeMth, mimeTypeStr));
+			}
+		}
+
+		auto intentCreateChooserMth = CHECK(env->GetStaticMethodID(intentCls, "createChooser", "(Landroid/content/Intent;Ljava/lang/CharSequence;)Landroid/content/Intent;"));
+		auto shareIntentInst        = CHECK(env->CallStaticObjectMethod(intentCls, intentCreateChooserMth, intentInst, nullptr));
+
+		auto startActivityMth       = CHECK(env->GetMethodID(activityCls, "startActivity", "(Landroid/content/Intent;)V"));
+		env->CallVoidMethod(activityInst, startActivityMth, shareIntentInst);
+	}
+	catch (const CheckFailed &ex)
+	{
+		__android_log_print(ANDROID_LOG_ERROR, APPID, "SendIntent failed: %s", ex.what());
+	}
+#undef CHECK
+}
+
 void OpenURI(ByteString uri)
 {
-	fprintf(stderr, "cannot open URI: not implemented\n");
+	SendIntent("ACTION_VIEW", uri, std::nullopt, std::nullopt);
+}
+
+void ShareText(ByteString text)
+{
+	SendIntent("ACTION_SEND", std::nullopt, text, "text/plain");
 }
 
 long unsigned int GetTime()

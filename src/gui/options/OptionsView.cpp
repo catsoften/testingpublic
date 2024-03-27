@@ -46,13 +46,13 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 	auto *tmpSeparator = new ui::Separator(ui::Point(0, 22), ui::Point(Size.X, 1));
 	AddComponent(tmpSeparator);
 
-	scrollPanel = new ui::ScrollPanel(ui::Point(1, 23), ui::Point(Size.X-2, Size.Y-39));
+	scrollPanel = new ui::ScrollPanel(ui::Point(1, 23), ui::Point(Size.X - 2, Size.Y - 23 - ui::StandardSize()));
 	
 	AddComponent(scrollPanel);
 
 	int currentY = 8;
 	auto addLabel = [this, &currentY, &autoWidth](int indent, String text) {
-		auto *label = new ui::Label(ui::Point(22 + indent * 15, currentY), ui::Point(1, 16), "");
+		auto *label = new ui::Label(ui::Point(ui::IfTouchUI(40, 22) + indent * 15, currentY), ui::Point(1, 16), "");
 		autoWidth(label, 0);
 		label->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		label->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
@@ -64,7 +64,11 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		return label;
 	};
 	auto addCheckbox = [this, &currentY, &autoWidth, &addLabel](int indent, String text, String info, std::function<void ()> action) {
-		auto *checkbox = new ui::Checkbox(ui::Point(8 + indent * 15, currentY), ui::Point(1, 16), text, "");
+		auto *checkbox = new ui::Checkbox(ui::Point(8 + indent * 15, currentY), ui::Point(1, ui::IfTouchUI(32, 16)), text, "");
+		if (ui::Engine::Ref().TouchUI)
+		{
+			checkbox->SetTextOffset(ui::Point(0, 6));
+		}
 		autoWidth(checkbox, 0);
 		checkbox->SetActionCallback({ action });
 		currentY += 14;
@@ -72,24 +76,29 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		{
 			addLabel(indent, info);
 		}
+		else if (ui::Engine::Ref().TouchUI)
+		{
+			checkbox->SetTextOffset(ui::Point(0, 12));
+			currentY += 15;
+		}
 		currentY += 4;
 		scrollPanel->AddChild(checkbox);
 		return checkbox;
 	};
 	auto addDropDown = [this, &currentY, &autoWidth](String info, std::vector<std::pair<String, int>> options, std::function<void ()> action) {
-		auto *dropDown = new ui::DropDown(ui::Point(Size.X - 95, currentY), ui::Point(80, 16));
+		auto *dropDown = new ui::DropDown(ui::Point(Size.X - 95, currentY), ui::Point(80, ui::StandardSize()));
 		scrollPanel->AddChild(dropDown);
 		for (auto &option : options)
 		{
 			dropDown->AddOption(option);
 		}
 		dropDown->SetActionCallback({ action });
-		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X - 96, 16), info);
+		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X - 96, ui::StandardSize()), info);
 		label->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		label->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 		scrollPanel->AddChild(label);
 		autoWidth(label, 85);
-		currentY += 20;
+		currentY += ui::IfTouchUI(30, 20);
 		return dropDown;
 	};
 	auto addSeparator = [this, &currentY]() {
@@ -121,7 +130,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		c->SetAirMode(airMode->GetOption().second);
 	});
 	{
-		ambientAirTemp = new ui::Textbox(ui::Point(Size.X-95, currentY), ui::Point(60, 16));
+		ambientAirTemp = new ui::Textbox(ui::Point(Size.X - 95, currentY), ui::Point(60, ui::StandardSize()));
 		ambientAirTemp->SetActionCallback({ [this] {
 			UpdateAirTemp(ambientAirTemp->GetText(), false);
 		} });
@@ -130,13 +139,13 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		}});
 		ambientAirTemp->SetLimit(9);
 		scrollPanel->AddChild(ambientAirTemp);
-		ambientAirTempPreview = new ui::Button(ui::Point(Size.X-31, currentY), ui::Point(16, 16), "", "Preview");
+		ambientAirTempPreview = new ui::Button(ui::Point(Size.X - 31, currentY), ui::Point(16, ui::StandardSize()), "", "Preview");
 		scrollPanel->AddChild(ambientAirTempPreview);
-		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X-105, 16), "Ambient air temperature");
+		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X - 105, ui::StandardSize()), "Ambient air temperature");
 		label->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		label->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 		scrollPanel->AddChild(label);
-		currentY += 20;
+		currentY += ui::IfTouchUI(30, 20);
 	}
 	{ // Vorticity coefficient setting
 		vorticityCoeff = new ui::Textbox(ui::Point(Size.X-95, currentY), ui::Point(80, 16));
@@ -177,7 +186,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 
 	public:
 		GravityWindow(ui::Point position, float scale, int radius, float x, float y, OptionsController * c_):
-			ui::Window(position, ui::Point((radius * 5 / 2) + 20, (radius * 5 / 2) + 75)),
+			ui::Window(position, ui::Point((radius * 5 / 2) + 20, (radius * 5 / 2) + ui::IfTouchUI(84, 75))),
 			gravityDirection(new ui::DirectionSelector(ui::Point(10, 32), scale, radius, radius / 4, 2, 5)),
 			c(c_)
 			{
@@ -202,7 +211,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 				gravityDirection->SetSnapPoints(5, 5, 2);
 				AddComponent(gravityDirection);
 
-				ui::Button * okayButton = new ui::Button(ui::Point(0, Size.Y - 17), ui::Point(Size.X, 17), "OK");
+				ui::Button * okayButton = new ui::Button(ui::Point(0, Size.Y - ui::IfTouchUI(26, 17)), ui::Point(Size.X, ui::IfTouchUI(26, 17)), "OK");
 				okayButton->Appearance.HorizontalAlign = ui::Appearance::AlignCentre;
 				okayButton->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 				okayButton->Appearance.BorderInactive = ui::Colour(200, 200, 200);
@@ -269,6 +278,9 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 			c->SetScale(scale->GetOption().second);
 		});
 	}
+	touchUI = addCheckbox(0, "Touchscreen Friendly UI \bg- requires restart", "", [this] {
+		c->SetTouchUI(touchUI->GetChecked());
+	});
 	if (FORCE_WINDOW_FRAME_OPS == forceWindowFrameOpsNone)
 	{
 		resizable = addCheckbox(0, "Resizable \bg- allow resizing and maximizing window", "", [this] {
@@ -343,7 +355,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 	currentY += 4;
 	if constexpr (ALLOW_DATA_FOLDER)
 	{
-		auto *dataFolderButton = new ui::Button(ui::Point(10, currentY), ui::Point(90, 16), "Open data folder");
+		auto *dataFolderButton = new ui::Button(ui::Point(10, currentY), ui::IfTouchUI<ui::Point>({ 98, 26 }, { 90, 16 }), "Open data folder");
 		dataFolderButton->SetActionCallback({ [] {
 			ByteString cwd = Platform::GetCwd();
 			if (!cwd.empty())
@@ -358,7 +370,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		scrollPanel->AddChild(dataFolderButton);
 		if constexpr (SHARED_DATA_FOLDER)
 		{
-			auto *migrationButton = new ui::Button(ui::Point(Size.X - 178, currentY), ui::Point(163, 16), "Migrate to shared data directory");
+			auto *migrationButton = new ui::Button(ui::Point(Size.X - ui::IfTouchUI(186, 178), currentY), ui::IfTouchUI<ui::Point>({ 171, 26 }, { 163, 16 }), "Migrate to shared data directory");
 			migrationButton->SetActionCallback({ [] {
 				ByteString from = Platform::originalCwd;
 				ByteString to = Platform::sharedCwd;
@@ -369,7 +381,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 			} });
 			scrollPanel->AddChild(migrationButton);
 		}
-		currentY += 26;
+		currentY += ui::IfTouchUI(36, 26);
 	}
 	String autoStartupRequestNote = "Done once at startup";
 	if (!IGNORE_UPDATES)
@@ -399,20 +411,24 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 	{
 		addSeparator();
 
-		auto *creditsButton = new ui::Button(ui::Point(10, currentY), ui::Point(90, 16), "Credits");
+		auto *creditsButton = new ui::Button(ui::Point(10, currentY), ui::IfTouchUI<ui::Point>({ 98, 24 }, { 90, 16 }), "Credits");
 		creditsButton->SetActionCallback({ [] {
 			auto *credits = new Credits();
 			ui::Engine::Ref().ShowWindow(credits);
 		} });
 		scrollPanel->AddChild(creditsButton);
 
+		if (ui::Engine::Ref().TouchUI)
+		{
+			currentY += 4;
+		}
 		addLabel(5, " - Find out who contributed to TPT");
-		currentY += 13;
+		currentY += ui::IfTouchUI(18, 12);
 	}
 
 
 	{
-		ui::Button *ok = new ui::Button(ui::Point(0, Size.Y-16), ui::Point(Size.X, 16), "OK");
+		ui::Button *ok = new ui::Button(ui::Point(0, Size.Y - ui::StandardSize()), ui::Point(Size.X, ui::StandardSize()), "OK");
 		ok->SetActionCallback({ [this] {
 			c->Exit();
 		} });
@@ -595,6 +611,7 @@ void OptionsView::NotifySettingsChanged(OptionsModel * sender)
 	{
 		scale->SetOption(sender->GetScale());
 	}
+	touchUI->SetChecked(sender->GetTouchUI());
 	if (resizable)
 	{
 		resizable->SetChecked(sender->GetResizable());

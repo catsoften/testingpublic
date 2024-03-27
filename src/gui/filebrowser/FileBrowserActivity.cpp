@@ -10,6 +10,7 @@
 #include "gui/dialogues/ConfirmPrompt.h"
 #include "gui/dialogues/ErrorMessage.h"
 #include "gui/dialogues/TextPrompt.h"
+#include "gui/interface/Engine.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/ProgressBar.h"
 #include "gui/interface/SaveButton.h"
@@ -69,7 +70,7 @@ public:
 };
 
 FileBrowserActivity::FileBrowserActivity(ByteString directory, OnSelected onSelected_):
-	WindowActivity(ui::Point(-1, -1), ui::Point(500, 350)),
+	WindowActivity(ui::Point(-1, -1), ui::Point(500, ui::IfTouchUI(360, 350))),
 	onSelected(onSelected_),
 	directory(directory),
 	hasQueuedSearch(false),
@@ -82,14 +83,17 @@ FileBrowserActivity::FileBrowserActivity(ByteString directory, OnSelected onSele
 	titleLabel->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	AddComponent(titleLabel);
 
-	ui::Textbox * textField = new ui::Textbox(ui::Point(8, 25), ui::Point(Size.X-16, 16), "", "[search]");
+	ui::Textbox * textField = new ui::Textbox(ui::Point(8, 25), ui::Point(Size.X - 16, ui::StandardSize()), "", "[search]");
 	textField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	textField->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	textField->SetActionCallback({ [this, textField] { DoSearch(textField->GetText().ToUtf8()); } });
 	AddComponent(textField);
-	FocusComponent(textField);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(textField);
+	}
 
-	itemList = new ui::ScrollPanel(ui::Point(4, 45), ui::Point(Size.X-8, Size.Y-53));
+	itemList = new ui::ScrollPanel(ui::Point(4, ui::IfTouchUI(55, 45)), ui::Point(Size.X - 8, Size.Y - 53));
 	itemList->Visible = false;
 	AddComponent(itemList);
 

@@ -15,6 +15,7 @@ gui_files += files(
 	'ScrollPanel.cpp',
 	'Slider.cpp',
 	'Spinner.cpp',
+	'SplitButton.cpp',
 	'Textbox.cpp',
 	'TextWrapper.cpp',
 	'Window.cpp',

@@ -137,6 +137,7 @@ namespace ui
 		bool MomentumScroll = true;
 		bool ShowAvatars = true;
 		bool TouchUI = false;
+		bool TouchUINew = false;
 		WindowFrameOps windowFrameOps;
 
 		void SetScale              (int newScale               ) { windowFrameOps.scale               = newScale;               }
@@ -162,4 +163,18 @@ namespace ui
 			refreshRate = newRefreshRate;
 		}
 	};
+
+	template <typename T>
+	T IfTouchUI(T ifTrue, T ifFalse)
+	{
+		return Engine::Ref().TouchUI ? ifTrue : ifFalse;
+	}
+
+	template <auto>
+	auto IfTouchUI(auto ifTrue, auto ifFalse)
+	{
+		return Engine::Ref().TouchUI ? ifTrue : ifFalse;
+	}
+
+	int StandardSize();
 }

@@ -8,6 +8,7 @@
 #include "gui/interface/Button.h"
 #include "gui/interface/Textbox.h"
 #include "gui/interface/DropDown.h"
+#include "gui/interface/Engine.h"
 #include "simulation/Simulation.h"
 #include "simulation/SimulationData.h"
 #include "graphics/Graphics.h"
@@ -89,7 +90,10 @@ sim(sim_)
 		textField->SetText(valueString);
 	}
 
-	FocusComponent(textField);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(textField);
+	}
 	Update();
 
 	MakeActiveWindow();

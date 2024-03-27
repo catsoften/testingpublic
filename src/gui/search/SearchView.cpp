@@ -11,6 +11,7 @@
 #include "gui/interface/Textbox.h"
 #include "gui/interface/Spinner.h"
 #include "gui/interface/DropDown.h"
+#include "gui/interface/Engine.h"
 #include "PowderToySDL.h"
 #include "graphics/Graphics.h"
 #include "graphics/VideoBuffer.h"
@@ -52,7 +53,10 @@ SearchView::SearchView():
 	searchField->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 	searchField->SetActionCallback({ [this] { doSearch(); } });
 	searchField->SetLimit(100);
-	FocusComponent(searchField);
+	if (!ui::Engine::Ref().TouchUI)
+	{
+		FocusComponent(searchField);
+	}
 
 	dateRange = new ui::DropDown(ui::Point(WINDOWW-185, 10), ui::Point(36, 17));
 	dateRange->SetActionCallback({ [this] { c->ChangePeriod(dateRange->GetOption().second); } });

@@ -49,6 +49,7 @@ public:
 
 	void OnMouseClick(int x, int y, unsigned int button) override;
 	void OnMouseDown(int x, int y, unsigned int button) override;
+	void OnMouseUp(int x, int y, unsigned int button) override;
 
 	void OnMouseEnter(int x, int y) override;
 	void OnMouseLeave(int x, int y) override;
@@ -82,5 +83,7 @@ public:
 
 protected:
 	bool isButtonDown, state, isMouseInside, selected, selectable;
+	Point lastClickPos;
+	uint64_t holdStartTick;
 };
 }

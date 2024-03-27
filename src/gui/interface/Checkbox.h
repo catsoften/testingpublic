@@ -8,6 +8,7 @@ namespace ui
 class Checkbox: public ui::Component {
 	String text;
 	String toolTip;
+	ui::Point textOffset;
 	bool checked;
 	bool isMouseOver;
 	struct CheckboxAction
@@ -23,6 +24,7 @@ public:
 	void SetText(String text);
 	String GetText();
 	void SetIcon(Icon icon);
+	void SetTextOffset(ui::Point offset);
 	void Draw(const Point& screenPos) override;
 	void OnMouseEnter(int x, int y) override;
 	void OnMouseHover(int x, int y) override;
