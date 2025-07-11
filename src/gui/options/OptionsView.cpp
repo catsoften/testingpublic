@@ -148,7 +148,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		currentY += ui::IfTouchUI(30, 20);
 	}
 	{ // Vorticity coefficient setting
-		vorticityCoeff = new ui::Textbox(ui::Point(Size.X-95, currentY), ui::Point(80, 16));
+		vorticityCoeff = new ui::Textbox(ui::Point(Size.X-95, currentY), ui::Point(80, ui::StandardSize()));
 		vorticityCoeff->SetActionCallback({ [this] {
 			UpdateVorticityCoeff(vorticityCoeff->GetText(), false);
 		} });
@@ -157,7 +157,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		}});
 		vorticityCoeff->SetLimit(9);
 		scrollPanel->AddChild(vorticityCoeff);
-		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X-105, 16), "Vorticity confinement");
+		auto *label = new ui::Label(ui::Point(8, currentY), ui::Point(Size.X-105, ui::StandardSize()), "Vorticity confinement");
 		label->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		label->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 		scrollPanel->AddChild(label);

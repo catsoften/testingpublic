@@ -2,6 +2,7 @@
 #include "Android.h"
 #include "common/Defer.h"
 #include "Config.h"
+#include <cstring>
 #include <ctime>
 #include <SDL.h>
 #include <jni.h>
@@ -160,5 +161,80 @@ ByteString DefaultDdir()
 		return *result;
 	}
 	return "";
+}
+
+int InvokeMain(int argc, char *argv[])
+{
+	struct CheckFailed : public std::runtime_error
+	{
+		using runtime_error::runtime_error;
+	};
+	try
+	{
+		auto CHECK = [](auto thing, const char *what) {
+			if (!thing)
+			{
+				throw CheckFailed(what);
+			}
+			return thing;
+		};
+#define CHECK(a) CHECK(a, #a)
+		auto *env                = CHECK((JNIEnv *)SDL_AndroidGetJNIEnv());
+		auto activityInst        = CHECK((jobject)SDL_AndroidGetActivity());
+		auto activityCls         = CHECK(env->GetObjectClass(activityInst));
+
+		auto getIntentMth        = CHECK(env->GetMethodID(activityCls, "getIntent", "()Landroid/content/Intent;"));
+		auto intentInst          = CHECK(env->CallObjectMethod(activityInst, getIntentMth));
+		auto intentCls           = CHECK(env->GetObjectClass(intentInst));
+
+		auto getActionMth        = CHECK(env->GetMethodID(intentCls, "getAction", "()Ljava/lang/String;"));
+		auto actionStr           = CHECK((jstring)env->CallObjectMethod(intentInst, getActionMth));
+
+		auto intentActionViewFld = CHECK(env->GetStaticFieldID(intentCls, "ACTION_VIEW", "Ljava/lang/String;"));
+		auto intentActionViewStr = CHECK((jstring)env->GetStaticObjectField(intentCls, intentActionViewFld));
+
+		auto stringCls           = CHECK(env->GetObjectClass(actionStr));
+		auto stringEqualsMth     = CHECK(env->GetMethodID(stringCls, "equals", "(Ljava/lang/Object;)Z"));
+		auto actionViewBool      = (jboolean)env->CallBooleanMethod(actionStr, stringEqualsMth, intentActionViewStr);
+
+		if (actionViewBool == JNI_TRUE)
+		{
+			auto getDataMth     = CHECK(env->GetMethodID(intentCls, "getData", "()Landroid/net/Uri;"));
+			auto uriInst        = CHECK(env->CallObjectMethod(intentInst, getDataMth));
+			auto uriCls         = CHECK(env->GetObjectClass(uriInst));
+
+			auto uriToStringMth = CHECK(env->GetMethodID(uriCls, "toString", "()Ljava/lang/String;"));
+			auto resultRef      = CHECK((jstring)env->CallObjectMethod(uriInst, uriToStringMth));
+			auto *resultBytes   = CHECK(env->GetStringUTFChars(resultRef, nullptr));
+			Defer deleteUtf([env, resultRef, resultBytes]() { env->ReleaseStringUTFChars(resultRef, resultBytes); });
+			ByteString uri = resultBytes;
+
+			if (uri.Contains('='))
+			{
+				uri = "ptsave:" + uri.PartitionBy('=')[1];
+			}
+			else if (uri.Contains('~'))
+			{
+				uri = "ptsave:" + uri.PartitionBy('~')[1];
+			}
+
+			char *newArgv[2];
+			newArgv[0] = argv[0];
+			newArgv[1] = new char[uri.length() + 1];
+			std::strcpy(newArgv[1], uri.c_str());
+
+			return Main(2, newArgv);
+		}
+	}
+	catch (const CheckFailed &ex)
+	{
+		__android_log_print(ANDROID_LOG_ERROR, APPID, "InvokeMain (intent check) failed: %s", ex.what());
+	}
+#undef CHECK
+	return Main(argc, argv);
+}
+
+void MarkPresentable()
+{
 }
 }
