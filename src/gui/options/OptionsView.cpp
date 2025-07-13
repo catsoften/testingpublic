@@ -161,7 +161,7 @@ OptionsView::OptionsView() : ui::Window(ui::Point(-1, -1), ui::Point(320, 340))
 		label->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 		label->Appearance.VerticalAlign = ui::Appearance::AlignMiddle;
 		scrollPanel->AddChild(label);
-		currentY += 20;
+		currentY += ui::IfTouchUI(30, 20);
 	}
 	class GravityWindow : public ui::Window
 	{

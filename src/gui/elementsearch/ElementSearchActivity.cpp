@@ -38,7 +38,11 @@ ElementSearchActivity::ElementSearchActivity(GameController * gameController, st
 	if (ui::Engine::Ref().TouchUI)
 	{
 		title = new ui::Label(ui::Point(8, 8), ui::Point(80, 26), "Select Element");
-		searchField = new ui::Textbox(ui::Point(88, 8), ui::Point(Size.X - 87 - 64, 26), "", "[search]");
+		searchField = new ui::Textbox(ui::Point(88, 8), ui::Point(Size.X - 87 - 97, 26), "", "[search]");
+		favoriteButton = new ui::Button(ui::Point(Size.X - 89, 8), ui::Point(26, 26), "", "Mark elements as favorites");
+		favoriteButton->SetIcon(IconFavourite);
+		favoriteButton->SetTogglable(true);
+		AddComponent(favoriteButton);
 		closeButton = new ui::Button(ui::Point(Size.X - 56, 8), ui::Point(48, 26), "Close");
 	}
 	else
@@ -94,8 +98,24 @@ void ElementSearchActivity::PlaceTool(Tool * tool, ui::Point position)
 	tempButton->Appearance.SetTexture(std::move(tempTexture));
 	tempButton->Appearance.BackgroundInactive = tool->Colour.WithAlpha(0xFF);
 	tempButton->SetActionCallback({ [this, tempButton, tool] {
-		if (tempButton->GetSelectionState() >= 0 && tempButton->GetSelectionState() <= 2)
+		if (favoriteButton && favoriteButton->GetToggleState())
+		{
+			if (Favorite::Ref().IsFavorite(tool->Identifier))
+			{
+				Favorite::Ref().RemoveFavorite(tool->Identifier);
+			}
+			else
+			{
+				Favorite::Ref().AddFavorite(tool->Identifier);
+			}
+			favoriteButton->SetToggleState(false);
+			gameController->RebuildFavoritesMenu();
+			SearchTools("");
+		}
+		else if (tempButton->GetSelectionState() >= 0 && tempButton->GetSelectionState() <= 2)
+		{
 			SetActiveTool(tempButton->GetSelectionState(), tool);
+		}
 	} });
 
 	if(gameController->GetActiveTool(0) == tool)
@@ -119,8 +139,8 @@ void ElementSearchActivity::PlaceTools() // Touch UI element selector layout
 {
 	ui::Point current = ui::Point(0, 0);
 	auto menuList = gameController->GetMenuList();
-	for (size_t i = 0; i < menuList.size(); i++)
-	{
+
+	auto addMenu = [this, &current, menuList](size_t i) {
 		auto menu = menuList[i];
 		if (menu->GetVisible() && i != SC_DECO)
 		{
@@ -151,6 +171,19 @@ void ElementSearchActivity::PlaceTools() // Touch UI element selector layout
 
 			current.Y += 3;
 		}
+	};
+
+	if (Favorite::Ref().AnyFavorites())
+	{
+		addMenu(SC_FAVORITES);
+	}
+	for (size_t i = 0; i < menuList.size(); i++)
+	{
+		if (i == SC_FAVORITES)
+		{
+			continue;
+		}
+		addMenu(i);
 	}
 	scrollPanel->InnerSize = ui::Point(scrollPanel->Size.X, current.Y + toolButtonSize.Y + 6);
 }

@@ -22,6 +22,7 @@ class ElementSearchActivity: public WindowActivity
 	GameController * gameController;
 	std::vector<Tool*> tools;
 	ui::Textbox * searchField;
+	ui::Button * favoriteButton = nullptr;
 	ui::ScrollPanel * scrollPanel = nullptr;
 	std::vector<ui::Label*> menuLabels;
 	std::vector<ToolButton*> toolButtons;
