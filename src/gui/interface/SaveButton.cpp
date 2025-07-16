@@ -265,7 +265,7 @@ void SaveButton::Draw(const Point& screenPos)
 		g->BlendText(screenPos + Vec2{ (Size.X-(Graphics::TextSize(name).X - 1))/2, Size.Y - 21 }, name, isMouseInside ? 0xFFFFFF_rgb .WithAlpha(255) : 0xB4B4B4_rgb .WithAlpha(255));
 	}
 
-	if(isMouseInside && selectable)
+	if((isMouseInside || ui::Engine::Ref().TouchUI) && selectable)
 	{
 		g->DrawFilledRect(RectSized(screenPos + Vec2{ Size.X - 19, 7 }, Vec2{ 13, 13 }), 0x000000_rgb);
 		g->DrawRect(RectSized(screenPos + Vec2{ Size.X-20, 6 }, Vec2{ 14, 14 }), 0xFFFFFF_rgb);

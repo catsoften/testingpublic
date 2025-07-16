@@ -2,6 +2,7 @@
 #include "LocalBrowserController.h"
 #include "LocalBrowserModel.h"
 #include "gui/interface/Button.h"
+#include "gui/interface/Engine.h"
 #include "gui/interface/Textbox.h"
 #include "gui/interface/Label.h"
 #include "gui/interface/SaveButton.h"
@@ -17,19 +18,19 @@ LocalBrowserView::LocalBrowserView():
 	lastChanged(0),
 	pageCount(0)
 {
-	nextButton = new ui::Button(ui::Point(WINDOWW-52, WINDOWH-18), ui::Point(50, 16), String("Next ") + 0xE015);
-	previousButton = new ui::Button(ui::Point(2, WINDOWH-18), ui::Point(50, 16), 0xE016 + String(" Prev"));
-	undeleteButton = new ui::Button(ui::Point(WINDOWW-122, WINDOWH-18), ui::Point(60, 16), "Rescan");
+	nextButton = new ui::Button(ui::Point(WINDOWW-52, WINDOWH - ui::StandardSize() - 2), ui::Point(50, ui::StandardSize()), String("Next ") + 0xE015);
+	previousButton = new ui::Button(ui::Point(2, WINDOWH - ui::StandardSize() - 2), ui::Point(50, ui::StandardSize()), 0xE016 + String(" Prev"));
+	undeleteButton = new ui::Button(ui::Point(WINDOWW - 122, WINDOWH - ui::StandardSize() - 2), ui::Point(60, ui::StandardSize()), "Rescan");
 	AddComponent(nextButton);
 	AddComponent(previousButton);
 	AddComponent(undeleteButton);
 
-	pageTextbox = new ui::Textbox(ui::Point(283, WINDOWH-18), ui::Point(41, 16), "");
+	pageTextbox = new ui::Textbox(ui::Point(283, WINDOWH - ui::StandardSize() - 2), ui::Point(41, ui::StandardSize()), "");
 	pageTextbox->SetActionCallback({ [this] { textChanged(); } });
 	pageTextbox->SetInputType(ui::Textbox::Number);
-	pageLabel = new ui::Label(ui::Point(0, WINDOWH-18), ui::Point(30, 16), "Page"); //page [TEXTBOX] of y
+	pageLabel = new ui::Label(ui::Point(0, WINDOWH - ui::StandardSize() - 2), ui::Point(30, ui::StandardSize()), "Page"); //page [TEXTBOX] of y
 	pageLabel->Appearance.HorizontalAlign = ui::Appearance::AlignRight;
-	pageCountLabel = new ui::Label(ui::Point(WINDOWW/2+6, WINDOWH-18), ui::Point(50, 16), "");
+	pageCountLabel = new ui::Label(ui::Point(WINDOWW / 2 + 6, WINDOWH - ui::StandardSize() - 2), ui::Point(50, ui::StandardSize()), "");
 	pageCountLabel->Appearance.HorizontalAlign = ui::Appearance::AlignLeft;
 	AddComponent(pageLabel);
 	AddComponent(pageCountLabel);
@@ -45,11 +46,11 @@ LocalBrowserView::LocalBrowserView():
 
 	undeleteButton->SetActionCallback({ [this] { c->RescanStamps(); } });
 
-	removeSelected = new ui::Button(ui::Point(((WINDOWW-100)/2), WINDOWH-18), ui::Point(100, 16), "Delete");
+	removeSelected = new ui::Button(ui::Point(((WINDOWW - 100) / 2), WINDOWH-ui::StandardSize() - 2), ui::Point(100, ui::StandardSize()), "Delete");
 	removeSelected->Visible = false;
 	removeSelected->SetActionCallback({ [this] { c->RemoveSelected(); } });
 
-	renameSelected = new ui::Button(ui::Point(((WINDOWW - 100) / 2 + 52), WINDOWH - 18), ui::Point(100, 16), "Rename");
+	renameSelected = new ui::Button(ui::Point(((WINDOWW - 100) / 2 + 52), WINDOWH - ui::StandardSize() - 2), ui::Point(100, ui::StandardSize()), "Rename");
 	renameSelected->Visible = false;
 	renameSelected->SetActionCallback({ [this] { c->RenameSelected(); } });
 
@@ -131,9 +132,9 @@ void LocalBrowserView::NotifySavesListChanged(LocalBrowserModel * sender)
 	}
 	stampButtons.clear();
 	buttonXOffset = 0;
-	buttonYOffset = 50;
+	buttonYOffset = ui::IfTouchUI(30, 50);
 	buttonAreaWidth = Size.X;
-	buttonAreaHeight = Size.Y - buttonYOffset - 18;
+	buttonAreaHeight = Size.Y - buttonYOffset - ui::StandardSize() - 2;
 	buttonWidth = (buttonAreaWidth/savesX) - buttonPadding*2;
 	buttonHeight = (buttonAreaHeight/savesY) - buttonPadding*2;
 	for (auto i = 0; i < int(saves.size()); i++)
