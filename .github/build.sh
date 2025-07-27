@@ -1092,7 +1092,7 @@ function compile_bzip2() {
 
 function compile_libwebpmux()
 {
-	get_and_cd libwebp-1.3.0.tar.gz libwebpmux_version
+	get_and_cd libwebp-1.6.0.tar.gz libwebpmux_version
 	mkdir build
 	cmake_configure=cmake # not local because add_*_flags can't deal with that
 	cmake_configure+=$'\t'-DWEBP_BUILD_ANIM_UTILS=OFF
@@ -1126,7 +1126,7 @@ function compile_libwebpmux()
 
 function compile_nasm() # nothing included in output libraries, just needed to compile libx264 and ffmpeg
 {
-	get_and_cd nasm-2.16.01.tar.gz nasm_version
+	get_and_cd nasm-2.16.03.tar.gz nasm_version
 	./autogen.sh
 	./configure
 	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
@@ -1191,7 +1191,7 @@ function compile_x264()
 function compile_ffmpeg()
 {
 	pkg-config --list-all
-	get_and_cd ffmpeg-6.0.tar.gz ffmpeg_version
+	get_and_cd ffmpeg-7.1.tar.gz ffmpeg_version
 	local configure=./configure
 	configure+=$'\t'--prefix=$zip_root_real
 	if [[ $BSH_STATIC_DYNAMIC != static ]]; then
