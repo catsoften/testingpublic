@@ -264,3 +264,77 @@ if host_platform == 'windows' and not is_static
 		config_dlls += [ [ files(join_paths(meson.current_source_dir(), dll[0], dll[1])), dll[1], dll[2] ] ]
 	endforeach
 endif
+
+libwebpmux_name = 'libwebpmux'
+config_dlls_pre += [ [ join_paths(meson.current_source_dir(), 'bin'), dll_prefix + libwebpmux_name + '.dll', 'all' ] ]
+meson.override_dependency('libwebpmux', declare_dependency(
+	dependencies: [
+		cpp_compiler.find_library('webp', dirs: join_paths(meson.current_source_dir(), lib_dir), static: is_static),
+		cpp_compiler.find_library('webpmux', dirs: join_paths(meson.current_source_dir(), lib_dir), static: is_static),
+		cpp_compiler.find_library('sharpyuv', dirs: join_paths(meson.current_source_dir(), lib_dir), static: is_static),
+	],
+	include_directories: [
+		include_directories('include'),
+	],
+	version: libwebpmux_version,
+), static: is_static)
+
+x264_name = 'x264'
+config_dlls_pre += [ [ join_paths(meson.current_source_dir(), 'bin'), dll_prefix + x264_name + '.dll', 'all' ] ]
+meson.override_dependency('libavcodec', declare_dependency(
+	dependencies: [
+		cpp_compiler.find_library('x264', dirs: join_paths(meson.current_source_dir(), lib_dir), static: is_static),
+	],
+	include_directories: [
+		include_directories('include'),
+	],
+	version: x264_version,
+), static: is_static)
+
+libavcodec_name = 'libavcodec'
+config_dlls_pre += [ [ join_paths(meson.current_source_dir(), 'bin'), dll_prefix + libavcodec_name + '.dll', 'all' ] ]
+meson.override_dependency('libavcodec', declare_dependency(
+	dependencies: [
+		cpp_compiler.find_library('avcodec', dirs: join_paths(meson.current_source_dir(), lib_dir), static: is_static),
+	],
+	include_directories: [
+		include_directories('include'),
+	],
+	version: libavcodec_version,
+), static: is_static)
+
+libavformat_name = 'libavformat'
+config_dlls_pre += [ [ join_paths(meson.current_source_dir(), 'bin'), dll_prefix + libavformat_name + '.dll', 'all' ] ]
+meson.override_dependency('libavformat', declare_dependency(
+	dependencies: [
+		cpp_compiler.find_library('avformat', dirs: join_paths(meson.current_source_dir(), lib_dir), static: is_static),
+	],
+	include_directories: [
+		include_directories('include'),
+	],
+	version: libavformat_version,
+), static: is_static)
+
+libavutil_name = 'libavutil'
+config_dlls_pre += [ [ join_paths(meson.current_source_dir(), 'bin'), dll_prefix + libavutil_name + '.dll', 'all' ] ]
+meson.override_dependency('libavutil', declare_dependency(
+	dependencies: [
+		cpp_compiler.find_library('avutil', dirs: join_paths(meson.current_source_dir(), lib_dir), static: is_static),
+	],
+	include_directories: [
+		include_directories('include'),
+	],
+	version: libavutil_version,
+), static: is_static)
+
+libswscale_name = 'libswscale'
+config_dlls_pre += [ [ join_paths(meson.current_source_dir(), 'bin'), dll_prefix + libswscale_name + '.dll', 'all' ] ]
+meson.override_dependency('libswscale', declare_dependency(
+	dependencies: [
+		cpp_compiler.find_library('swscale', dirs: join_paths(meson.current_source_dir(), lib_dir), static: is_static),
+	],
+	include_directories: [
+		include_directories('include'),
+	],
+	version: libswscale_version,
+), static: is_static)

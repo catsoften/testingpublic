@@ -21,20 +21,23 @@ configurations = []
 for bsh_host_arch, bsh_host_platform, bsh_host_libc, bsh_static_dynamic, bsh_build_platform,        runs_on in [
 	(   'x86_64' ,           'linux',         'gnu',           'static',            'linux', 'ubuntu-22.04' ),
 	(  'aarch64' ,           'linux',         'gnu',           'static',        'linux', 'ubuntu-22.04-arm' ),
-	(   'x86_64' ,         'windows',       'mingw',           'static',          'windows', 'windows-2022' ),
+# mingw doesn't like libwebp
+#	(   'x86_64' ,         'windows',       'mingw',           'static',          'windows', 'windows-2022' ),
 	(   'x86_64' ,         'windows',        'msvc',           'static',          'windows', 'windows-2022' ),
 	(   'x86_64' ,         'windows',        'msvc',          'dynamic',          'windows', 'windows-2022' ),
-	(      'x86' ,         'windows',        'msvc',           'static',          'windows', 'windows-2022' ),
-	(      'x86' ,         'windows',        'msvc',          'dynamic',          'windows', 'windows-2022' ),
+# libwebp doesn't support win32
+#	(      'x86' ,         'windows',        'msvc',           'static',          'windows', 'windows-2022' ),
+#	(      'x86' ,         'windows',        'msvc',          'dynamic',          'windows', 'windows-2022' ),
 	(  'aarch64' ,         'windows',        'msvc',           'static',          'windows', 'windows-2022' ),
 	(  'aarch64' ,         'windows',        'msvc',          'dynamic',          'windows', 'windows-2022' ),
 	(   'x86_64' ,          'darwin',       'macos',           'static',           'darwin',     'macos-13' ),
 	(  'aarch64' ,          'darwin',       'macos',           'static',           'darwin',     'macos-13' ),
-	(      'x86' ,         'android',      'bionic',           'static',            'linux', 'ubuntu-22.04' ),
-	(   'x86_64' ,         'android',      'bionic',           'static',            'linux', 'ubuntu-22.04' ),
-	(      'arm' ,         'android',      'bionic',           'static',            'linux', 'ubuntu-22.04' ),
-	(  'aarch64' ,         'android',      'bionic',           'static',            'linux', 'ubuntu-22.04' ),
-	(   'wasm32' ,      'emscripten',  'emscripten',           'static',            'linux', 'ubuntu-22.04' ),
+# not worth trying to get ffmpeg (and deps) to build for android and wasm
+#	(      'x86' ,         'android',      'bionic',           'static',            'linux', 'ubuntu-22.04' ),
+#	(   'x86_64' ,         'android',      'bionic',           'static',            'linux', 'ubuntu-22.04' ),
+#	(      'arm' ,         'android',      'bionic',           'static',            'linux', 'ubuntu-22.04' ),
+#	(  'aarch64' ,         'android',      'bionic',           'static',            'linux', 'ubuntu-22.04' ),
+#	(   'wasm32' ,      'emscripten',  'emscripten',           'static',            'linux', 'ubuntu-22.04' ),
 ]:
 	for debug_release in [ 'debug', 'release' ]:
 		job_name = f'build+target={bsh_host_arch}-{bsh_host_platform}-{bsh_host_libc}-{bsh_static_dynamic}-{debug_release}'

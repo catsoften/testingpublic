@@ -38,6 +38,10 @@ tarball_hash() {
 	jsoncpp-1.9.5.tar.gz)      sha256sum=f409856e5920c18d0c2fb85276e24ee607d2a09b5e7d5f0a371368903c275da2;; # acquired from https://github.com/open-source-parsers/jsoncpp/archive/refs/tags/1.9.5.tar.gz
 	bzip2-1.0.8.tar.gz)        sha256sum=ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269;; # acquired from https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
 	nghttp2-1.66.0.tar.gz)     sha256sum=e178687730c207f3a659730096df192b52d3752786c068b8e5ee7aeb8edae05a;; # acquired from https://github.com/nghttp2/nghttp2/releases/download/v1.66.0/nghttp2-1.66.0.tar.gz
+	libwebp-1.6.0.tar.gz)      sha256sum=e4ab7009bf0629fd11982d4c2aa83964cf244cffba7347ecd39019a9e38c4564;; # acquired from https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.6.0.tar.gz
+	nasm-2.16.03.tar.gz)       sha256sum=5bc940dd8a4245686976a8f7e96ba9340a0915f2d5b88356874890e207bdb581;; # acquired from https://www.nasm.us/pub/nasm/releasebuilds/2.16.01/nasm-2.16.03.tar.gz
+	x264-r3144-5a9dfdd.tar.gz) sha256sum=4672fb415c34bf16e2ed9cd43d1ab865158f586c7f1406d507f7f44516fb5ec8;; # acquired from https://code.videolan.org/videolan/x264/-/archive/master/x264-master.tar.gz commit b35605ace3ddf7c1a5d67a2eb553f034aef41d55
+	ffmpeg-7.1.tar.gz)         sha256sum=42a7dc0d1583885d1b8f6559fa7ce28f97acafea6803de6a8f73e3ba229348bd;; # acquired from https://ffmpeg.org/releases/ffmpeg-7.1.tar.gz
 	*)                                         >&2 echo "no such tarball (update tarball_hash)" && exit 1;;
 	esac
 }
@@ -1086,6 +1090,156 @@ function compile_bzip2() {
 	library_versions+="bzip2_version = '$bzip2_version-tpt-libs'"$'\n'
 }
 
+function compile_libwebpmux()
+{
+	get_and_cd libwebp-1.3.0.tar.gz libwebpmux_version
+	mkdir build
+	cmake_configure=cmake # not local because add_*_flags can't deal with that
+	cmake_configure+=$'\t'-DWEBP_BUILD_ANIM_UTILS=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_CWEBP=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_DWEBP=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_GIF2WEBP=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_IMG2WEBP=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_VWEBP=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_WEBPINFO=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_WEBPMUX=OFF
+	cmake_configure+=$'\t'-DWEBP_BUILD_EXTRAS=OFF
+	add_install_flags cmake_configure
+	if [[ $BSH_STATIC_DYNAMIC == static ]]; then
+		cmake_configure+=$'\t'-DWEBP_LINK_STATIC=ON
+	else
+		cmake_configure+=$'\t'-DWEBP_LINK_STATIC=OFF
+	fi
+	if [[ $BSH_HOST_PLATFORM == android ]]; then
+		add_android_flags cmake_configure
+	fi
+	cd build
+	VERBOSE=1 $cmake_configure ..
+	VERBOSE=1 cmake --build . -j$NPROC --config $cmake_build_type
+	VERBOSE=1 cmake --install . --config $cmake_build_type
+	cd ..
+	echo 5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf COPYING | sha256sum -c
+	cp COPYING $zip_root_real/licenses/libwebpmux.LICENSE
+	uncd_and_unget
+	library_versions+="libwebpmux_version = '$libwebpmux_version-tpt-libs'"$'\n'
+}
+
+function compile_nasm() # nothing included in output libraries, just needed to compile libx264 and ffmpeg
+{
+	get_and_cd nasm-2.16.01.tar.gz nasm_version
+	./autogen.sh
+	./configure
+	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
+		sudo make install -j$NPROC
+	else
+		make install -j$NPROC
+	fi
+	export PATH=$PATH:/usr/local/bin
+	uncd_and_unget
+}
+
+function compile_x264()
+{
+	pkg-config --list-all
+	get_and_cd x264-r3144-5a9dfdd.tar.gz x264_version
+	local configure=./configure
+	configure+=$'\t'--enable-pic
+	configure+=$'\t'--disable-cli
+	configure+=$'\t'--disable-bashcompletion
+	configure+=$'\t'--disable-interlaced
+	configure+=$'\t'--bit-depth=8
+	if [[ $BSH_HOST_ARCH != x86_64 ]]; then
+		configure+=$'\t'--disable-asm
+	fi
+	if [[ $BSH_HOST_ARCH-$BSH_HOST_PLATFORM == aarch64-darwin ]]; then
+		configure+=$'\t'--host=arm64-apple-darwin
+	fi
+
+	# install as dependency
+	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
+		CC=cl $configure --enable-static
+	else
+		$configure --enable-static
+	fi
+	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
+		sudo make install -j$NPROC
+	else
+		make install -j$NPROC
+	fi
+
+	# install as library
+	make clean
+	configure+=$'\t'--prefix=$zip_root_real
+	if [[ $BSH_STATIC_DYNAMIC == static ]]; then
+		configure+=$'\t'--enable-static
+	else
+		configure+=$'\t'--enable-shared
+	fi
+	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
+		CC=cl $configure
+	else
+		$configure
+	fi
+	make install -j$NPROC
+
+	echo 32b1062f7da84967e7019d01ab805935caa7ab7321a7ced0e30ebe75e5df1670 COPYING | sha256sum -c
+	cp COPYING $zip_root_real/licenses/libx264.LICENSE
+	uncd_and_unget
+	library_versions+="x264_version = 'x264_version-tpt-libs'"$'\n'
+}
+
+function compile_ffmpeg()
+{
+	pkg-config --list-all
+	get_and_cd ffmpeg-6.0.tar.gz ffmpeg_version
+	local configure=./configure
+	configure+=$'\t'--prefix=$zip_root_real
+	if [[ $BSH_STATIC_DYNAMIC != static ]]; then
+		configure+=$'\t'--disable-static
+		configure+=$'\t'--enable-shared
+	fi
+	if [[ $BSH_HOST_ARCH != x86_64 ]]; then
+		configure+=$'\t'--disable-x86asm
+	fi
+	if [[ $BSH_HOST_PLATFORM == windows ]]; then
+		configure+=$'\t'--toolchain=msvc
+		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
+			configure+=$'\t'--target-os=win64
+			configure+=$'\t'--arch=x86_64
+		fi
+	fi
+	configure+=$'\t'--enable-gpl
+	configure+=$'\t'--enable-libx264
+	configure+=$'\t'--disable-programs
+	configure+=$'\t'--disable-doc
+	configure+=$'\t'--disable-avdevice
+	configure+=$'\t'--disable-swresample
+	configure+=$'\t'--disable-postproc
+	configure+=$'\t'--disable-avfilter
+	configure+=$'\t'--disable-network
+	configure+=$'\t'--disable-encoders
+	configure+=$'\t'--enable-encoder=libx264
+	configure+=$'\t'--disable-decoders
+	configure+=$'\t'--disable-muxers
+	configure+=$'\t'--enable-muxer=mp4
+	configure+=$'\t'--disable-demuxers
+	configure+=$'\t'--disable-parsers
+	configure+=$'\t'--disable-bsfs
+	configure+=$'\t'--disable-protocols
+	configure+=$'\t'--enable-protocol=file
+	configure+=$'\t'--disable-devices
+	configure+=$'\t'--disable-filters
+	$configure
+	make install -j$NPROC
+	echo 8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643 COPYING.GPLv2 | sha256sum -c
+	cp COPYING.GPLv2 $zip_root_real/licenses/ffmpeg.LICENSE
+	uncd_and_unget
+	library_versions+="libavcodec_version = '60.3.100-tpt-libs'"$'\n'
+	library_versions+="libavformat_version = '60.3.100-tpt-libs'"$'\n'
+	library_versions+="libavutil_version = '58.2.100-tpt-libs'"$'\n'
+	library_versions+="libswscale_version = '7.1.100-tpt-libs'"$'\n'
+}
+
 function compile() {
 	local what=$1 # $2 and up hold names of libraries that have to be compiled before $what
 	declare -n status=status_$what
@@ -1107,18 +1261,25 @@ function compile() {
 	status=compiled
 }
 
-compile zlib
-compile libpng zlib
-compile nghttp2
-compile bzip2
-compile jsoncpp
-compile mbedtls
-compile curl zlib mbedtls nghttp2
-compile sdl2
-compile fftw
-compile lua51
-compile lua52
-compile luajit
+if [[ $BSH_HOST_ARCH == x86_64 ]]; then
+	compile nasm
+fi
+compile x264
+compile ffmpeg
+#compile libwebpmux
+
+#compile zlib
+#compile libpng zlib
+#compile nghttp2
+#compile bzip2
+#compile jsoncpp
+#compile mbedtls
+#compile curl zlib mbedtls nghttp2
+#compile sdl2
+#compile fftw
+#compile lua51
+#compile lua52
+#compile luajit
 
 cat - << MESON > $temp_dir/$zip_root/meson.build
 project('tpt-libs-prebuilt', 'cpp', version: '$BSH_VTAG')
@@ -1154,6 +1315,8 @@ for junk in \
 	include/libpng16 \
 	include/nghttp2 \
 	lib/{cmake,libpng,pkgconfig} \
+	include/webp/{sharpyuv,decode.h,demux.h} \
+	lib/{libwebpdecoder.a,libwebpdemux.a} \
 ; do
 	rm -r $junk
 done
