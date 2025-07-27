@@ -40,7 +40,7 @@ tarball_hash() {
 	nghttp2-1.66.0.tar.gz)     sha256sum=e178687730c207f3a659730096df192b52d3752786c068b8e5ee7aeb8edae05a;; # acquired from https://github.com/nghttp2/nghttp2/releases/download/v1.66.0/nghttp2-1.66.0.tar.gz
 	libwebp-1.6.0.tar.gz)      sha256sum=e4ab7009bf0629fd11982d4c2aa83964cf244cffba7347ecd39019a9e38c4564;; # acquired from https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.6.0.tar.gz
 	nasm-2.16.03.tar.gz)       sha256sum=5bc940dd8a4245686976a8f7e96ba9340a0915f2d5b88356874890e207bdb581;; # acquired from https://www.nasm.us/pub/nasm/releasebuilds/2.16.01/nasm-2.16.03.tar.gz
-	x264-r3144-5a9dfdd.tar.gz) sha256sum=4672fb415c34bf16e2ed9cd43d1ab865158f586c7f1406d507f7f44516fb5ec8;; # acquired from https://code.videolan.org/videolan/x264/-/archive/master/x264-master.tar.gz commit b35605ace3ddf7c1a5d67a2eb553f034aef41d55
+	x264-r3222-b35605a.tar.gz) sha256sum=4672fb415c34bf16e2ed9cd43d1ab865158f586c7f1406d507f7f44516fb5ec8;; # acquired from https://code.videolan.org/videolan/x264/-/archive/master/x264-master.tar.gz commit b35605ace3ddf7c1a5d67a2eb553f034aef41d55
 	ffmpeg-7.1.tar.gz)         sha256sum=42a7dc0d1583885d1b8f6559fa7ce28f97acafea6803de6a8f73e3ba229348bd;; # acquired from https://ffmpeg.org/releases/ffmpeg-7.1.tar.gz
 	*)                                         >&2 echo "no such tarball (update tarball_hash)" && exit 1;;
 	esac
