@@ -1159,9 +1159,7 @@ function compile_x264()
 		$configure --enable-shared
 	fi
 	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
-		sudo make install-lib-shared -j$NPROC
-	elif [[ $BSH_BUILD_PLATFORM == windows ]]; then
-		PATH="/c/Strawberry/perl/bin/:$PATH" make install-lib-shared -j$NPROC
+		sudo make install -j$NPROC
 	else
 		make install-lib-shared -j$NPROC
 	fi
