@@ -28,11 +28,11 @@ for bsh_host_arch, bsh_host_platform, bsh_host_libc, bsh_static_dynamic, bsh_bui
 # libwebp doesn't support win32
 #	(      'x86' ,         'windows',        'msvc',           'static',          'windows', 'windows-2022' ),
 #	(      'x86' ,         'windows',        'msvc',          'dynamic',          'windows', 'windows-2022' ),
-	(  'aarch64' ,         'windows',        'msvc',           'static',          'windows', 'windows-2022' ),
-	(  'aarch64' ,         'windows',        'msvc',          'dynamic',          'windows', 'windows-2022' ),
+# not worth trying to get ffmpeg (and deps) to build for windows aarch64, android, and wasm
+#	(  'aarch64' ,         'windows',        'msvc',           'static',          'windows', 'windows-2022' ),
+#	(  'aarch64' ,         'windows',        'msvc',          'dynamic',          'windows', 'windows-2022' ),
 	(   'x86_64' ,          'darwin',       'macos',           'static',           'darwin',     'macos-13' ),
 	(  'aarch64' ,          'darwin',       'macos',           'static',           'darwin',     'macos-13' ),
-# not worth trying to get ffmpeg (and deps) to build for android and wasm
 #	(      'x86' ,         'android',      'bionic',           'static',            'linux', 'ubuntu-22.04' ),
 #	(   'x86_64' ,         'android',      'bionic',           'static',            'linux', 'ubuntu-22.04' ),
 #	(      'arm' ,         'android',      'bionic',           'static',            'linux', 'ubuntu-22.04' ),

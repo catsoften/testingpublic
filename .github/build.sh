@@ -1188,6 +1188,10 @@ function compile_x264()
 
 function compile_ffmpeg()
 {
+	PKG_CONFIG_PATH=$zip_root_real/lib/pkgconfig
+	echo 'aaa'
+	pkg-config --list-all
+	echo 'aaa'
 	get_and_cd ffmpeg-7.1.tar.gz ffmpeg_version
 	local configure=./configure
 	configure+=$'\t'--prefix=$zip_root_real
@@ -1203,11 +1207,6 @@ function compile_ffmpeg()
 		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
 			configure+=$'\t'--target-os=win64
 			configure+=$'\t'--arch=x86_64
-		fi
-		if [[ $BSH_HOST_ARCH == aarch64 ]]; then
-			configure+=$'\t'--target-os=win64
-			configure+=$'\t'--arch=aarch64
-			configure+=$'\t'--enable-cross-compile
 		fi
 	fi
 	configure+=$'\t'--enable-gpl
@@ -1231,7 +1230,7 @@ function compile_ffmpeg()
 	configure+=$'\t'--enable-protocol=file
 	configure+=$'\t'--disable-devices
 	configure+=$'\t'--disable-filters
-	PKG_CONFIG_PATH=$zip_root_real/lib/pkgconfig $configure
+	$configure
 	make install -j$NPROC
 	echo 8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643 COPYING.GPLv2 | sha256sum -c
 	cp COPYING.GPLv2 $zip_root_real/licenses/ffmpeg.LICENSE
