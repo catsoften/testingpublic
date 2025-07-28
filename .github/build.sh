@@ -1176,7 +1176,7 @@ function compile_x264()
 	else
 		$configure
 	fi
-	make install -j$NPROC
+	make install-lib-shared -j$NPROC
 
 	echo 32b1062f7da84967e7019d01ab805935caa7ab7321a7ced0e30ebe75e5df1670 COPYING | sha256sum -c
 	cp COPYING $zip_root_real/licenses/libx264.LICENSE
