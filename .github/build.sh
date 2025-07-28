@@ -1137,6 +1137,8 @@ function compile_libwebpmux()
 function compile_x264()
 {
 	pkg-config --list-all
+	PATH=C\:/Strawberry/perl/bin/:$PATH
+	which perl
 	get_and_cd x264-r3222-b35605a.tar.gz x264_version
 	local configure=./configure
 	configure+=$'\t'--enable-pic
@@ -1189,7 +1191,6 @@ function compile_ffmpeg()
 {
 	pkg-config --list-all
 	PATH=C\:/Strawberry/perl/bin/:$PATH
-	which perl
 	get_and_cd ffmpeg-7.1.tar.gz ffmpeg_version
 	local configure=./configure
 	configure+=$'\t'--prefix=$zip_root_real
