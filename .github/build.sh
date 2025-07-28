@@ -1162,23 +1162,23 @@ function compile_x264()
 	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
 		sudo make install -j$NPROC
 	else
-		make install -j$NPROC
+		make install-lib-shared -j$NPROC
 	fi
 
 	# install as library
-	make clean
-	configure+=$'\t'--prefix=$zip_root_real
-	if [[ $BSH_STATIC_DYNAMIC == static ]]; then
-		configure+=$'\t'--enable-static
-	else
-		configure+=$'\t'--enable-shared
-	fi
-	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
-		CC=cl $configure
-	else
-		$configure
-	fi
-	make install-lib-shared -j$NPROC
+	#make clean
+	#configure+=$'\t'--prefix=$zip_root_real
+	#if [[ $BSH_STATIC_DYNAMIC == static ]]; then
+	#	configure+=$'\t'--enable-static
+	#else
+	#	configure+=$'\t'--enable-shared
+	#fi
+	#if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
+	#	CC=cl $configure
+	#else
+	#	$configure
+	#fi
+	#make install -j$NPROC
 
 	echo 32b1062f7da84967e7019d01ab805935caa7ab7321a7ced0e30ebe75e5df1670 COPYING | sha256sum -c
 	cp COPYING $zip_root_real/licenses/libx264.LICENSE
@@ -1188,10 +1188,6 @@ function compile_x264()
 
 function compile_ffmpeg()
 {
-	PKG_CONFIG_PATH=$zip_root_real/lib/pkgconfig
-	echo 'aaa'
-	pkg-config --list-all
-	echo 'aaa'
 	get_and_cd ffmpeg-7.1.tar.gz ffmpeg_version
 	local configure=./configure
 	configure+=$'\t'--prefix=$zip_root_real
