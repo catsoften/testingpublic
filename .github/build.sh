@@ -139,6 +139,7 @@ if [[ -z ${BSH_NO_PACKAGES-} ]]; then
 		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
 			choco install nasm
 		fi
+		export PATH=/c/Strawberry/perl/bin/:$PATH
 		perl -MCPAN -e 'install Pod::Usage'
 		;;
 	darwin)
@@ -1137,7 +1138,6 @@ function compile_libwebpmux()
 
 function compile_x264()
 {
-	pkg-config --list-all
 	get_and_cd x264-r3222-b35605a.tar.gz x264_version
 	local configure=./configure
 	configure+=$'\t'--enable-pic
@@ -1187,8 +1187,6 @@ function compile_x264()
 
 function compile_ffmpeg()
 {
-	PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$zip_root_real/lib/pkgconfig
-	pkg-config --list-all
 	get_and_cd ffmpeg-7.1.tar.gz ffmpeg_version
 	local configure=./configure
 	configure+=$'\t'--prefix=$zip_root_real
@@ -1227,7 +1225,7 @@ function compile_ffmpeg()
 	configure+=$'\t'--enable-protocol=file
 	configure+=$'\t'--disable-devices
 	configure+=$'\t'--disable-filters
-	$configure
+	PKG_CONFIG_PATH=$zip_root_real/lib/pkgconfig $configure
 	make install -j$NPROC
 	echo 8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643 COPYING.GPLv2 | sha256sum -c
 	cp COPYING.GPLv2 $zip_root_real/licenses/ffmpeg.LICENSE
