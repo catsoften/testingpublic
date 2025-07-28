@@ -1154,12 +1154,14 @@ function compile_x264()
 
 	# install as dependency
 	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
-		PATH="/c/Strawberry/perl/bin/:$PATH" CC=cl $configure --enable-shared
+		CC=cl $configure --enable-shared
 	else
 		$configure --enable-shared
 	fi
 	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
 		sudo make install-lib-shared -j$NPROC
+	elif [[ $BSH_BUILD_PLATFORM == windows ]]; then
+		PATH="/c/Strawberry/perl/bin/:$PATH" make install-lib-shared -j$NPROC
 	else
 		make install-lib-shared -j$NPROC
 	fi
