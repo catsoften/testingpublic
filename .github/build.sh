@@ -1155,7 +1155,7 @@ function compile_x264()
 
 	# install as dependency
 	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
-		CC=cl $configure --enable-static
+		CC=cl $configure --enable-shared
 	else
 		$configure --enable-static
 	fi
