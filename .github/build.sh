@@ -138,8 +138,9 @@ if [[ -z ${BSH_NO_PACKAGES-} ]]; then
 		fi
 		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
 			choco install nasm
+			export PATH="$PATH:/c/Program Files/NASM"
 		fi
-		export PATH=/c/Strawberry/perl/bin/:$PATH
+		export PATH="/c/Strawberry/perl/bin/:$PATH" # forcing this location to be searched first, $PATH must go after
 		perl -MCPAN -e 'install Pod::Usage'
 		;;
 	darwin)
@@ -1202,6 +1203,11 @@ function compile_ffmpeg()
 		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
 			configure+=$'\t'--target-os=win64
 			configure+=$'\t'--arch=x86_64
+		fi
+		if [[ $BSH_HOST_ARCH == aarch64 ]]; then
+			configure+=$'\t'--target-os=win64
+			configure+=$'\t'--arch=aarch64
+			configure+=$'\t'--enable-cross-compile
 		fi
 	fi
 	configure+=$'\t'--enable-gpl
