@@ -1188,6 +1188,9 @@ function compile_x264()
 
 function compile_ffmpeg()
 {
+	echo 'aaa'
+	pkg-config --list-all
+	echo 'aaa'
 	get_and_cd ffmpeg-7.1.tar.gz ffmpeg_version
 	local configure=./configure
 	configure+=$'\t'--prefix=$zip_root_real
