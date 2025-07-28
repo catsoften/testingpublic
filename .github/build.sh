@@ -141,6 +141,7 @@ if [[ -z ${BSH_NO_PACKAGES-} ]]; then
 			export PATH="$PATH:/c/Program Files/NASM"
 		fi
 		perl -MCPAN -e 'install Pod::Usage'
+		perl -MCPAN -e 'install CPAN::Author'
 		;;
 	darwin)
 		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
