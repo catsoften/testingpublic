@@ -139,7 +139,7 @@ if [[ -z ${BSH_NO_PACKAGES-} ]]; then
 		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
 			choco install nasm
 		fi
-		perl -MCPAN -e 'install Pod::Usage'
+		perl -MCPAN -e 'install Pod::Usage CPAN::Author'
 		;;
 	darwin)
 		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
