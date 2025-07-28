@@ -140,7 +140,6 @@ if [[ -z ${BSH_NO_PACKAGES-} ]]; then
 			choco install nasm
 			export PATH="$PATH:/c/Program Files/NASM"
 		fi
-		export PATH="/c/Strawberry/perl/bin/:$PATH" # forcing this location to be searched first, $PATH must go after
 		perl -MCPAN -e 'install Pod::Usage'
 		;;
 	darwin)
@@ -1157,10 +1156,10 @@ function compile_x264()
 	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
 		CC=cl $configure --enable-shared
 	else
-		$configure --enable-static
+		$configure --enable-shared
 	fi
 	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
-		sudo make install -j$NPROC
+		sudo make install-lib-shared -j$NPROC
 	else
 		make install-lib-shared -j$NPROC
 	fi
