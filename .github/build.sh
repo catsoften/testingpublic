@@ -141,7 +141,6 @@ if [[ -z ${BSH_NO_PACKAGES-} ]]; then
 			export PATH="$PATH:/c/Program Files/NASM"
 		fi
 		perl -MCPAN -e 'install Pod::Usage'
-		perl -MCPAN -e 'install CPAN::Author'
 		;;
 	darwin)
 		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
@@ -1155,7 +1154,7 @@ function compile_x264()
 
 	# install as dependency
 	if [[ $BSH_HOST_PLATFORM-$BSH_HOST_LIBC == windows-msvc ]]; then
-		CC=cl $configure --enable-shared
+		PATH="/c/Strawberry/perl/bin/:$PATH" CC=cl $configure --enable-shared
 	else
 		$configure --enable-shared
 	fi
