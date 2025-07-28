@@ -137,8 +137,9 @@ if [[ -z ${BSH_NO_PACKAGES-} ]]; then
 			pacman -S --noconfirm --needed mingw-w64-ucrt-x86_64-{gcc,cmake,make,ninja,7zip} patch
 		fi
 		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
-			choco install nasm strawberryperl
+			choco install nasm
 		fi
+		perl -MCPAN -e 'install Pod::Usage'
 		;;
 	darwin)
 		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
@@ -1137,8 +1138,6 @@ function compile_libwebpmux()
 function compile_x264()
 {
 	pkg-config --list-all
-	PATH=C\:/Strawberry/perl/bin/:$PATH
-	which perl
 	get_and_cd x264-r3222-b35605a.tar.gz x264_version
 	local configure=./configure
 	configure+=$'\t'--enable-pic
@@ -1179,7 +1178,6 @@ function compile_x264()
 		$configure
 	fi
 	make install-lib-shared -j$NPROC
-	ls -R $zip_root_real
 
 	echo 32b1062f7da84967e7019d01ab805935caa7ab7321a7ced0e30ebe75e5df1670 COPYING | sha256sum -c
 	cp COPYING $zip_root_real/licenses/libx264.LICENSE
@@ -1189,8 +1187,8 @@ function compile_x264()
 
 function compile_ffmpeg()
 {
+	PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$zip_root_real/lib/pkgconfig
 	pkg-config --list-all
-	PATH=C\:/Strawberry/perl/bin/:$PATH
 	get_and_cd ffmpeg-7.1.tar.gz ffmpeg_version
 	local configure=./configure
 	configure+=$'\t'--prefix=$zip_root_real
