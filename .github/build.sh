@@ -39,7 +39,6 @@ tarball_hash() {
 	bzip2-1.0.8.tar.gz)        sha256sum=ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269;; # acquired from https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz
 	nghttp2-1.66.0.tar.gz)     sha256sum=e178687730c207f3a659730096df192b52d3752786c068b8e5ee7aeb8edae05a;; # acquired from https://github.com/nghttp2/nghttp2/releases/download/v1.66.0/nghttp2-1.66.0.tar.gz
 	libwebp-1.6.0.tar.gz)      sha256sum=e4ab7009bf0629fd11982d4c2aa83964cf244cffba7347ecd39019a9e38c4564;; # acquired from https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.6.0.tar.gz
-	nasm-2.16.03.tar.gz)       sha256sum=5bc940dd8a4245686976a8f7e96ba9340a0915f2d5b88356874890e207bdb581;; # acquired from https://www.nasm.us/pub/nasm/releasebuilds/2.16.01/nasm-2.16.03.tar.gz
 	x264-r3222-b35605a.tar.gz) sha256sum=4672fb415c34bf16e2ed9cd43d1ab865158f586c7f1406d507f7f44516fb5ec8;; # acquired from https://code.videolan.org/videolan/x264/-/archive/master/x264-master.tar.gz commit b35605ace3ddf7c1a5d67a2eb553f034aef41d55
 	ffmpeg-7.1.tar.gz)         sha256sum=42a7dc0d1583885d1b8f6559fa7ce28f97acafea6803de6a8f73e3ba229348bd;; # acquired from https://ffmpeg.org/releases/ffmpeg-7.1.tar.gz
 	*)                                         >&2 echo "no such tarball (update tarball_hash)" && exit 1;;
@@ -128,11 +127,22 @@ if [[ -z ${BSH_NO_PACKAGES-} ]]; then
 		else
 			sudo apt update
 			sudo apt install libc6-dev fcitx-libs-dev libibus-1.0-dev libwayland-dev libxkbcommon-dev libegl-dev libxrandr-dev
+			if [[ $BSH_HOST_ARCH == x86_64 ]]; then
+				sudo apt install nasm
+			fi
 		fi
 		;;
 	windows)
 		if [[ $BSH_BUILD_PLATFORM-$BSH_HOST_LIBC == windows-mingw ]]; then
 			pacman -S --noconfirm --needed mingw-w64-ucrt-x86_64-{gcc,cmake,make,ninja,7zip} patch
+		fi
+		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
+			choco install nasm
+		fi
+		;;
+	darwin)
+		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
+			brew install nasm
 		fi
 		;;
 	android)
@@ -1124,20 +1134,6 @@ function compile_libwebpmux()
 	library_versions+="libwebpmux_version = '$libwebpmux_version-tpt-libs'"$'\n'
 }
 
-function compile_nasm() # nothing included in output libraries, just needed to compile libx264 and ffmpeg
-{
-	get_and_cd nasm-2.16.03.tar.gz nasm_version
-	./autogen.sh
-	./configure
-	if [[ $BSH_BUILD_PLATFORM == linux ]]; then
-		sudo make install -j$NPROC
-	else
-		make install -j$NPROC
-	fi
-	export PATH=$PATH:/usr/local/bin
-	uncd_and_unget
-}
-
 function compile_x264()
 {
 	pkg-config --list-all
@@ -1261,9 +1257,6 @@ function compile() {
 	status=compiled
 }
 
-if [[ $BSH_HOST_ARCH == x86_64 ]]; then
-	compile nasm
-fi
 compile x264
 compile ffmpeg
 #compile libwebpmux
