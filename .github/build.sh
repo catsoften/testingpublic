@@ -139,7 +139,8 @@ if [[ -z ${BSH_NO_PACKAGES-} ]]; then
 		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
 			choco install nasm
 		fi
-		perl -MCPAN -e 'install Pod::Usage CPAN::Author'
+		perl -MCPAN -e 'install Pod::Usage'
+		perl -MCPAN -e 'install CPAN::Author'
 		;;
 	darwin)
 		if [[ $BSH_HOST_ARCH == x86_64 ]]; then
@@ -1178,7 +1179,7 @@ function compile_x264()
 		$configure
 	fi
 	make install-lib-shared -j$NPROC
-	PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$zip_root_real
+	PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$zip_root_real/lib/pkgconfig"
 
 	echo 32b1062f7da84967e7019d01ab805935caa7ab7321a7ced0e30ebe75e5df1670 COPYING | sha256sum -c
 	cp COPYING $zip_root_real/licenses/libx264.LICENSE
