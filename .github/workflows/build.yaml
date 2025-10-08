@@ -9,16 +9,15 @@ on:
 
 jobs:
   prepare:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
-      release_upload_url: ${{ steps.create_release.outputs.upload_url }}
       do_release: ${{ steps.prepare.outputs.do_release }}
       matrix: ${{ steps.prepare.outputs.matrix }}
       vtag: ${{ steps.prepare.outputs.vtag }}
     steps:
       - run: git config --global core.autocrlf false
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - id: prepare
@@ -27,24 +26,28 @@ jobs:
           GITHUB_REF: ${{ github.ref }}
       - if: steps.prepare.outputs.do_release == 'yes'
         id: create_release
-        uses: LBPHacker/create-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: false
-          prerelease: false
+        run: bash -c './.github/create-release.sh'
   build:
     runs-on: ${{ matrix.runs_on }}
+    name: ${{ matrix.job_name }}
     needs: [prepare]
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
+      - if: matrix.runs_on == 'ubuntu-22.04-arm' # TODO: undo; see https://github.com/orgs/community/discussions/148648#discussioncomment-11858098
+        run: for var in HOME PATH XDG_CONFIG_HOME; do sed -Ee "s/^/${var}=/" -e 's/(runner)admin/\1/g' <<< "${!var}"; done | tee -a "$GITHUB_ENV"
       - run: git config --global core.autocrlf false
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - if: matrix.force_msys2_bash == 'yes'
+        run: bash -c './.github/force-msys2-bash.sh'
+        env:
+          BSH_HOST_ARCH: ${{ matrix.bsh_host_arch }}
+      - if: matrix.force_msys2_bash == 'yes'
+        run: bash -c 'pacman -Syu --noconfirm'
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - run: python -m pip install meson ninja
@@ -61,14 +64,11 @@ jobs:
           BSH_VTAG: ${{ needs.prepare.outputs.vtag }}
       - if: needs.prepare.outputs.do_release == 'yes'
         id: upload_release_asset
-        uses: LBPHacker/upload-release-asset@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.prepare.outputs.release_upload_url }}
-          asset_path: temp/libraries.zip
-          asset_name: ${{ matrix.asset_name }}.zip
-          asset_content_type: application/zip
+          ASSET_PATH: temp/libraries.zip
+          ASSET_NAME: ${{ matrix.asset_name }}.zip
+        run: bash -c './.github/upload-release-asset.sh'
       - if: needs.prepare.outputs.do_release == 'yes'
         run: bash -c './.github/wrapfile.sh'
         env:
@@ -81,11 +81,8 @@ jobs:
           BSH_VTAG: ${{ needs.prepare.outputs.vtag }}
           ASSET_URL: ${{ steps.upload_release_asset.outputs.browser_download_url }}
       - if: needs.prepare.outputs.do_release == 'yes'
-        uses: LBPHacker/upload-release-asset@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ needs.prepare.outputs.release_upload_url }}
-          asset_path: temp/libraries.wrap
-          asset_name: ${{ matrix.asset_name }}.wrap
-          asset_content_type: text/plain
+          ASSET_PATH: temp/libraries.wrap
+          ASSET_NAME: ${{ matrix.asset_name }}.wrap
+        run: bash -c './.github/upload-release-asset.sh'
