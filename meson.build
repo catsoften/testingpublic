@@ -56,10 +56,6 @@ else
 endif
 
 static_variant = get_option('static')
-if static_variant != 'prebuilt' and host_platform == 'android'
-	warning('only prebuilt libs are supported for android')
-	static_variant = 'prebuilt'
-endif
 if static_variant == 'system' and host_platform == 'windows' and host_libc == 'msvc'
 	warning('no way to find system libs for msvc on windows')
 	static_variant = 'prebuilt'
