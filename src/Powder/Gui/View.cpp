@@ -57,6 +57,17 @@ namespace Powder::Gui
 
 		case SDL_MOUSEBUTTONDOWN:
 			SetMousePos(Pos2{ event.button.x, event.button.y });
+			if (g.GetTouchUI() && mousePos)
+			{
+				for (auto &index : layoutRootIndices)
+				{
+					UpdateUnderMouse(componentStore[index]);
+					if (underMouseIndex)
+					{
+						break;
+					}
+				}
+			}
 			for (auto &index : popupIndices)
 			{
 				auto &component = componentStore[index];
@@ -77,7 +88,7 @@ namespace Powder::Gui
 			}
 			if (handleButtonsIndex)
 			{
-				componentMouseDownEvent = ComponentMouseButtonEvent{ *handleButtonsIndex, event.button.button };
+				componentMouseDownEvent = ComponentMouseButtonEvent{ *handleButtonsIndex, event.button.button, SDL_GetTicks() };
 				return true;
 			}
 			if (cancelWhenRootMouseDown && (!underMouseIndex ||
@@ -198,7 +209,10 @@ namespace Powder::Gui
 		{
 			auto index = GetComponentIndex(component);
 			underMouseIndex = index;
-			component.hovered = true;
+			if (!GetHost().GetTouchUI() || (componentMouseDownEvent && componentMouseDownEvent->component == index))
+			{
+				component.hovered = true;
+			}
 			if (component.cursor)
 			{
 				cursor = *component.cursor;

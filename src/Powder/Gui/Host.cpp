@@ -277,8 +277,8 @@ namespace Powder::Gui
 				underlineRect.size.Y = 1;
 				for (auto p : underlineRect)
 				{
-					blend(p + Vec2(0,                0), effectiveColor.WithAlpha(0xFF));
-					blend(p + Vec2(0, fontTypeSize - 2), effectiveColor.WithAlpha(0xFF));
+					blend(p + Vec2<int>(0,                0), effectiveColor.WithAlpha(0xFF));
+					blend(p + Vec2<int>(0, fontTypeSize - 2), effectiveColor.WithAlpha(0xFF));
 				}
 			}
 #if DebugGuiHost
@@ -547,8 +547,11 @@ namespace Powder::Gui
 		SdlAssertZero(SDL_SetWindowFullscreen(sdlWindow, fullscreenFlags)); // do this first; seems to override other settings if done later...
 		SdlAssertZero(SDL_RenderSetIntegerScale(sdlRenderer, forceIntegerScale ? SDL_TRUE : SDL_FALSE));
 		SDL_SetWindowResizable(sdlWindow, windowParameters.frameType == WindowParameters::FrameType::resizable ? SDL_TRUE : SDL_FALSE);
-		auto scaledWindowSize = windowParameters.GetScaledWindowSize();
-		SDL_SetWindowSize(sdlWindow, scaledWindowSize.X, scaledWindowSize.Y);
+		if (windowParameters.frameType == WindowParameters::FrameType::fixed)
+		{
+			auto scaledWindowSize = windowParameters.GetScaledWindowSize();
+			SDL_SetWindowSize(sdlWindow, scaledWindowSize.X, scaledWindowSize.Y);
+		}
 		SDL_ShowWindow(sdlWindow);
 	}
 

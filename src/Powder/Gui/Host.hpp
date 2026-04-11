@@ -180,6 +180,7 @@ namespace Powder::Gui
 		bool showAvatars = true;
 		bool fastQuit = true;
 		bool globalQuit = false;
+		bool touchUI = false;
 
 		CommonMetrics commonMetrics;
 
@@ -254,6 +255,23 @@ namespace Powder::Gui
 			return globalQuit;
 		}
 
+		void SetTouchUI(bool newTouchUI)
+		{
+			touchUI = newTouchUI;
+			if (newTouchUI)
+			{
+				commonMetrics.SetTouch();
+			}
+			else
+			{
+				commonMetrics.SetDefault();
+			}
+		}
+		bool GetTouchUI() const
+		{
+			return touchUI;
+		}
+
 		void Start();
 		void Stop();
 		bool IsRunning() const;
@@ -303,6 +321,11 @@ namespace Powder::Gui
 		const CommonMetrics &GetCommonMetrics() const
 		{
 			return commonMetrics;
+		}
+
+		auto IfTouchUI(auto ifTrue, auto ifFalse)
+		{
+			return touchUI ? ifTrue : ifFalse;
 		}
 	};
 }

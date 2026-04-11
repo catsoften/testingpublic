@@ -276,7 +276,13 @@ namespace Powder::Activity
 	void Settings::GuiSimulation()
 	{
 		auto gameCheckbox = [this](ComponentKey key, StringView title, auto getter, auto setter) {
+			auto &g = GetHost();
+
 			auto vPanel = ScopedVPanel(key);
+			if (g.GetTouchUI())
+			{
+				SetSize(Common{});
+			}
 			SetParentFillRatio(0);
 			auto value = (game.*getter)();
 			BeginCheckbox("checkbox", title, value, CheckboxFlags::multiline);
@@ -490,8 +496,14 @@ namespace Powder::Activity
 		auto windowParameters = g.GetWindowParameters();
 
 		auto checkbox = [this](ComponentKey key, StringView title, bool &value, bool enabled, bool round, Size indent) {
+			auto &g = GetHost();
+
 			auto hPanel = ScopedHPanel(key);
 			SetPadding(indent * indentSize, 0, 0, 0);
+			if (g.GetTouchUI())
+			{
+				SetSize(Common{});
+			}
 			SetParentFillRatio(0);
 			auto checkboxFlags = CheckboxFlags::multiline;
 			if (round)
@@ -597,11 +609,24 @@ namespace Powder::Activity
 			0
 		);
 
+		auto isTouchUI = g.GetTouchUI();
+		changed |= checkbox(
+			"touchui",
+			"Touchscreen friendly UI",
+			isTouchUI,
+			true,
+			false,
+			0
+		);
+
 		if (changed)
 		{
-			windowParameters.fixedScale = scaleOptions[scaleIndex].scale;
+			//windowParameters.fixedScale = scaleOptions[scaleIndex].scale;
+			windowParameters.windowSize = isTouchUI ? Vec2<int>{ 644, 416 } : Vec2<int>{ 629, 424 };
 			g.SetWindowParameters(windowParameters);
 			windowParameters.SetPrefs();
+			g.SetTouchUI(isTouchUI);
+			GlobalPrefs::Ref().Set("TouchUI", isTouchUI);
 		}
 	}
 

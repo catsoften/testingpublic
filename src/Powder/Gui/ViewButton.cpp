@@ -15,10 +15,7 @@ namespace Powder::Gui
 		};
 		{
 			auto &component = *GetCurrentComponent();
-			if (component.prevContent.enabled)
-			{
-				SetHandleButtons(true);
-			}
+			SetHandleButtons(true);
 			if (!component.prevContent.enabled)
 			{
 				edgeColor.Alpha /= 2;

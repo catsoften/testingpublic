@@ -95,7 +95,7 @@ namespace Powder::Gui
 	constexpr const char iconColors2                 [] = "\u0010\u0080\u00FF\uE059";
 	constexpr const char iconColors3                 [] = "\u0010\u0080\u00FF\uE05A";
 	constexpr const char iconBasic                   [] = "\uE05B";
-	constexpr const char iconUnusedGrid              [] = "\uE05C";
+	constexpr const char iconGrid                    [] = "\uE05C";
 	constexpr const char iconUnusedSparkles          [] = "\uE05D";
 	constexpr const char iconLensing                 [] = "\uE05E";
 	constexpr const char iconGlow                    [] = "\uE05F";
@@ -116,4 +116,25 @@ namespace Powder::Gui
 	constexpr const char iconBrokenImage             [] = "\uE06E";
 	constexpr const char iconKeyboardInitial         [] = "\uE06F";
 	constexpr const char iconKeyboardFinal           [] = "\uE070";
+	constexpr const char iconMenu                    [] = "\uE071";
+	constexpr const char iconQuickOptions            [] = "\uE072";
+	constexpr const char iconBrushOptions            [] = "\uE073";
+	constexpr const char iconEraser                  [] = "\uE074";
+	constexpr const char iconLineDraw                [] = "\uE075";
+	constexpr const char iconRectangleDraw           [] = "\uE076";
+	constexpr const char iconZoom                    [] = "\uE077";
+	constexpr const char iconGravity                 [] = "\uE078";
+	constexpr const char iconConsole                 [] = "\uE079";
+	constexpr const char iconInvertAir               [] = "\uE07A";
+	constexpr const char iconSquare                  [] = "\uE07B";
+	constexpr const char iconTriangle                [] = "\uE07C";
+	constexpr const char iconCopy                    [] = "\uE07D";
+	constexpr const char iconCut                     [] = "\uE07E";
+	constexpr const char iconStamp                   [] = "\uE07F";
+	constexpr const char iconUndo                    [] = "\uE080";
+	constexpr const char iconRedo                    [] = "\uE081";
+	constexpr const char iconHud                     [] = "\uE082";
+	constexpr const char iconDebugHud                [] = "\uE083";
+	constexpr const char iconStepFrame               [] = "\uE084";
+	constexpr const char iconShare                   [] = "\uE085";
 }

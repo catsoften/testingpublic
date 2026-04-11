@@ -122,16 +122,25 @@ namespace Powder
 		void HandleWindowParameters(Gui::Host &host, Prefs &prefs, Arguments &arguments)
 		{
 			Gui::WindowParameters windowParameters;
-			if (prefs.Get("Fullscreen", false))
-			{
-				windowParameters.frameType = Gui::WindowParameters::FrameType::fullscreen;
-			}
-			else if (prefs.Get("Resizable", false))
+			if (FORCE_WINDOW_FRAME_OPS == forceWindowFrameOpsHandheld)
 			{
 				windowParameters.frameType = Gui::WindowParameters::FrameType::resizable;
+				windowParameters.fullscreenChangeResolution  = false;
+				windowParameters.fullscreenForceIntegerScale = false;
 			}
-			windowParameters.fullscreenChangeResolution  = prefs.Get("AltFullscreen"      , false);
-			windowParameters.fullscreenForceIntegerScale = prefs.Get("ForceIntegerScaling", true );
+			else
+			{
+				if (prefs.Get("Fullscreen", false))
+				{
+					windowParameters.frameType = Gui::WindowParameters::FrameType::fullscreen;
+				}
+				else if (prefs.Get("Resizable", false))
+				{
+					windowParameters.frameType = Gui::WindowParameters::FrameType::resizable;
+				}
+				windowParameters.fullscreenChangeResolution  = prefs.Get("AltFullscreen"      , false);
+				windowParameters.fullscreenForceIntegerScale = prefs.Get("ForceIntegerScaling", true );
+			}
 			windowParameters.fixedScale                  = prefs.Get("Scale"              , 1    );
 			windowParameters.blurryScaling               = prefs.Get("BlurryScaling"      , false);
 			bool setPrefs = false;
@@ -159,15 +168,20 @@ namespace Powder
 				windowParameters.fixedScale = 1;
 				setPrefs = true;
 			}
+			if (prefs.Get("TouchUI", false))
+			{
+				windowParameters.windowSize = { 644, 416 };
+			}
 			if (setPrefs)
 			{
 				windowParameters.SetPrefs();
 			}
 			host.SetWindowParameters(windowParameters);
-			host.SetMomentumScroll(prefs.Get("MomentumScroll", true));
-			host.SetShowAvatars   (prefs.Get("ShowAvatars"   , true));
-			host.SetFastQuit      (prefs.Get("FastQuit"      , true));
-			host.SetGlobalQuit    (prefs.Get("GlobalQuit"    , true));
+			host.SetMomentumScroll(prefs.Get("MomentumScroll", true ));
+			host.SetShowAvatars   (prefs.Get("ShowAvatars"   , true ));
+			host.SetFastQuit      (prefs.Get("FastQuit"      , true ));
+			host.SetGlobalQuit    (prefs.Get("GlobalQuit"    , true ));
+			host.SetTouchUI       (prefs.Get("TouchUI"       , false));
 		}
 
 		void HandleRedirect(Prefs &prefs, Arguments &arguments, Client &client)

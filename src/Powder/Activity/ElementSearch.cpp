@@ -2,6 +2,7 @@
 #include "Common/Log.hpp"
 #include "Game.hpp"
 #include "Gui/Host.hpp"
+#include "Gui/Icons.hpp"
 #include "Gui/SdlAssert.hpp"
 #include "Gui/StaticTexture.hpp"
 #include "simulation/SimulationData.h"
@@ -11,8 +12,6 @@ namespace Powder::Activity
 {
 	namespace
 	{
-		constexpr int32_t toolButtonsPerRow         =  7;
-		constexpr int32_t maxRows                   = 12; // and an extra half row is shown to indicate that scrolling is possible
 		constexpr Gui::View::Size toolButtonPadding =  2;
 		constexpr Gui::View::Size toolButtonSpacing =  1;
 
@@ -149,6 +148,10 @@ namespace Powder::Activity
 
 	void ElementSearch::Gui()
 	{
+		auto &g = GetHost();
+		int32_t toolButtonsPerRow = g.IfTouchUI(14, 7);
+		int32_t maxRows = g.IfTouchUI(10, 12); // and an extra half row is shown to indicate that scrolling is possible
+
 		auto elementSearch = ScopedDialog("elementSearch", "Element search"); // TODO-REDO_UI-TRANSLATE
 		BeginTextbox("query", query, "[name, description, or category]", TextboxFlags::none); // TODO-REDO_UI-TRANSLATE
 		SetSize(Common{});
@@ -169,28 +172,106 @@ namespace Powder::Activity
 		SetSizeSecondary((Game::toolTextureDataSize.X + 2 * toolButtonPadding + toolButtonSpacing) * toolButtonsPerRow + toolButtonSpacing + 2);
 		SetPadding(toolButtonPadding);
 		SetSpacing(toolButtonSpacing);
-		auto &g = GetHost();
 		auto r = GetRect();
 		lastHoveredTool = nullptr;
 		int32_t buttonIndex = 0;
-		while (buttonIndex < int32_t(matchingTools.size()))
+		int32_t rowIndex = 0;
+		bool inHPanel = false;
+
+		auto addTool = [&](const GameToolInfo &info, bool rightAlign)
 		{
-			auto bPanel = ScopedHPanel(buttonIndex);
-			SetAlignment(Gui::Alignment::left);
-			SetSpacing(1);
-			SetParentFillRatio(0);
-			for (int32_t i = 0; i < toolButtonsPerRow; ++i)
+			if (!inHPanel)
+			{
+				BeginHPanel(rowIndex++);
+				if (rightAlign)
+				{
+					SetAlignment(Gui::Alignment::right);
+					SetOrder(Order::rightToLeft);
+				}
+				else
+				{
+					SetAlignment(Gui::Alignment::left);
+				}
+				SetSpacing(1);
+				SetParentFillRatio(0);
+				inHPanel = true;
+			}
+
 			{
 				auto cell = ScopedComponent(buttonIndex);
 				SetSize(Game::toolTextureDataSize.X + 2 * toolButtonPadding);
-				auto *info = (buttonIndex < int32_t(matchingTools.size())) ? matchingTools[buttonIndex] : nullptr;
-				if (info && game.GuiToolButton(*this, *info, *toolAtlasTexture, true))
+				if (game.GuiToolButton(*this, info, *toolAtlasTexture, true))
 				{
 					// QueueToolTip(info->tool->Description.ToUtf8(), ...) // TODO-REDO_UI
-					lastHoveredTool = info->tool.get();
+					lastHoveredTool = info.tool.get();
 				}
-				buttonIndex += 1;
+				buttonIndex++;
 			}
+
+			if (buttonIndex % toolButtonsPerRow == 0 && inHPanel)
+			{
+				EndPanel();
+				inHPanel = false;
+			}
+		};
+
+		if (g.GetTouchUI() && query.empty())
+		{
+			auto &sd = SimulationData::CRef();
+			auto &tools = game.GetTools();
+
+			static const std::array<StringView, 16> iconOverrides = {{ // TODO-REDO_UI: move this where menu sections are defined
+				StringView(Gui::iconWalls),
+				StringView(Gui::iconElectronic),
+				StringView(Gui::iconPowered),
+				StringView(Gui::iconSensor),
+				StringView(Gui::iconForce),
+				StringView(Gui::iconExplosive),
+				StringView(Gui::iconGas),
+				StringView(Gui::iconLiquid),
+				StringView(Gui::iconPowder),
+				StringView(Gui::iconSolid),
+				StringView(Gui::iconRadioactive),
+				StringView(Gui::iconStar),
+				StringView(Gui::iconGol),
+				StringView(Gui::iconTool),
+				StringView(Gui::iconFavorite),
+				StringView(Gui::iconDeco),
+			}};
+			Assert(sd.msections.size() == iconOverrides.size());
+
+			auto addMenu = [&](int32_t i) {
+				buttonIndex = 0;
+				for (auto &info : tools)
+				{
+					if (info && info->tool->MenuVisible && info->tool->MenuSection == i)
+					{
+						addTool(*info, true);
+					}
+				}
+				if (inHPanel)
+				{
+					EndPanel();
+					inHPanel = false;
+				}
+			};
+
+			for (int32_t i = 0; i < int32_t(sd.msections.size()); i++)
+			{
+				TextSeparator(rowIndex++, " " + sd.msections[i].name.ToAscii() + " " + std::string(iconOverrides[i]) + " ");
+				addMenu(i);
+			}
+		}
+		else
+		{
+			while (buttonIndex < int32_t(matchingTools.size()))
+			{
+				addTool(*matchingTools[buttonIndex], false);
+			}
+		}
+		if (inHPanel)
+		{
+			EndPanel();
 		}
 		g.DrawRect(r, 0xFFFFFFFF_argb);
 	}

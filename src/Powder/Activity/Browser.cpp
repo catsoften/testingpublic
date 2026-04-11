@@ -3,6 +3,7 @@
 #include "Main.hpp"
 #include "Game.hpp"
 #include "SaveButton.hpp"
+#include "SetPage.hpp"
 #include "Gui/Colors.hpp"
 #include "Gui/Host.hpp"
 #include "Gui/Icons.hpp"
@@ -252,6 +253,16 @@ namespace Powder::Activity
 			FocusQuery();
 		}
 		SetSpacing(Common{});
+		if (GetHost().GetTouchUI())
+		{
+			BeginButton("page", ByteString::Build("Page ", query.page + 1), ButtonFlags::none); // TODO-REDO_UI-TRANSLATE
+			SetEnabled(paginationContext.GetPageCount() > 1);
+			SetSize(GetHost().GetCommonMetrics().bigButton);
+			if (EndButton())
+			{
+				PushAboveThis(std::make_shared<Powder::Activity::SetPage>(*this));
+			}
+		}
 		GuiSearchRight();
 	}
 
@@ -303,8 +314,11 @@ namespace Powder::Activity
 		GuiSearch();
 		Separator("searchSeparator");
 		GuiGrid();
-		Separator("bottomSeparator");
-		GuiBottom();
+		if (!GetHost().GetTouchUI())
+		{
+			Separator("bottomSeparator");
+			GuiBottom();
+		}
 	}
 
 	Browser::Size2 Browser::GetPageSize() const
@@ -366,7 +380,10 @@ namespace Powder::Activity
 		{
 			SetQuery({});
 		}
-		FocusQuery();
+		if (!GetHost().GetTouchUI())
+		{
+			FocusQuery();
+		}
 	}
 
 	bool Browser::GuiQuickNav()
