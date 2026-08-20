@@ -44,7 +44,7 @@ const std::array<BuiltinGOL, NGOL> SimulationData::builtinGol = {{
 	{ "FRG2", GT_FRG2, 0x20816, 0x006432_rgb, 0x00FF5A_rgb, NGT_FRG2, String("Like Frogs rule: B3/S124/3") },
 	{ "STAR", GT_STAR, 0x98478, 0x000040_rgb, 0x0000E6_rgb, NGT_STAR, String("Like Star Wars rule: B278/S3456/6") },
 	{ "FROG", GT_FROG, 0x21806, 0x006400_rgb, 0x00FF00_rgb, NGT_FROG, String("Frogs: B34/S12/3") },
-	{ "BRAN", GT_BRAN, 0x25440, 0xFFFF00_rgb, 0x969600_rgb, NGT_BRAN, String("Brian 6: B246/S6/3" )}
+	{ "BRAN", GT_BRAN, 0x25440, 0xFFFF00_rgb, 0x969600_rgb, NGT_BRAN, String("Raisin Bran: B246/S6/3" )}
 }};
 
 static std::vector<wall_type> LoadWalls()
@@ -70,6 +70,9 @@ static std::vector<wall_type> LoadWalls()
 		{0xDCDCDC_rgb, 0x000000_rgb, 1, Renderer::WallIcon, String("AIRBLOCK WALL"),   "DEFAULT_WL_NOAIR",  String("Allows all particles, but blocks air.")},
 		{0x808080_rgb, 0x000000_rgb, 0, Renderer::WallIcon, String("ERASEALL"),        "DEFAULT_WL_ERASEA", String("Erases walls, particles, and signs.")},
 		{0x800080_rgb, 0x000000_rgb, 0, Renderer::WallIcon, String("STASIS WALL"),     "DEFAULT_WL_STASIS", String("Freezes particles inside the wall in place until powered.")},
+		{0x40A832_rgb, 0x000000_rgb, 4, Renderer::WallIcon, String("INDEST WALL"),     "DEFAULT_WL_INDEST", String("Prevents particles inside from being destroyed.")},
+		{0x006387_rgb, 0x000000_rgb, 2, Renderer::WallIcon, String("FARADAY WALL"),    "DEFAULT_WL_FARADAY",String("Blocks WIFI, ETRD, EMP, and portals inside a box of this wall.")},
+		{0x008717_rgb, 0x000000_rgb, 1, Renderer::WallIcon, String("ONEWAY WALL"),     "DEFAULT_WL_ONEWAY", String("One way wall, use line tool to set direction.")},
 	};
 }
 
@@ -80,6 +83,7 @@ static std::vector<menu_section> LoadMenus()
 		{0xE041, String("Walls"), 0, 1},
 		{0xE042, String("Electronics"), 0, 1},
 		{0xE056, String("Powered Materials"), 0, 1},
+		{0xE077, String("Electromagnetic"), 0, 1},
 		{0xE019, String("Sensors"), 0, 1},
 		{0xE062, String("Force"), 0, 1},
 		{0xE043, String("Explosives"), 0, 1},
@@ -87,8 +91,10 @@ static std::vector<menu_section> LoadMenus()
 		{0xE044, String("Liquids"), 0, 1},
 		{0xE050, String("Powders"), 0, 1},
 		{0xE051, String("Solids"), 0, 1},
+		{0xE076, String("Organic"), 0, 1},
 		{0xE046, String("Radioactive"), 0, 1},
 		{0xE04C, String("Special"), 0, 1},
+		{0xE048, String("Random"), 0, 1},
 		{0xE052, String("Game Of Life"), 0, 1},
 		{0xE057, String("Tools"), 0, 1},
 		{0xE067, String("Favorites"), 0, 1},
@@ -163,16 +169,39 @@ void SimulationData::init_can_move()
 		can_move[movingType][PT_STKM] = 0;
 		can_move[movingType][PT_STKM2] = 0;
 		can_move[movingType][PT_FIGH] = 0;
+		// Vehicle shouldn't be displaced
+		can_move[movingType][PT_CYTK] = 0;
+		can_move[movingType][PT_TANK] = 0;
+		can_move[movingType][PT_GNSH] = 0;
 		//INVS behaviour varies with pressure
 		can_move[movingType][PT_INVIS] = 3;
+		can_move[movingType][PT_PINV] = 3;
 		//stop CNCT from being displaced by other particles
 		can_move[movingType][PT_CNCT] = 0;
+		can_move[movingType][PT_RCRT] = 0;
 		//VOID and PVOD behaviour varies with powered state and ctype
 		can_move[movingType][PT_PVOD] = 3;
 		can_move[movingType][PT_VOID] = 3;
 		//nothing moves through EMBR (not sure why, but it's killed when it touches anything)
 		can_move[movingType][PT_EMBR] = 0;
 		can_move[PT_EMBR][movingType] = 0;
+		//SOIL varies depending on tunnel state
+		can_move[movingType][PT_SOIL] = 3;
+
+		// "Everything" goes through
+		can_move[movingType][PT_TRBN] = 2;
+		can_move[movingType][PT_FILL] = 2;
+		can_move[movingType][PT_TRUS] = 2;
+		can_move[movingType][PT_RSPK] = 2;
+		can_move[movingType][PT_SHRD] = 2;
+		can_move[movingType][PT_WEB] = 2;
+		can_move[movingType][PT_CLUD] = 2;
+
+		// Metallic mesh only blocks life
+		if (!(movingType == PT_BEE || movingType == PT_SPDR || movingType == PT_ANT || movingType == PT_BIRD || movingType == PT_FISH))
+		{
+			can_move[movingType][PT_MMSH] = 2;
+		}
 		//Energy particles move through VIBR and BVBR, so it can absorb them
 		if (elements[movingType].Properties & TYPE_ENERGY)
 		{
@@ -182,25 +211,38 @@ void SimulationData::init_can_move()
 
 		//SAWD cannot be displaced by other powders
 		if (elements[movingType].Properties & TYPE_PART)
-			can_move[movingType][PT_SAWD] = 0;
+			can_move[movingType][PT_SAWD] = 1;
 	}
+
+	// Whether PHOT can move through powered filter depends on on off state
+	can_move[PT_PHOT][PT_PFLT] = 3;
 
 	for (destinationType = 0; destinationType < PT_NUM; destinationType++)
 	{
+		can_move[PT_RSPK][destinationType] = 2;
+		if (destinationType != PT_VOID && destinationType != PT_PVOD)
+		{
+			can_move[PT_JCB1][destinationType] = 2;
+			can_move[PT_NTRI][destinationType] = 2;
+		}
+
 		//a list of lots of things PHOT can move through
 		if (elements[destinationType].Properties & PROP_PHOTPASS)
 			can_move[PT_PHOT][destinationType] = 2;
 
 		//Things PROT and GRVT cannot move through
-		if (destinationType != PT_DMND && destinationType != PT_INSL && destinationType != PT_VOID && destinationType != PT_PVOD && destinationType != PT_VIBR && destinationType != PT_BVBR && destinationType != PT_PRTI && destinationType != PT_PRTO)
+		if (destinationType != PT_DMND && destinationType != PT_INSL && destinationType != PT_VOID && destinationType != PT_PVOD && destinationType != PT_VIBR && destinationType != PT_BVBR && destinationType != PT_PRTI && destinationType != PT_PRTO && destinationType != PT_INDI)
 		{
 			can_move[PT_PROT][destinationType] = 2;
+			can_move[PT_APRT][destinationType] = 2;
 			can_move[PT_GRVT][destinationType] = 2;
+			can_move[PT_BALI][destinationType] = 2;
 		}
 	}
 
 	//other special cases that weren't covered above
 	can_move[PT_DEST][PT_DMND] = 0;
+	can_move[PT_DEST][PT_INDI] = 0;
 	can_move[PT_DEST][PT_CLNE] = 0;
 	can_move[PT_DEST][PT_PCLN] = 0;
 	can_move[PT_DEST][PT_BCLN] = 0;
@@ -211,26 +253,45 @@ void SimulationData::init_can_move()
 	can_move[PT_ELEC][PT_LCRY] = 2;
 	can_move[PT_ELEC][PT_EXOT] = 2;
 	can_move[PT_ELEC][PT_GLOW] = 2;
+	can_move[PT_POSI][PT_LCRY] = 2;
+	can_move[PT_POSI][PT_EXOT] = 2;
+	can_move[PT_POSI][PT_GLOW] = 2;
 	can_move[PT_PHOT][PT_LCRY] = 3; //varies according to LCRY life
 	can_move[PT_PHOT][PT_GPMP] = 3;
+	can_move[PT_PROT][PT_PINV] = 3; //varies according to PINV life
+	can_move[PT_NTRI][PT_PINV] = 3;
+	can_move[PT_JCB1][PT_PINV] = 3;
 
 	can_move[PT_PHOT][PT_BIZR] = 2;
 	can_move[PT_ELEC][PT_BIZR] = 2;
+	can_move[PT_POSI][PT_BIZR] = 2;
 	can_move[PT_PHOT][PT_BIZRG] = 2;
 	can_move[PT_ELEC][PT_BIZRG] = 2;
+	can_move[PT_POSI][PT_BIZRG] = 2;
 	can_move[PT_PHOT][PT_BIZRS] = 2;
 	can_move[PT_ELEC][PT_BIZRS] = 2;
+	can_move[PT_POSI][PT_BIZRS] = 2;
 	can_move[PT_BIZR][PT_FILT] = 2;
 	can_move[PT_BIZRG][PT_FILT] = 2;
+	can_move[PT_BIZR][PT_PFLT] = 2;
+	can_move[PT_BIZRG][PT_PFLT] = 2;
 
 	can_move[PT_ANAR][PT_WHOL] = 1; //WHOL eats ANAR
 	can_move[PT_ANAR][PT_NWHL] = 1;
 	can_move[PT_ELEC][PT_DEUT] = 1;
+	can_move[PT_POSI][PT_DEUT] = 1;
 	can_move[PT_THDR][PT_THDR] = 2;
 	can_move[PT_EMBR][PT_EMBR] = 2;
 	can_move[PT_TRON][PT_SWCH] = 3;
 	can_move[PT_ELEC][PT_RSST] = 2;
 	can_move[PT_ELEC][PT_RSSS] = 2;
+
+	can_move[PT_ANT][PT_SOIL] = 2; // ANT can go through soil
+	can_move[PT_BEE][PT_HONY] = 2;
+	can_move[PT_BEE][PT_WAX] = 2; // BEEs go through wax and honey
+	can_move[PT_CLUD][PT_CLUD] = 0; // CLUD can't overlap
+	can_move[PT_WEB][PT_WEB] = 0; // WEB can't overlap
+
 }
 
 const CustomGOLData *SimulationData::GetCustomGOLByRule(int rule) const

@@ -54,6 +54,21 @@ void Element::Element_LAVA()
 
 static int graphics(GRAPHICS_FUNC_ARGS)
 {
+	auto &sd = SimulationData::CRef();
+	auto &elements = sd.elements;
+
+	// Element has custom molten graphics function
+	if (cpart->ctype >= 0 && cpart->ctype < PT_NUM && elements[cpart->ctype].Enabled && elements[cpart->ctype].MoltenGraphics)
+	{
+		auto color = elements[cpart->ctype].Colour;
+
+		*colr = color.Red;
+		*colg = color.Green;
+		*colb = color.Blue;
+
+		return elements[cpart->ctype].MoltenGraphics(GRAPHICS_FUNC_SUBCALL_ARGS);
+	}
+
 	*colr = cpart->life * 2 + 0xE0;
 	*colg = cpart->life * 1 + 0x50;
 	*colb = cpart->life / 2 + 0x10;

@@ -68,12 +68,20 @@ static int update(UPDATE_FUNC_ARGS)
 			ct = PT_METL;
 		parts[i].ctype = PT_NONE;
 		parts[i].life = 4;
-		if (ct == PT_WATR)
+		if (ct == PT_WATR || ct == PT_THOR || ct == PT_RSTR)
 			parts[i].life = 64;
 		else if (ct == PT_SLTW)
 			parts[i].life = 54;
 		else if (ct == PT_SWCH)
 			parts[i].life = 14;
+		else if (ct == PT_INDC)
+			parts[i].life = 100;
+		else if (ct == PT_NEON)
+			parts[i].life = 54;
+		else if (ct == PT_LEAD)
+			parts[i].life = 16;
+		else if (ct == PT_BRKN) // Broken change back into broken form
+			parts[i].ctype = parts[i].tmp;
 		else if (ct == PT_RSST) //RSST disappears at the end of its spark cycle
 		{
 			sim->kill_part(i);
@@ -193,6 +201,101 @@ static int update(UPDATE_FUNC_ARGS)
 		if(parts[i].temp < 3595.0){
 			parts[i].temp += sim->rng.between(-4, 15);
 		}
+		break;
+	case PT_SICN:
+		for (auto rx = -1; rx <= 1; rx++)
+		{
+			for (auto ry = -1; ry <= 1; ry++)
+			{
+				if (rx || ry)
+				{
+					auto r = pmap[y + ry][x + rx];
+					if (!r)
+					{
+						continue;
+					}
+
+					if (
+						(
+							TYP(r) == PT_LCRY || TYP(r) == PT_SWCH || TYP(r) == PT_PCLN || TYP(r) == PT_HSWC ||
+							TYP(r) == PT_PVOD || TYP(r) == PT_PUMP || TYP(r) == PT_PBCN || TYP(r) == PT_GPMP ||
+							TYP(r) == PT_PPIP || TYP(r) == PT_EXFN || TYP(r) == PT_FFGN || TYP(r) == PT_PFLT ||
+							TYP(r) == PT_PINV || TYP(r) == PT_SHRD || TYP(r) == PT_TIME
+						)
+					) // Activate powered stuff
+					{
+						if (parts[i].life == 4)
+						{
+							if (TYP(r) == PT_LCRY)
+							{
+								sim->flood_prop(x + rx, y + ry, AccessProperty{ FIELD_LIFE, 10 });
+								sim->flood_prop(x + rx, y + ry, AccessProperty{ FIELD_TMP, 2 });
+								sim->flood_prop(x + rx, y + ry, AccessProperty{ FIELD_TMP2, 10 });
+							}
+							else if (TYP(r) == PT_PPIP)
+							{
+								Element_PPIP_flood_trigger(sim, x + rx, y + ry, PT_PSCN);
+							}
+							else if (TYP(r) == PT_TIME)
+							{
+								sim->flood_prop(x + rx, y + ry, AccessProperty{ FIELD_TMP2, 10 });
+							}
+							else
+							{
+								sim->flood_prop(x + rx, y + ry, AccessProperty{ FIELD_LIFE, 10 });
+							}
+						}
+						else if (parts[i].life == 1)
+						{
+							if (TYP(r) == PT_LCRY)
+							{
+								sim->flood_prop(x + rx, y + ry, AccessProperty{ FIELD_LIFE, 0 });
+								sim->flood_prop(x + rx, y + ry, AccessProperty{ FIELD_TMP, 0 });
+								sim->flood_prop(x + rx, y + ry, AccessProperty{ FIELD_TMP2, 0 });
+							}
+							else if (TYP(r) == PT_PPIP)
+							{
+								Element_PPIP_flood_trigger(sim, x + rx, y + ry, PT_NSCN);
+							}
+							else if (TYP(r) == PT_TIME)
+							{
+								sim->flood_prop(x + rx, y + ry, AccessProperty{ FIELD_TMP2, 0 });
+							}
+							else
+							{
+								sim->flood_prop(x + rx, y + ry, AccessProperty{ FIELD_LIFE, 0 });
+							}
+						}
+					}
+				}
+			}
+		}
+		break;
+	case PT_IRDM:
+		// Produce sparks (EMBR) and FIRE
+		for (auto rx = -1; rx <= 1; rx++)
+		{
+			for (auto ry = -1; ry <= 1; ry++)
+			{
+				if (rx || ry)
+				{
+					auto r = pmap[y + ry][x + rx];
+					if (!r)
+					{
+
+						auto j = sim->create_part(-1, x + rx, y + ry, sim->rng.chance(1, 2) ? PT_EMBR : PT_FIRE);
+						if (i >= 0)
+						{
+							parts[j].life = sim->rng.between(50, 200);
+							parts[j].vx = sim->rng.between(-3, 3);
+							parts[j].vy = sim->rng.between(-3, 3);
+							parts[j].temp = parts[i].temp;
+						}
+					}
+				}
+			}
+		}
+		break;
 	default:
 		break;
 	}
@@ -277,6 +380,7 @@ static int update(UPDATE_FUNC_ARGS)
 				case PT_EMP:
 					if (!parts[ID(r)].life && parts[i].life > 0 && parts[i].life < 4)
 					{
+						sim->faradayEmp.insert(sim->faradayMap[(y + ry) / CELL][(x + rx) / CELL]);
 						sim->emp_trigger_count++;
 						sim->emp_decor += 3;
 						if (sim->emp_decor > 40)
@@ -284,6 +388,29 @@ static int update(UPDATE_FUNC_ARGS)
 						parts[ID(r)].life = 220;
 					}
 					continue;
+				case PT_NICH: // NICH only conducts 1 pixel at a time
+				{
+					if (pavg != PT_INSL && parts[i].life < 4)
+					{
+						if (std::abs(rx) > 1 || std::abs(ry) > 1)
+						{
+							continue;
+						}
+					}
+					break;
+				}
+				case PT_SICN: // Don't conduct diagonals
+					if (rx != 0 && ry != 0)
+					{
+						continue;
+					}
+					break;
+				case PT_JUNC: // Only conduct of opposite direction has a SPRK, no diagonals
+					if (TYP(pmap[y - ry][x - rx]) != PT_SPRK || !(rx == 0 || ry == 0) || std::abs(rx) > 1 || std::abs(ry) > 1)
+					{
+						continue;
+					}
+					break;
 				}
 
 				if ((pavg == PT_INSL) || (pavg == PT_RSSS)) continue; //Insulation blocks everything past here
@@ -297,7 +424,7 @@ static int update(UPDATE_FUNC_ARGS)
 					switch (sender)
 					{
 					case PT_INST:
-						if (receiver==PT_NSCN)
+						if (receiver == PT_SICN || receiver==PT_NSCN)
 							return true;
 						return false;
 					case PT_SWCH:
@@ -309,17 +436,29 @@ static int update(UPDATE_FUNC_ARGS)
 							return true;
 						return false;
 					case PT_NTCT:
-						if (receiver==PT_PSCN || (receiver==PT_NSCN && parts[i].temp>373.0f))
+						if (receiver==PT_SICN || receiver==PT_PSCN || (receiver==PT_NSCN && parts[i].temp>373.0f))
 							return true;
 						return false;
 					case PT_PTCT:
-						if (receiver==PT_PSCN || (receiver==PT_NSCN && parts[i].temp<373.0f))
+						if (receiver==PT_SICN || receiver==PT_PSCN || (receiver==PT_NSCN && parts[i].temp<373.0f))
 							return true;
 						return false;
 					case PT_INWR:
-						if (receiver==PT_NSCN || receiver==PT_PSCN)
+						if (receiver==PT_SICN || receiver==PT_NSCN || receiver==PT_PSCN)
 							return true;
 						return false;
+					case PT_LEAD:
+						if (receiver == PT_SICN || receiver == PT_PSCN)
+							return true;
+						return false;
+					case PT_JUNC: // Only conduct of opposite direction has a SPRK, no diagonals
+						if (TYP(pmap[y - ry][x - rx]) != PT_SPRK || !(rx == 0 || ry == 0) || abs(rx) > 1 || abs(ry) > 1)
+							return false;
+						break;
+					case PT_IRDM: // Don't conduct to PSCN
+						if (receiver == PT_PSCN)
+							return false;
+						break;
 					default:
 						break;
 					}
@@ -327,23 +466,23 @@ static int update(UPDATE_FUNC_ARGS)
 					switch (receiver)
 					{
 					case PT_QRTZ:
-						if ((sender==PT_NSCN||sender==PT_METL||sender==PT_PSCN||sender==PT_QRTZ) && (parts[ID(r)].temp<173.15||sim->pv[(y+ry)/CELL][(x+rx)/CELL]>8))
+						if ((sender == PT_SICN || sender==PT_NSCN||sender==PT_METL||sender==PT_PSCN||sender==PT_QRTZ) && (parts[ID(r)].temp<173.15||sim->pv[(y+ry)/CELL][(x+rx)/CELL]>8))
 							return true;
 						return false;
 					case PT_NTCT:
-						if (sender==PT_NSCN || (sender==PT_PSCN&&parts[ID(r)].temp>373.0f))
+						if (sender == PT_SICN || sender==PT_NSCN || (sender==PT_PSCN&&parts[ID(r)].temp>373.0f))
 							return true;
 						return false;
 					case PT_PTCT:
-						if (sender==PT_NSCN || (sender==PT_PSCN&&parts[ID(r)].temp<373.0f))
+						if (sender == PT_SICN || sender==PT_NSCN || (sender==PT_PSCN&&parts[ID(r)].temp<373.0f))
 							return true;
 						return false;
 					case PT_INWR:
-						if (sender==PT_NSCN || sender==PT_PSCN)
+						if (sender == PT_SICN || sender==PT_NSCN || sender==PT_PSCN)
 							return true;
 						return false;
 					case PT_INST:
-						if (sender==PT_PSCN)
+						if (sender == PT_SICN || sender==PT_PSCN)
 							return true;
 						return false;
 					case PT_NBLE:
@@ -352,6 +491,10 @@ static int update(UPDATE_FUNC_ARGS)
 						return false;
 					case PT_PSCN:
 						if (sender!=PT_NSCN)
+							return true;
+						return false;
+					case PT_LEAD:
+						if (sender != PT_PSCN)
 							return true;
 						return false;
 					default:
@@ -365,11 +508,11 @@ static int update(UPDATE_FUNC_ARGS)
 					continue;
 				}
 				//Yay, passed normal conduction rules, check a few last things and change receiver to spark
-				if (receiver==PT_WATR||receiver==PT_SLTW) {
+				if (receiver==PT_WATR||receiver==PT_SLTW || receiver == PT_THOR || receiver == PT_RSTR) {
 					if (parts[ID(r)].life==0 && parts[i].life<3)
 					{
 						sim->part_change_type(ID(r),x+rx,y+ry,PT_SPRK);
-						if (receiver==PT_WATR) parts[ID(r)].life = 6;
+						if (receiver==PT_WATR || receiver==PT_THOR) parts[ID(r)].life = 6;
 						else parts[ID(r)].life = 5;
 						parts[ID(r)].ctype = receiver;
 					}

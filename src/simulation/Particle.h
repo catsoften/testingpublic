@@ -29,3 +29,4 @@ constexpr unsigned int FIELD_TMP   =  9;
 constexpr unsigned int FIELD_TMP2  = 10;
 constexpr unsigned int FIELD_TMP3  = 11;
 constexpr unsigned int FIELD_TMP4  = 12;
+constexpr unsigned int FIELD_DCOLOUR = 13;

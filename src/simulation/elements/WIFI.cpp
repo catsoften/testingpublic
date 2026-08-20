@@ -52,6 +52,9 @@ static int update(UPDATE_FUNC_ARGS)
 	parts[i].tmp = (int)((parts[i].temp-73.15f)/100+1);
 	if (parts[i].tmp>=CHANNELS) parts[i].tmp = CHANNELS-1;
 	else if (parts[i].tmp<0) parts[i].tmp = 0;
+
+	auto channel = CHANNELS * sim->faradayMap[y / CELL][x / CELL] + parts[i].tmp;
+
 	for (auto rx = -1; rx <= 1; rx++)
 	{
 		for (auto ry = -1; ry <= 1; ry++)
@@ -63,9 +66,9 @@ static int update(UPDATE_FUNC_ARGS)
 					continue;
 				// wireless[][0] - whether channel is active on this frame
 				// wireless[][1] - whether channel should be active on next frame
-				if (sim->wireless[parts[i].tmp][0])
+				if (sim->wireless[channel][0])
 				{
-					if ((TYP(r)==PT_NSCN||TYP(r)==PT_PSCN||TYP(r)==PT_INWR)&&parts[ID(r)].life==0 && sim->wireless[parts[i].tmp][0])
+					if ((TYP(r)==PT_NSCN||TYP(r)==PT_PSCN||TYP(r)==PT_INWR)&&parts[ID(r)].life==0 && sim->wireless[channel][0])
 					{
 						parts[ID(r)].ctype = TYP(r);
 						sim->part_change_type(ID(r),x+rx,y+ry,PT_SPRK);
@@ -74,7 +77,7 @@ static int update(UPDATE_FUNC_ARGS)
 				}
 				if (TYP(r)==PT_SPRK && parts[ID(r)].ctype!=PT_NSCN && parts[ID(r)].life>=3)
 				{
-					sim->wireless[parts[i].tmp][1] = 1;
+					sim->wireless[channel][1] = 1;
 					sim->ISWIRE = 2;
 				}
 			}

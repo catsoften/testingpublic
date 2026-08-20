@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include "Format.h"
 #include "Gradient.h"
 #include "Misc.h"
 #include "VideoBuffer.h"
@@ -15,6 +16,10 @@
 #include <algorithm>
 #include <cmath>
 #include <numbers>
+
+#include "STKM_arc_png.h"
+
+std::unique_ptr<PlaneAdapter<std::vector<pixel_rgba>>> STKM_arcImage = format::PixelsFromPNG(STKM_arc_png.AsCharSpan());
 
 void Renderer::RenderBackground()
 {
@@ -250,6 +255,7 @@ void Renderer::render_parts()
 	gfctx.rng.seed(rng());
 	gfctx.pipeSubcallCpart = nullptr;
 	gfctx.pipeSubcallTpart = nullptr;
+	gfctx.renderer = this;
 	int deca, decr, decg, decb, cola, colr, colg, colb, firea, firer, fireg, fireb, pixel_mode, q, i, t, nx, ny, x, y;
 	int orbd[4] = {0, 0, 0, 0}, orbl[4] = {0, 0, 0, 0};
 	int drawing_budget = 1000000; //Serves as an upper bound for costly effects such as SPARK, FLARE and LFLARE
@@ -626,6 +632,15 @@ void Renderer::render_parts()
 						DrawLine({ nx+2, ny }, { nx, ny-2 }, RGB(colr, colg, colb));
 						DrawLine({ nx, ny-2 }, { nx-2, ny }, RGB(colr, colg, colb));
 						DrawLine({ nx-2, ny }, { nx, ny+2 }, RGB(colr, colg, colb));
+					}
+					else if (parts[i].tmp == 1 && colorMode != COLOUR_HEAT)
+					{
+						pixel_rgba const *data = STKM_arcImage->data();
+						auto rect = RectSized(Vec2{ 0, 0 }, STKM_arcImage->Size());
+						for (auto pos : rect)
+						{
+							BlendPixel(Vec2{ nx, ny } + pos - rect.size / 2, RGBA::Unpack(data[pos.X + pos.Y * rect.size.X]));
+						}
 					}
 					else
 					{

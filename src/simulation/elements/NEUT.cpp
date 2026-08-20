@@ -1,10 +1,10 @@
 #include "simulation/ElementCommon.h"
 #include "FIRE.h"
 #include "PLNT.h"
+#include "NEUT.h"
 
 static int update(UPDATE_FUNC_ARGS);
 static int graphics(GRAPHICS_FUNC_ARGS);
-static void create(ELEMENT_CREATE_FUNC_ARGS);
 static int DeutExplosion(Simulation * sim, int n, int x, int y, float temp, int t);
 
 void Element::Element_NEUT()
@@ -50,7 +50,7 @@ void Element::Element_NEUT()
 
 	Update = &update;
 	Graphics = &graphics;
-	Create = &create;
+	Create = &Element_NEUT_create;
 }
 
 static int update(UPDATE_FUNC_ARGS)
@@ -259,7 +259,7 @@ static int graphics(GRAPHICS_FUNC_ARGS)
 	return 1;
 }
 
-static void create(ELEMENT_CREATE_FUNC_ARGS)
+void Element_NEUT_create(ELEMENT_CREATE_FUNC_ARGS)
 {
 	float r = sim->rng.between(128, 255) / 127.0f;
 	float a = sim->rng.between(0, 359) * std::numbers::pi_v<float> / 180.0f;

@@ -31,7 +31,7 @@ void Element::Element_CLNE()
 	HeatConduct = 251;
 	Description = "Clone. Duplicates any particles it touches.";
 
-	Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_NOCTYPEDRAW;
+	Properties = TYPE_SOLID | PROP_PHOTPASS | PROP_NOCTYPEDRAW | PROP_INDESTRUCTIBLE;
 	CarriesTypeIn = 1U << FIELD_CTYPE;
 
 	LowPressure = IPL;
@@ -77,14 +77,17 @@ static int update(UPDATE_FUNC_ARGS)
 	}
 	else
 	{
-		if (parts[i].ctype==PT_LIFE) sim->create_part(-1, x + sim->rng.between(-1, 1), y + sim->rng.between(-1, 1), PT_LIFE, parts[i].tmp);
-		else if (parts[i].ctype!=PT_LIGH || sim->rng.chance(1, 30))
+		if (parts[i].ctype != PT_JCB1 && !(elements[parts[i].ctype].Properties & PROP_VEHICLE))
 		{
-			int np = sim->create_part(-1, x + sim->rng.between(-1, 1), y + sim->rng.between(-1, 1), TYP(parts[i].ctype));
-			if (np>=0)
+			if (parts[i].ctype==PT_LIFE) sim->create_part(-1, x + sim->rng.between(-1, 1), y + sim->rng.between(-1, 1), PT_LIFE, parts[i].tmp);
+			else if (parts[i].ctype!=PT_LIGH || sim->rng.chance(1, 30))
 			{
-				if (parts[i].ctype==PT_LAVA && parts[i].tmp>0 && parts[i].tmp<PT_NUM && elements[parts[i].tmp].HighTemperatureTransition==PT_LAVA)
-					parts[np].ctype = parts[i].tmp;
+				int np = sim->create_part(-1, x + sim->rng.between(-1, 1), y + sim->rng.between(-1, 1), TYP(parts[i].ctype));
+				if (np>=0)
+				{
+					if (parts[i].ctype==PT_LAVA && parts[i].tmp>0 && parts[i].tmp<PT_NUM && elements[parts[i].tmp].HighTemperatureTransition==PT_LAVA)
+						parts[np].ctype = parts[i].tmp;
+				}
 			}
 		}
 	}

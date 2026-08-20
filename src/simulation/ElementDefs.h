@@ -32,6 +32,12 @@ constexpr auto PROP_SPARKSETTLE   = UINT32_C(0x00020000);  //2^17 Allow Sparks/E
 constexpr auto PROP_NOAMBHEAT     = UINT32_C(0x00040000);  //2^18 Don't transfer or receive heat from ambient heat.
 constexpr auto PROP_NOCTYPEDRAW   = UINT32_C(0x00100000); // 2^20 When this element is drawn upon with, do not set ctype (like BCLN for CLNE)
 
+constexpr auto PROP_VEHICLE       = UINT32_C(0x00200000); // 2^21 A vehicle element, ie cybertruck
+constexpr auto PROP_NO_TIME       = UINT32_C(0x00400000); // 2^22 Not affected by time dilation
+constexpr auto PROP_WATER         = UINT32_C(0x01000000); // 2^23 Water element (like SLTW, SWTR)
+constexpr auto PROP_INDESTRUCTIBLE= UINT32_C(0x02000000); // 2^24 Indestructible
+constexpr auto PROP_EDIBLE        = UINT32_C(0x04000000); // 2^25 Edible (food)
+
 constexpr auto FLAG_STAGNANT      = UINT32_C(0x00000001);
 constexpr auto FLAG_SKIPMOVE      = UINT32_C(0x00000002); // skip movement for one frame, only implemented for PHOT
 //#define FLAG_WATEREQUAL 0x4 //if a liquid was already checked during equalization

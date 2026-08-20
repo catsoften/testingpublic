@@ -20,8 +20,16 @@
 #include <array>
 #include <memory>
 #include <optional>
+#include <set>
 
 constexpr int CHANNELS = int(MAX_TEMP - 73) / 100 + 2;
+
+constexpr int FARADAY_CHANNELS = 15;
+
+constexpr int STASIS_CELL = 2;
+
+constexpr int MIN_TIME_DILATION = -16;
+constexpr int MAX_TIME_DILATION = 8;
 
 class FrameTime;
 class Snapshot;
@@ -135,8 +143,8 @@ public:
 	int lightningRecreate = 0;
 	bool gravWallChanged = false;
 
-	Particle portalp[CHANNELS][8][80];
-	int wireless[CHANNELS][2];
+	Particle portalp[CHANNELS * FARADAY_CHANNELS][8][80];
+	int wireless[CHANNELS * FARADAY_CHANNELS][2];
 
 	int CGOL = 0;
 	int GSPEED = 1;
@@ -146,6 +154,7 @@ public:
 	float fvy[YCELLS][XCELLS];
 	int Element_LOLZ_lolz[XRES/9][YRES/9];
 	int Element_LOVE_love[XRES/9][YRES/9];
+	int Element_MONY_mony[XRES/9][YRES/9];
 	int Element_PSTN_tempParts[std::max(XRES, YRES)];
 	int Element_PPIP_ppip_changed;
 
@@ -171,6 +180,26 @@ public:
 	int NUM_PARTS;
 	int sandcolour;
 	int sandcolour_interface;
+
+	// Faraday area map
+	int faradayMap[YRES / CELL][XRES / CELL];
+
+	// EMPed faraday channels
+	std::set<int> faradayEmp;
+
+	// Faraday needs updated
+	bool faradayRecalc = true;
+
+	// Stasis field
+	float stasisVX[YRES / STASIS_CELL][XRES / STASIS_CELL];
+	float stasisVY[YRES / STASIS_CELL][XRES / STASIS_CELL];
+	float stasisStrength[YRES / STASIS_CELL][XRES / STASIS_CELL];
+
+	// Time dilation, smaller = more updates
+	int timeDilation[YCELLS][XCELLS];
+
+	// Vehicle id containing STKM
+	int vehicle_p1 = -1, vehicle_p2 = -1;
 
 	void Load(const GameSave *save, bool includePressure, Vec2<int> blockP); // block coordinates
 	std::unique_ptr<GameSave> Save(bool includePressure, Rect<int> partR); // particle coordinates
@@ -205,7 +234,7 @@ public:
 	bool FloodFillPmapCheck(int x, int y, int type) const;
 	int flood_prop(int x, int y, const AccessProperty &changeProperty);
 	bool flood_water(int x, int y, int i);
-	int FloodINST(int x, int y);
+	int FloodINST(int x, int y, int INSTType = -1);
 	void detach(int i);
 	bool part_change_type(int i, int x, int y, int t);
 	//int InCurrentBrush(int i, int j, int rx, int ry);
@@ -273,6 +302,10 @@ public:
 	FrameTime *frameTime = nullptr;
 
 	static std::unique_ptr<Simulation> Factory();
+
+	void RecalcFaraday();
+	void RecalcExternal();
+	void ClearStasis();
 
 private:
 	CoordStack& getCoordStackSingleton();

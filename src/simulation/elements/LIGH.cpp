@@ -195,6 +195,12 @@ static int update(UPDATE_FUNC_ARGS)
 
 static bool create_LIGH(Simulation * sim, int x, int y, int c, float temp, int life, int tmp, int tmp2, bool last, int i)
 {
+	// Force fields and anti-spark powder block LIGH
+	if (x >= 0 && x < XRES && y >= 0 && y < YRES && (TYP(sim->pmap[y][x]) == PT_ASPK || TYP(sim->photons[y][x]) == PT_FFLD))
+	{
+		return true;
+	}
+
 	int p = sim->create_part(-1, x, y,c);
 	if (p != -1)
 	{

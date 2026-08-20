@@ -38,6 +38,14 @@ uint32_t Snapshot::Hash() const
 	takeThing(FrameCount);
 	takeThing(RngState[0]);
 	takeThing(RngState[1]);
+
+	takeVector(FaradayMap);
+
+	takeVector(TimeDilation);
+
+	takeThing(Vehicle_p1);
+	takeThing(Vehicle_p2);
+
 	// signs and Authors are excluded on purpose, as they aren't POD and don't have much effect on the simulation.
 	return hash;
 }

@@ -131,6 +131,8 @@ public:
 	// author information
 	Json::Value authors;
 
+	int vehicle_p1 = -1, vehicle_p2 = -1;
+
 	int pmapbits = 8; // default to 8 bits for older saves
 
 	GameSave(Vec2<int> newBlockSize);

@@ -51,6 +51,9 @@ void Element::Element_WARP()
 
 static int update(UPDATE_FUNC_ARGS)
 {
+	auto &sd = SimulationData::CRef();
+	auto &elements = sd.elements;
+
 	if (parts[i].tmp2 > 2000)
 	{
 		parts[i].temp = 10000;
@@ -68,7 +71,7 @@ static int update(UPDATE_FUNC_ARGS)
 			int r = pmap[y + ry][x + rx];
 			if (!r)
 				continue;
-			if (TYP(r) != PT_WARP && TYP(r) != PT_STKM && TYP(r) != PT_STKM2 && TYP(r) != PT_DMND && TYP(r) != PT_CLNE && TYP(r) != PT_BCLN && TYP(r) != PT_PCLN)
+			if (TYP(r) != PT_WARP && TYP(r) != PT_STKM && TYP(r) != PT_STKM2 && !(elements[TYP(r)].Properties & PROP_INDESTRUCTIBLE) && TYP(r) != PT_BCLN && TYP(r) != PT_PCLN)
 			{
 				parts[i].x = parts[ID(r)].x;
 				parts[i].y = parts[ID(r)].y;

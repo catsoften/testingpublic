@@ -770,6 +770,9 @@ void GameSave::readOPS(const std::vector<char> &data)
 		ConvertBsonToJson(*authorsNode, &authors);
 	}
 
+	copyIfInt32(b, "vehicle_p1", vehicle_p1);
+	copyIfInt32(b, "vehicle_p2", vehicle_p2);
+
 	auto paletteRemap = [this](auto maxVersion, ByteString from, ByteString to) {
 		if (version <= maxVersion)
 		{
@@ -2702,6 +2705,9 @@ std::pair<bool, std::vector<char>> GameSave::serialiseOPS() const
 		auto &authorsNode = (b["authors"] = Bson::Type::objectValue);
 		ConvertJsonToBson(authorsNode, authors);
 	}
+
+	b["vehicle_p1"] = vehicle_p1;
+	b["vehicle_p2"] = vehicle_p2;
 
 	std::vector<char> finalData;
 	try

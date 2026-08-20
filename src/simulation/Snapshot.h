@@ -40,6 +40,13 @@ public:
 	uint64_t FrameCount;
 	RNG::State RngState;
 
+	std::vector<int> FaradayMap;
+
+	std::vector<int> TimeDilation;
+
+	int Vehicle_p1;
+	int Vehicle_p2;
+
 	uint32_t Hash() const;
 
 	Json::Value Authors;

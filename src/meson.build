@@ -203,6 +203,7 @@ subdir('prefs')
 subdir('resampler')
 subdir('simulation')
 subdir('tasks')
+subdir('ultimata')
 
 element_numbers_x = []
 foreach elem_name_id : simulation_elem_ids

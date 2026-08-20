@@ -1,5 +1,6 @@
 #include "simulation/ElementCommon.h"
 #include "FIRE.h"
+#include "THOR.h"
 #include <algorithm>
 
 static int updateLegacy(UPDATE_FUNC_ARGS);
@@ -299,6 +300,40 @@ int Element_FIRE_update(UPDATE_FUNC_ARGS)
 					{
 						parts[ID(r)].life++;
 					}
+					else if (parts[i].ctype == PT_ZINC && rt == PT_LAVA && parts[ID(r)].ctype == PT_COPR) // LAVA(ZINC) + LAVA(COPR) = LAVA(BRAS)
+					{
+						parts[i].ctype = PT_BRAS;
+						parts[ID(r)].ctype = PT_BRAS;
+					}
+					else if (parts[i].ctype == PT_TIN && rt == PT_LAVA && parts[ID(r)].ctype == PT_COPR) // LAVA(TIN) + LAVA(COPR) = LAVA(BRNZ)
+					{
+						parts[i].ctype = PT_BRNZ;
+						parts[ID(r)].ctype = PT_BRNZ;
+					}
+					else if (parts[i].ctype == PT_BSMH) // LAVA(BSMH) resets tmp and tmp2 and tmp3
+					{
+						parts[i].tmp = 0;
+						parts[i].tmp2 = 0;
+						parts[i].tmp3 = 0;
+					}
+					else if (parts[i].ctype == PT_THOR) // Molten THOR still is radioactive
+					{
+						Element_THOR_update(sim, i, x, y, surround_space, nt, parts, pmap);
+					}
+					else if (
+						parts[i].ctype == PT_LEAD &&
+						(
+							rt == PT_WIFI || rt == PT_SWCH || rt == PT_INST || rt == PT_ARAY ||
+							rt == PT_CRAY || rt == PT_DRAY || rt == PT_TESC || rt == PT_EMP  ||
+							rt == PT_ETRD || rt == PT_DTEC || rt == PT_TSNS || rt == PT_LDTC ||
+							rt == PT_PSNS || rt == PT_PDTC || rt == PT_TRBN || rt == PT_PSTN ||
+							rt == PT_FRAY || rt == PT_FILT || rt == PT_HEAC || rt == PT_LSNS ||
+							elements[rt].MenuSection == SC_POWERED
+						)
+					) // Molten LEAD destroys nearby electronics
+					{
+						sim->part_change_type(ID(r), x, y, PT_BREC);
+					}
 				}
 
 				if ((surround_space || elements[rt].Explosive) &&
@@ -306,7 +341,8 @@ int Element_FIRE_update(UPDATE_FUNC_ARGS)
 				    //exceptions, t is the thing causing the spark and rt is what's burning
 				    (t != PT_SPRK || (rt != PT_RBDM && rt != PT_LRBD && rt != PT_INSL)) &&
 				    (t != PT_PHOT || rt != PT_INSL) &&
-				    (rt != PT_SPNG || parts[ID(r)].life == 0))
+				    (rt != PT_SPNG || parts[ID(r)].life == 0) &&
+				    (rt != PT_CRBN || parts[ID(r)].temp > 300.0f + 273.0f))
 				{
 					sim->part_change_type(ID(r), x+rx, y+ry, PT_FIRE);
 					parts[ID(r)].temp = restrict_flt(elements[PT_FIRE].DefaultProperties.temp + (elements[rt].Flammable/2), MIN_TEMP, MAX_TEMP);
@@ -381,7 +417,7 @@ static int updateLegacy(UPDATE_FUNC_ARGS)
 						sim->part_change_type(i,x,y,PT_STNE);
 					}
 				}
-				if (rt==PT_WATR || rt==PT_DSTW || rt==PT_SLTW)
+				if (elements[rt].Properties & PROP_WATER)
 				{
 					sim->kill_part(ID(r));
 					if (t==PT_FIRE)
@@ -410,9 +446,20 @@ static int graphics(GRAPHICS_FUNC_ARGS)
 	*colb = color.Blue;
 
 	*firea = 255;
-	*firer = *colr;
-	*fireg = *colg;
-	*fireb = *colb;
+	if (!cpart->dcolour || !cpart->tmp2)
+	{
+		*firer = *colr;
+		*fireg = *colg;
+		*fireb = *colb;
+	}
+	else
+	{
+		auto dcolour = RGB::Unpack(cpart->dcolour);
+
+		*firer = (0.3f * *colr + dcolour.Red);
+		*fireg = (0.3f * *colg + dcolour.Green);
+		*fireb = (0.3f * *colb + dcolour.Blue);
+	}
 
 	*pixel_mode = PMODE_NONE; //Clear default, don't draw pixel
 	*pixel_mode |= FIRE_ADD;

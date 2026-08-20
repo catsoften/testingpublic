@@ -25,8 +25,8 @@ std::unique_ptr<Snapshot> Simulation::CreateSnapshot() const
 	snap->FanVelocityX   .insert   (snap->FanVelocityX   .begin(), &fvx [0][0]      , &fvx [0][0] + NCELL);
 	snap->FanVelocityY   .insert   (snap->FanVelocityY   .begin(), &fvy [0][0]      , &fvy [0][0] + NCELL);
 	snap->Particles      .insert   (snap->Particles      .begin(), &parts  [0]      , &parts  [0] + parts.active);
-	snap->PortalParticles.insert   (snap->PortalParticles.begin(), &portalp[0][0][0], &portalp[0][0][0] + CHANNELS * 8 * 80);
-	snap->WirelessData   .insert   (snap->WirelessData   .begin(), &wireless[0][0]  , &wireless[0][0] + CHANNELS * 2);
+	snap->PortalParticles.insert   (snap->PortalParticles.begin(), &portalp[0][0][0], &portalp[0][0][0] + CHANNELS * FARADAY_CHANNELS * 8 * 80);
+	snap->WirelessData   .insert   (snap->WirelessData   .begin(), &wireless[0][0]  , &wireless[0][0] + CHANNELS * FARADAY_CHANNELS * 2);
 	snap->stickmen       .insert   (snap->stickmen       .begin(), &fighters[0]     , &fighters[0] + MAX_FIGHTERS);
 	snap->stickmen       .push_back(player2);
 	snap->stickmen       .push_back(player);
@@ -37,6 +37,14 @@ std::unique_ptr<Snapshot> Simulation::CreateSnapshot() const
 	snap->signs = signs;
 	snap->FrameCount = frameCount;
 	snap->RngState = rng.state();
+
+	snap->FaradayMap.insert(snap->FaradayMap.begin(), &faradayMap[0][0], &faradayMap[0][0] + NCELL);
+
+	snap->TimeDilation.insert(snap->TimeDilation.begin(), &timeDilation[0][0], &timeDilation[0][0] + NCELL);
+
+	snap->Vehicle_p1 = vehicle_p1;
+	snap->Vehicle_p2 = vehicle_p2;
+
 	return snap;
 }
 
@@ -81,6 +89,15 @@ void Simulation::Restore(const Snapshot &snap)
 	rng.state(snap.RngState);
 	parts.active = NPART;
 	RecalcFreeParticles(false);
+
+	std::copy(snap.FaradayMap.begin(), snap.FaradayMap.end(), &faradayMap[0][0]);
+
+	std::copy(snap.TimeDilation.begin(), snap.TimeDilation.end(), &timeDilation[0][0]);
+
+	vehicle_p1 = snap.Vehicle_p1;
+	vehicle_p2 = snap.Vehicle_p2;
+
+	RecalcExternal();
 }
 
 void Simulation::clear_area(int area_x, int area_y, int area_w, int area_h)
@@ -104,6 +121,12 @@ void Simulation::clear_area(int area_x, int area_y, int area_w, int area_h)
 		{
 			if (bmap[y][x] == WL_GRAV)
 				gravWallChanged = true;
+
+			if (bmap[y][x] == WL_FARADAY)
+			{
+				faradayRecalc = true;
+			}
+
 			bmap[y][x] = 0;
 			emap[y][x] = 0;
 		}
@@ -205,6 +228,11 @@ int Simulation::CreateWalls(int x, int y, int rx, int ry, int wall, Brush const 
 				}
 				if (wall == WL_GRAV || bmap[wallY][wallX] == WL_GRAV)
 					gravWallChanged = true;
+
+				if (wall == WL_FARADAY || bmap[wallY][wallX] == WL_FARADAY)
+				{
+					faradayRecalc = true;
+				}
 
 				if (wall == WL_ERASEALL)
 				{

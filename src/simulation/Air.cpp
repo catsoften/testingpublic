@@ -99,6 +99,14 @@ void Air::update_airh(void)
 	{
 		for (auto x=0; x<XCELLS; x++)
 		{
+			// Time dilation: (negative = loop every n frames)
+			if (sim.timeDilation[y][x] < 0 && sim.frameCount % (int)std::abs(sim.timeDilation[y][x]))
+			{
+				continue;
+			}
+			int count = 0;
+updateBegin:
+
 			auto dh = 0.0f;
 			auto dx = 0.0f;
 			auto dy = 0.0f;
@@ -247,6 +255,13 @@ void Air::update_airh(void)
 
 			vx[y][x] = dvx;
 			vy[y][x] = dvy;
+
+			// Time dilation: (positive = run n more times. i.e. 1 = run air sim 2 times)
+			count++;
+			if (sim.timeDilation[y][x] > 0 && count <= sim.timeDilation[y][x])
+			{
+				goto updateBegin;
+			}
 		}
 	}
 	memcpy(hv, ohv, sizeof(hv));
@@ -349,6 +364,14 @@ void Air::update_air(void)
 		{
 			for (auto x=0; x<XCELLS; x++)
 			{
+				// Time dilation: (negative = loop every n frames)
+				if (sim.timeDilation[y][x] < 0 && sim.frameCount % (int)std::abs(sim.timeDilation[y][x]))
+				{
+					continue;
+				}
+				int count = 0;
+updateBegin:
+
 				auto dx = 0.0f;
 				auto dy = 0.0f;
 				auto dp = 0.0f;
@@ -488,6 +511,13 @@ void Air::update_air(void)
 				ovx[y][x] = dx;
 				ovy[y][x] = dy;
 				opv[y][x] = dp;
+
+				// Time dilation: (positive = run n more times. i.e. 1 = run air sim 2 times)
+				count++;
+				if (sim.timeDilation[y][x] > 0 && count <= sim.timeDilation[y][x])
+				{
+					goto updateBegin;
+				}
 			}
 		}
 		memcpy(vx, ovx, sizeof(vx));

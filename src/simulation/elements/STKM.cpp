@@ -143,7 +143,7 @@ int Element_STKM_run_stickman(playerst *playerp, UPDATE_FUNC_ARGS)
 		parts[i].temp += 1;
 
 	//Death
-	if (parts[i].life<1 || (sim->pv[y/CELL][x/CELL]>=4.5f && !playerp->fan) ) //If his HP is less than 0 or there is very big wind...
+	if (parts[i].ctype != PT_VACC && (parts[i].life<1 || (sim->pv[y/CELL][x/CELL]>=4.5f && !playerp->fan)) ) //If his HP is less than 0 or there is very big wind...
 	{
 		die(sim, playerp, i);
 		return 1;
@@ -420,13 +420,23 @@ int Element_STKM_run_stickman(playerst *playerp, UPDATE_FUNC_ARGS)
 					continue;
 
 				Element_STKM_set_element(sim, playerp, TYP(r));
-				if (TYP(r) == PT_PLNT && parts[i].life<100) //Plant gives him 5 HP
+				if (parts[i].life < 100)
 				{
-					if (parts[i].life<=95)
-						parts[i].life += 5;
-					else
-						parts[i].life = 100;
-					sim->kill_part(ID(r));
+					if (elements[TYP(r)].Properties & PROP_EDIBLE)
+					{
+						parts[i].life += elements[TYP(r)].FoodValue;
+						sim->kill_part(ID(r));
+					}
+					else if (TYP(r) == PT_STMH || TYP(r) == PT_UDDR || TYP(r) == PT_FLSH)
+					{
+						// Frozen meat is inedible
+						if (parts[ID(r)].temp > 273.15f)
+						{
+							parts[i].life += (parts[ID(r)].tmp3 > 40.0f + 273.15f) ? 10 : -5;
+							sim->kill_part(ID(r));
+						}
+					}
+					parts[i].life = std::clamp(parts[i].life, 0, 100);
 				}
 
 				if (TYP(r) == PT_NEUT)
@@ -483,6 +493,8 @@ int Element_STKM_run_stickman(playerst *playerp, UPDATE_FUNC_ARGS)
 					}
 			}
 			else if (playerp->elem==PT_LIGH && playerp->frames<30)//limit lightning creation rate
+				np = -1;
+			else if (elements[playerp->elem].Properties & PROP_VEHICLE) // STKM can't spawn vehicles
 				np = -1;
 			else
 				np = sim->create_part(-1, rx, ry, playerp->elem);
@@ -628,6 +640,12 @@ int Element_STKM_run_stickman(playerst *playerp, UPDATE_FUNC_ARGS)
 	if (!parts[i].type)
 		return 1;
 
+	// VACC makes STKM always full HP
+	if (parts[i].ctype == PT_VACC)
+	{
+		parts[i].life = 100;
+	}
+
 	parts[i].ctype = playerp->elem;
 	return 0;
 }
@@ -681,9 +699,17 @@ void Element_STKM_interact(Simulation *sim, playerst *playerp, int i, int x, int
 		if (TYP(r)==PT_PRTI && sim->parts[i].type)
 		{
 			int nnx, count=1;//gives rx=0, ry=1 in update_PRTO
-			sim->parts[ID(r)].tmp = (int)((sim->parts[ID(r)].temp-73.15f)/100+1);
-			if (sim->parts[ID(r)].tmp>=CHANNELS) sim->parts[ID(r)].tmp = CHANNELS-1;
-			else if (sim->parts[ID(r)].tmp<0) sim->parts[ID(r)].tmp = 0;
+
+			sim->parts[ID(r)].tmp = sim->faradayMap[y / CELL][x / CELL] * CHANNELS + (int)((sim->parts[ID(r)].temp - 73.15f) / 100 + 1);
+			if (sim->parts[ID(r)].tmp >= FARADAY_CHANNELS * CHANNELS)
+			{
+				sim->parts[ID(r)].tmp = FARADAY_CHANNELS * CHANNELS - 1;
+			}
+			else if (sim->parts[ID(r)].tmp < 0)
+			{
+				sim->parts[ID(r)].tmp = 0;
+			}
+
 			for (nnx=0; nnx<80; nnx++)
 				if (!sim->portalp[sim->parts[ID(r)].tmp][count][nnx].type)
 				{
@@ -752,11 +778,17 @@ void Element_STKM_set_element(Simulation *sim, playerst *playerp, int element)
 {
 	auto &sd = SimulationData::CRef();
 	auto &elements = sd.elements;
+
+	if (element == PT_HAIR)
+	{
+		return;
+	}
+
 	if (elements[element].Falldown != 0
 	    || elements[element].Properties&TYPE_GAS
 	    || elements[element].Properties&TYPE_LIQUID
 	    || elements[element].Properties&TYPE_ENERGY
-	    || element == PT_LOLZ || element == PT_LOVE)
+	    || element == PT_LOLZ || element == PT_LOVE || element == PT_MONY)
 	{
 		if (!playerp->rocketBoots || element != PT_PLSM)
 		{

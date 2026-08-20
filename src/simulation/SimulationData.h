@@ -54,8 +54,11 @@ constexpr int WL_BLOCKAIR     = 16;
 constexpr int WL_ERASEALL     = 17;
 constexpr int WL_STASIS       = 18;
 constexpr int WL_FLOODHELPER  =255;
+constexpr int WL_INDEST       = 19;
+constexpr int WL_FARADAY      = 20;
+constexpr int WL_ONEWAY       = 21;
 
-constexpr int UI_WALLCOUNT = 19;
+constexpr int UI_WALLCOUNT = 22;
 
 constexpr int OLD_SPC_AIR = 236;
 constexpr int SPC_AIR     = 256;

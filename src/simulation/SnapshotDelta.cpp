@@ -94,7 +94,8 @@ bool operator ==(const playerst &lhs, const playerst &rhs)
 	       lhs.frames      == rhs.frames      &&
 	       lhs.rocketBoots == rhs.rocketBoots &&
 	       lhs.fan         == rhs.fan         &&
-	       lhs.spawnID     == rhs.spawnID;
+	       lhs.spawnID     == rhs.spawnID     &&
+	       lhs.stkmID      == rhs.stkmID;
 }
 
 // * Needed by FillSingleDiff for handling Snapshot::signs.
@@ -225,6 +226,13 @@ std::unique_ptr<SnapshotDelta> SnapshotDelta::FromSnapshots(const Snapshot &oldS
 	FillHunkVectorPtr(reinterpret_cast<const uint32_t *>(oldSnap.PortalParticles.data()), reinterpret_cast<const uint32_t *>(newSnap.PortalParticles.data()), delta.PortalParticles, newSnap.PortalParticles.size() * ParticleUint32Count);
 	FillHunkVectorPtr(reinterpret_cast<const uint32_t *>(oldSnap.stickmen.data())       , reinterpret_cast<const uint32_t *>(newSnap.stickmen.data()       ), delta.stickmen       , newSnap.stickmen       .size() * playerstUint32Count);
 
+	FillHunkVector(oldSnap.FaradayMap     , newSnap.FaradayMap     , delta.FaradayMap     );
+
+	FillHunkVector(oldSnap.TimeDilation   , newSnap.TimeDilation   , delta.TimeDilation   );
+
+	FillSingleDiff(oldSnap.Vehicle_p1     , newSnap.Vehicle_p1     , delta.Vehicle_p1     );
+	FillSingleDiff(oldSnap.Vehicle_p2     , newSnap.Vehicle_p2     , delta.Vehicle_p2     );
+
 	// * Slightly more interesting; this will only diff the common parts, the rest is copied separately.
 	auto commonSize = std::min(oldSnap.Particles.size(), newSnap.Particles.size());
 	FillHunkVectorPtr(reinterpret_cast<const uint32_t *>(oldSnap.Particles.data()), reinterpret_cast<const uint32_t *>(newSnap.Particles.data()), delta.commonParticles, commonSize * ParticleUint32Count);
@@ -262,6 +270,14 @@ std::unique_ptr<Snapshot> SnapshotDelta::Forward(const Snapshot &oldSnap)
 	ApplyHunkVectorPtr<false>(PortalParticles, reinterpret_cast<uint32_t *>(newSnap.PortalParticles.data()));
 	ApplyHunkVectorPtr<false>(stickmen       , reinterpret_cast<uint32_t *>(newSnap.stickmen.data()       ));
 
+	ApplyHunkVector<false>(FaradayMap     , newSnap.FaradayMap     );
+
+	ApplyHunkVector<false>(TimeDilation   , newSnap.TimeDilation   );
+
+	ApplySingleDiff<false>(Vehicle_p1     , newSnap.Vehicle_p1     );
+	ApplySingleDiff<false>(Vehicle_p2     , newSnap.Vehicle_p2     );
+
+
 	// * Slightly more interesting; apply the common hunk vector, copy the extra portion separaterly.
 	ApplyHunkVectorPtr<false>(commonParticles, reinterpret_cast<uint32_t *>(newSnap.Particles.data()));
 	auto commonSize = oldSnap.Particles.size() - extraPartsOld.size();
@@ -296,6 +312,13 @@ std::unique_ptr<Snapshot> SnapshotDelta::Restore(const Snapshot &newSnap)
 	ApplySingleDiff<true>(RngState       , oldSnap.RngState       );
 	ApplyHunkVectorPtr<true>(PortalParticles, reinterpret_cast<uint32_t *>(oldSnap.PortalParticles.data()));
 	ApplyHunkVectorPtr<true>(stickmen       , reinterpret_cast<uint32_t *>(oldSnap.stickmen.data()       ));
+
+	ApplyHunkVector<true>(FaradayMap     , oldSnap.FaradayMap     );
+
+	ApplyHunkVector<true>(TimeDilation   , oldSnap.TimeDilation   );
+
+	ApplySingleDiff<true>(Vehicle_p1     , oldSnap.Vehicle_p1     );
+	ApplySingleDiff<true>(Vehicle_p2     , oldSnap.Vehicle_p2     );
 
 	// * Slightly more interesting; apply the common hunk vector, copy the extra portion separaterly.
 	ApplyHunkVectorPtr<true>(commonParticles, reinterpret_cast<uint32_t *>(oldSnap.Particles.data()));

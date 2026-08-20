@@ -576,10 +576,13 @@ static void pushParticle(Simulation * sim, int i, int count, int original)
 					portaltmp = CHANNELS-1;
 				else if (portaltmp < 0)
 					portaltmp = 0;
+
+				auto channel = CHANNELS * sim->faradayMap[(y + ry) / CELL][(x + rx) / CELL] + portaltmp;
+
 				for (int nnx = 0; nnx < 80; nnx++)
-					if (!sim->portalp[portaltmp][count][nnx].type)
+					if (!sim->portalp[channel][count][nnx].type)
 					{
-						Element_PIPE_transfer_pipe_to_part(sim, sim->parts+i, &(sim->portalp[portaltmp][count][nnx]), false);
+						Element_PIPE_transfer_pipe_to_part(sim, sim->parts+i, &(sim->portalp[channel][count][nnx]), false);
 						count++;
 						break;
 					}
@@ -589,7 +592,9 @@ static void pushParticle(Simulation * sim, int i, int count, int original)
 	else //predefined 1 pixel thick pipe movement
 	{
 		int coords = 7 - ((sim->parts[i].tmp>>10)&7);
-		auto r = sim->pmap[y+ Element_PIPE_offsets[coords].Y][x+ Element_PIPE_offsets[coords].X];
+		auto rx = Element_PIPE_offsets[coords].X;
+		auto ry = Element_PIPE_offsets[coords].Y;
+		auto r = sim->pmap[y + ry][x + rx];
 		if ((TYP(r) == PT_PIPE || TYP(r) == PT_PPIP) && (sim->parts[ID(r)].tmp&PFLAG_COLORS) != notctype && !TYP(sim->parts[ID(r)].ctype))
 		{
 			transfer_pipe_to_pipe(sim->parts+i, sim->parts+(ID(r)), false);
@@ -605,10 +610,13 @@ static void pushParticle(Simulation * sim, int i, int count, int original)
 				portaltmp = CHANNELS-1;
 			else if (portaltmp < 0)
 				portaltmp = 0;
+
+			auto channel = CHANNELS * sim->faradayMap[(y + ry) / CELL][(x + rx) / CELL] + portaltmp;
+
 			for (int nnx = 0; nnx < 80; nnx++)
-				if (!sim->portalp[portaltmp][count][nnx].type)
+				if (!sim->portalp[channel][count][nnx].type)
 				{
-					Element_PIPE_transfer_pipe_to_part(sim, sim->parts+i, &(sim->portalp[portaltmp][count][nnx]), false);
+					Element_PIPE_transfer_pipe_to_part(sim, sim->parts+i, &(sim->portalp[channel][count][nnx]), false);
 					count++;
 					break;
 				}

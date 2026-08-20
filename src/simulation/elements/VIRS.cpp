@@ -53,6 +53,9 @@ void Element::Element_VIRS()
 
 int Element_VIRS_update(UPDATE_FUNC_ARGS)
 {
+	auto &sd = SimulationData::CRef();
+	auto &elements = sd.elements;
+
 	//tmp3 measures how many frames until it is cured (0 if still actively spreading and not being cured)
 	//tmp4 measures how many frames until it dies
 	int rndstore = sim->rng.gen();
@@ -98,7 +101,7 @@ int Element_VIRS_update(UPDATE_FUNC_ARGS)
 					return 0;
 				}
 				//soap cures virus
-				else if (TYP(r) == PT_SOAP)
+				else if (TYP(r) == PT_SOAP || TYP(r) == PT_SHPO || TYP(r) == PT_HOLY)
 				{
 					parts[i].tmp3 += 10;
 					if (!(rndstore & 0x3))
@@ -115,7 +118,7 @@ int Element_VIRS_update(UPDATE_FUNC_ARGS)
 					}
 				}
 				//transforms things into virus here
-				else if (TYP(r) != PT_VIRS && TYP(r) != PT_VRSS && TYP(r) != PT_VRSG && TYP(r) != PT_DMND && TYP(r) != PT_BASE)
+				else if (TYP(r) != PT_VIRS && TYP(r) != PT_VRSS && TYP(r) != PT_VRSG && !(elements[TYP(r)].Properties & PROP_INDESTRUCTIBLE && TYP(r) != PT_CLNE) && TYP(r) != PT_BASE && TYP(r) != PT_LEAD)
 				{
 					if (!(rndstore & 0x7))
 					{

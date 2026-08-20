@@ -50,6 +50,9 @@ void Element::Element_BOMB()
 
 static int update(UPDATE_FUNC_ARGS)
 {
+	auto &sd = SimulationData::CRef();
+	auto &elements = sd.elements;
+
 	for (auto rx = -1; rx <= 1; rx++)
 	{
 		for (auto ry = -1; ry <= 1; ry++)
@@ -60,7 +63,13 @@ static int update(UPDATE_FUNC_ARGS)
 				if (!r)
 					continue;
 				auto rt = TYP(r);
-				if (rt!=PT_BOMB && rt!=PT_EMBR && rt!=PT_DMND && rt!=PT_CLNE && rt!=PT_PCLN && rt!=PT_BCLN && rt!=PT_VIBR)
+				if (
+					(
+						!(elements[rt].Properties & PROP_INDESTRUCTIBLE) &&
+						rt!=PT_BOMB && rt!=PT_EMBR && rt!=PT_CLNE && rt!=PT_PCLN && rt!=PT_BCLN && rt!=PT_VIBR
+					) ||
+					TYP(sim->photons[y + ry][x + rx]) == PT_NTRI
+				)
 				{
 					const int rad = 8;
 					sim->kill_part(i);
@@ -76,7 +85,7 @@ static int update(UPDATE_FUNC_ARGS)
 									continue;
 
 								auto nt = TYP(pmap[ynxj][xnxi]);
-								if (nt!=PT_DMND && nt!=PT_CLNE && nt!=PT_PCLN && nt!=PT_BCLN && nt!=PT_VIBR)
+								if (!(elements[rt].Properties & PROP_INDESTRUCTIBLE) && nt!=PT_CLNE && nt!=PT_PCLN && nt!=PT_BCLN && nt!=PT_VIBR)
 								{
 									if (nt)
 										sim->kill_part(ID(pmap[ynxj][xnxi]));

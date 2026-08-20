@@ -35,7 +35,7 @@ void Element::Element_PLNT()
 	HeatConduct = 65;
 	Description = "Plant, drinks water and grows.";
 
-	Properties = TYPE_SOLID|PROP_NEUTPENETRATE|PROP_LIFE_DEC;
+	Properties = TYPE_SOLID|PROP_NEUTPENETRATE|PROP_LIFE_DEC|PROP_EDIBLE;
 
 	LowPressure = IPL;
 	LowPressureTransition = NT;
@@ -45,6 +45,8 @@ void Element::Element_PLNT()
 	LowTemperatureTransition = NT;
 	HighTemperature = 573.0f;
 	HighTemperatureTransition = PT_FIRE; //@ PLNT -> FIRE
+
+	FoodValue = 5;
 
 	Update = &update;
 	Graphics = &graphics;

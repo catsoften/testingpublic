@@ -1,6 +1,7 @@
 #include "simulation/ElementCommon.h"
 
 static int update(UPDATE_FUNC_ARGS);
+static int graphics(GRAPHICS_FUNC_ARGS);
 
 void Element::Element_SNOW()
 {
@@ -46,10 +47,24 @@ void Element::Element_SNOW()
 	HighTemperatureTransition = ST;
 
 	Update = &update;
+	Graphics = &graphics;
 }
 
 static int update(UPDATE_FUNC_ARGS)
 {
+	auto &sd = SimulationData::CRef();
+	auto &elements = sd.elements;
+
+	// Fix for liquid melting, also update in ICEI
+	if (
+		parts[i].ctype >= 0 && parts[i].ctype < PT_NUM && elements[parts[i].ctype].Enabled &&
+		elements[parts[i].ctype].LowTemperatureTransition == PT_LQUD && parts[i].temp > elements[parts[i].ctype].MeltingPoint
+	)
+	{
+		sim->part_change_type(i, x, y, PT_LQUD);
+		return 1;
+	}
+
 	if (parts[i].ctype==PT_FRZW)//get colder if it is from FRZW
 	{
 		parts[i].temp = restrict_flt(parts[i].temp-1.0f, MIN_TEMP, MAX_TEMP);
@@ -72,5 +87,24 @@ static int update(UPDATE_FUNC_ARGS)
 			}
 		}
 	}
+	return 0;
+}
+
+static int graphics(GRAPHICS_FUNC_ARGS)
+{
+	auto &sd = SimulationData::CRef();
+	auto &elements = sd.elements;
+
+	if (cpart->ctype >= 0 && cpart->ctype < PT_NUM && elements[cpart->ctype].Enabled && elements[cpart->ctype].FrozenGraphics)
+	{
+		auto color = elements[cpart->ctype].Colour;
+
+		*colr = color.Red;
+		*colg = color.Green;
+		*colb = color.Blue;
+
+		return elements[cpart->ctype].FrozenGraphics(GRAPHICS_FUNC_SUBCALL_ARGS);
+	}
+
 	return 0;
 }

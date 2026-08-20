@@ -1,0 +1,4 @@
+#pragma once
+#include "simulation/ElementDefs.h"
+
+int Element_FLSH_update(UPDATE_FUNC_ARGS);

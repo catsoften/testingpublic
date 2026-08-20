@@ -71,6 +71,8 @@ static int update(UPDATE_FUNC_ARGS)
 	else if (parts[i].tmp < 0)
 		parts[i].tmp = 0;
 
+	auto channel = CHANNELS * sim->faradayMap[y / CELL][x / CELL] + parts[i].tmp;
+
 	for (int count = 0; count < 8; count++)
 	{
 		int rx = portal_rx[count];
@@ -94,20 +96,20 @@ static int update(UPDATE_FUNC_ARGS)
 				Element_SOAP_detach(sim, ID(r));
 
 			for (int nnx=0; nnx<80; nnx++)
-				if (!sim->portalp[parts[i].tmp][count][nnx].type)
+				if (!sim->portalp[channel][count][nnx].type)
 				{
 					if (TYP(r) == PT_STOR)
 					{
 						if (sd.IsElement(parts[ID(r)].tmp) && (elements[parts[ID(r)].tmp].Properties & (TYPE_PART | TYPE_LIQUID | TYPE_GAS | TYPE_ENERGY)))
 						{
 							// STOR uses same format as PIPE, so we can use this function to do the transfer
-							Element_PIPE_transfer_pipe_to_part(sim, parts+(ID(r)), &sim->portalp[parts[i].tmp][count][nnx], true);
+							Element_PIPE_transfer_pipe_to_part(sim, parts+(ID(r)), &sim->portalp[channel][count][nnx], true);
 							break;
 						}
 					}
 					else
 					{
-						sim->portalp[parts[i].tmp][count][nnx] = parts[ID(r)];
+						sim->portalp[channel][count][nnx] = parts[ID(r)];
 						if (TYP(r) == PT_SPRK)
 							sim->part_change_type(ID(r),x+rx,y+ry,parts[ID(r)].ctype);
 						else

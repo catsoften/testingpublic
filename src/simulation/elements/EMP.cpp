@@ -111,7 +111,9 @@ void Element_EMP_Trigger(Simulation *sim, int triggerCount)
 		int t = parts[r].type;
 		auto rx = int(parts[r].x);
 		auto ry = int(parts[r].y);
-		if (t==PT_SPRK || (t==PT_SWCH && parts[r].life!=0 && parts[r].life!=10) || (t==PT_WIRE && parts[r].ctype>0))
+		if (
+			sim->faradayEmp.contains(sim->faradayMap[ry / CELL][rx / CELL]) &&
+			(t==PT_SPRK || (t==PT_SWCH && parts[r].life!=0 && parts[r].life!=10) || (t==PT_WIRE && parts[r].ctype>0)))
 		{
 			bool is_elec = false;
 			if (parts[r].ctype==PT_PSCN || parts[r].ctype==PT_NSCN || parts[r].ctype==PT_PTCT ||

@@ -63,7 +63,7 @@ static int update(UPDATE_FUNC_ARGS)
 				auto r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if ((elements[TYP(r)].Properties & (TYPE_SOLID | TYPE_PART | TYPE_LIQUID)) && !(elements[TYP(r)].Properties & PROP_SPARKSETTLE))
+				if ((elements[TYP(r)].Properties & (TYPE_SOLID | TYPE_PART | TYPE_LIQUID)) && !(elements[TYP(r)].Properties & PROP_SPARKSETTLE) && (TYP(r) != PT_SPRK || parts[ID(r)].ctype != PT_IRDM))
 				{
 					sim->kill_part(i);
 					return 1;
@@ -71,6 +71,16 @@ static int update(UPDATE_FUNC_ARGS)
 			}
 		}
 	}
+
+	// Thanks ChemGuy
+	// https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=20347
+	// POSI + ELEC flash effect
+	if (parts[i].tmp == 3)
+	{
+		parts[i].vx = parts[i].vy = 0.0f;
+		parts[i].life -= 3; // "Cheated" to get a bright but short-lived spark
+	}
+
 	return 0;
 }
 
@@ -126,6 +136,13 @@ static int graphics(GRAPHICS_FUNC_ARGS)
 	else if (cpart->tmp==2)
 	{
 		*pixel_mode = PMODE_FLAT | FIRE_ADD;
+		*firea = 255;
+	}
+	// Thanks ChemGuy
+	// https://powdertoy.co.uk/Discussions/Thread/View.html?Thread=20347
+	else if (cpart->tmp == 3)
+	{
+		*pixel_mode = PMODE_SPARK | FIRE_ADD;
 		*firea = 255;
 	}
 	else

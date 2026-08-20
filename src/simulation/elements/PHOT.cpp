@@ -67,6 +67,91 @@ static int update(UPDATE_FUNC_ARGS)
 	if (parts[i].temp > 506)
 		if (sim->rng.chance(1, 10))
 			Element_FIRE_update(UPDATE_FUNC_SUBCALL_ARGS);
+
+	// PHOT has different code for moving through FIBR
+	if (TYP(pmap[y][x]) == PT_FIBR)
+	{
+		int max_speed = parts[ID(pmap[y][x])].tmp;
+		int vx = isign(parts[i].vx);
+		int vy = isign(parts[i].vy);
+		int dx = 0, dy = 0;
+
+		if (vx == 0 && vy == 0) // In the special case where we have no velocity just do nothing
+		{
+			return 0;
+		}
+		else if (max_speed == 0) // Freezing fiber
+		{
+			parts[i].vx = parts[i].vy = 0.0f;
+			return 0;
+		}
+
+		while (std::abs(dx) < max_speed && std::abs(dy) < max_speed)
+		{
+			dx += vx, dy += vy;
+
+			// Bounds check and make sure velocity is not 0
+			if (x + dx >= 0 && x + dx < XRES && y + dy >= 0 && y + dy < YRES)
+			{
+				auto r2 = pmap[y + dy][x + dx];
+				if (TYP(r2) != PT_FIBR)
+				{
+					std::vector<std::pair<int, int>> branches;
+					dx -= vx;
+					dy -= vy;
+
+					// Look for nearby FIBR to redirect to
+					for (auto rx = -1; rx <= 1; rx++)
+					{
+						for (auto ry = -1; ry <= 1; ry++)
+						{
+							if (rx || ry)
+							{
+								auto r2 = pmap[y + dy + ry][x + dx + rx];
+								if (r2 && TYP(r2) == PT_FIBR && (rx != -vx || ry != -vy) && (rx == 0 || ry == 0))
+								{
+									branches.push_back(std::make_pair(rx, ry));
+								}
+							}
+						}
+					}
+
+					if (branches.size() == 0)
+					{
+						// Avoid stopping at end
+						dx = vx * max_speed;
+						dy = vy * max_speed;
+					}
+					else if (branches.size() == 1)
+					{
+						parts[i].x += dx;
+						parts[i].y += dy;
+						dx = branches[0].first;
+						dy = branches[0].second;
+					}
+					else
+					{
+						auto j = sim->rng.between(0, branches.size() - 1);
+						parts[i].x += dx;
+						parts[i].y += dy;
+						dx = branches[j].first;
+						dy = branches[j].second;
+					}
+
+					break;
+				}
+			}
+			else // Out of bounds
+			{
+				dx = vx;
+				dy = vy;
+				break;
+			}
+		}
+		parts[i].vx = dx;
+		parts[i].vy = dy;
+	}
+
 	for (auto rx = -1; rx <= 1; rx++)
 	{
 		for (auto ry = -1; ry <= 1; ry++)
@@ -93,7 +178,7 @@ static int update(UPDATE_FUNC_ARGS)
 					sim->pv[y/CELL][x/CELL] -= 15.0f * CFDS;
 				}
 			}
-			else if((TYP(r) == PT_QRTZ || TYP(r) == PT_PQRT) && !ry && !rx)//if on QRTZ
+			else if((TYP(r) == PT_QRTZ || TYP(r) == PT_PQRT || TYP(r) == PT_RDMD) && !ry && !rx)//if on QRTZ
 			{
 				float a = sim->rng.between(0, 359) * std::numbers::pi_v<float> / 180.0f;
 				parts[i].vx = 3.0f*cosf(a);
@@ -136,7 +221,7 @@ static int update(UPDATE_FUNC_ARGS)
 
 				return 1;
 			}
-			else if (TYP(r) == PT_FILT && parts[ID(r)].tmp==9)
+			else if ((TYP(r) == PT_FILT || (TYP(r) == PT_PFLT && parts[ID(r)].life)) && parts[ID(r)].tmp == 9)
 			{
 				parts[i].vx += ((float)sim->rng.between(-500, 500))/1000.0f;
 				parts[i].vy += ((float)sim->rng.between(-500, 500))/1000.0f;
@@ -180,6 +265,6 @@ static void create(ELEMENT_CREATE_FUNC_ARGS)
 	float a = sim->rng.between(0, 7) * 0.78540f;
 	sim->parts[i].vx = 3.0f * cosf(a);
 	sim->parts[i].vy = 3.0f * sinf(a);
-	if (TYP(sim->pmap[y][x]) == PT_FILT)
+	if (TYP(sim->pmap[y][x]) == PT_FILT || TYP(sim->pmap[y][x]) == PT_PFLT)
 		sim->parts[i].ctype = Element_FILT_interactWavelengths(sim, &sim->parts[ID(sim->pmap[y][x])], sim->parts[i].ctype);
 }

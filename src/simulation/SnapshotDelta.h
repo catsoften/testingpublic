@@ -70,6 +70,13 @@ struct SnapshotDelta
 	SingleDiff<uint64_t> FrameCount;
 	SingleDiff<RNG::State> RngState;
 
+	HunkVector<int> FaradayMap;
+
+	HunkVector<int> TimeDilation;
+
+	SingleDiff<int> Vehicle_p1;
+	SingleDiff<int> Vehicle_p2;
+
 	SingleDiff<Json::Value> Authors;
 
 	static std::unique_ptr<SnapshotDelta> FromSnapshots(const Snapshot &oldSnap, const Snapshot &newSnap);

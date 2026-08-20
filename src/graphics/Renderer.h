@@ -23,6 +23,7 @@ struct GraphicsFuncContext
 	RNG rng;
 	const Particle *pipeSubcallCpart;
 	Particle *pipeSubcallTpart;
+	Renderer *renderer;
 };
 
 RGB HeatToColour(float temp, float hdispLimitMin, float hdispLimitMax);

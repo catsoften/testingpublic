@@ -145,4 +145,8 @@ embedded_files += [
 	[ 'save_online_png', files('save_online.png') ],
 	[ 'font_bz2', files('font.bz2') ],
 	[ 'credits_json', files('credits.json') ],
+	[ 'CYTK_png', files('CYTK.png') ],
+	[ 'JCB1_png', files('JCB1.png') ],
+	[ 'TANK_png', files('TANK.png') ],
+	[ 'STKM_arc_png', files('STKM_arc.png') ],
 ]

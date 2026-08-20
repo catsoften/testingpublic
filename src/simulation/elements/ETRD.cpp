@@ -106,6 +106,8 @@ int Element_ETRD_nearestSparkablePart(Simulation *sim, int targetId)
 	int foundI = -1;
 	ui::Point targetPos = ui::Point(int(parts[targetId].x), int(parts[targetId].y));
 
+	auto faraday = sim->faradayMap[targetPos.Y / CELL][targetPos.X / CELL];
+
 	if (sim->etrd_count_valid)
 	{
 		// countLife0 doesn't need recalculating, so just focus on finding the nearest particle
@@ -119,7 +121,7 @@ int Element_ETRD_nearestSparkablePart(Simulation *sim, int targetId)
 			{
 				ui::Point checkPos = targetPos + delta.d;
 				int checkDistance = delta.length;
-				if (parts[targetId].tmp >= checkDistance) // tmp sets min distance
+				if (parts[targetId].tmp >= checkDistance || sim->faradayMap[checkPos.Y / CELL][checkPos.X / CELL] != faraday) // tmp sets min distance
 				{
 					continue;
 				}
@@ -144,7 +146,7 @@ int Element_ETRD_nearestSparkablePart(Simulation *sim, int targetId)
 		{
 			for (int i = 0; i < sim->parts.active; i++)
 			{
-				if (parts[i].type == PT_ETRD && !parts[i].life)
+				if (parts[i].type == PT_ETRD && !parts[i].life && sim->faradayMap[int(parts[i].y) / CELL][int(parts[i].x) / CELL] == faraday)
 				{
 					ui::Point checkPos = ui::Point(int(parts[i].x)-targetPos.X, int(parts[i].y)-targetPos.Y);
 					int checkDistance = int(std::hypot(checkPos.X, checkPos.Y));
@@ -163,7 +165,7 @@ int Element_ETRD_nearestSparkablePart(Simulation *sim, int targetId)
 		int countLife0 = 0;
 		for (int i = 0; i < sim->parts.active; i++)
 		{
-			if (parts[i].type == PT_ETRD && !parts[i].life)
+			if (parts[i].type == PT_ETRD && !parts[i].life && sim->faradayMap[int(parts[i].y) / CELL][int(parts[i].x) / CELL] == faraday)
 			{
 				countLife0++;
 				ui::Point checkPos = ui::Point(int(parts[i].x)-targetPos.X, int(parts[i].y)-targetPos.Y);

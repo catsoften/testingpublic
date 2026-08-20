@@ -4,6 +4,7 @@ simulation_files = files(
 	'Element.cpp',
 	'ElementClasses.cpp',
 	'GOLString.cpp',
+	'MovingSolid.cpp',
 	'Particle.cpp',
 	'SaveRenderer.cpp',
 	'Sign.cpp',
@@ -11,6 +12,7 @@ simulation_files = files(
 	'Simulation.cpp',
 	'StructProperty.cpp',
 	'FrameTime.cpp',
+	'Vehicle.cpp',
 )
 
 subdir('elements')

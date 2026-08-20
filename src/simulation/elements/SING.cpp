@@ -49,6 +49,9 @@ void Element::Element_SING()
 
 static int update(UPDATE_FUNC_ARGS)
 {
+	auto &sd = SimulationData::CRef();
+	auto &elements = sd.elements;
+
 	int singularity = -parts[i].life;
 
 	if (sim->pv[y/CELL][x/CELL]<singularity)
@@ -119,7 +122,7 @@ static int update(UPDATE_FUNC_ARGS)
 				auto r = pmap[y+ry][x+rx];
 				if (!r)
 					continue;
-				if (TYP(r)!=PT_DMND&& sim->rng.chance(1, 3))
+				if ((!(elements[TYP(r)].Properties & PROP_INDESTRUCTIBLE) || TYP(r) == PT_CLNE) && sim->rng.chance(1, 3)) // CLNE is not considered "indestructible" to SING
 				{
 					if (TYP(r)==PT_SING && parts[ID(r)].life >10)
 					{
