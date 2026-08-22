@@ -1,6 +1,7 @@
 simulation_files = files(
 	'Air.cpp',
 	'AccessProperty.cpp',
+	'Editing.cpp', # More functions being used for things they weren't designed for
 	'Element.cpp',
 	'ElementClasses.cpp',
 	'GOLString.cpp',
@@ -21,7 +22,6 @@ subdir('gravity')
 
 powder_files += files(
 	'AccessPropertyParse.cpp',
-	'Editing.cpp',
 	'SimTool.cpp',
 	'ToolClasses.cpp',
 	'Snapshot.cpp',

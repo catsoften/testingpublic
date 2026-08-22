@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <numbers>
 
 #include "Misc.h"
 #include "ultimata/ElementUtils.h"

@@ -1866,6 +1866,12 @@ void GameModel::AllocElementTool(int element)
 	case PT_STKM:
 	case PT_FIGH:
 	case PT_STKM2:
+	case PT_BALI:
+	case PT_CYTK:
+	case PT_GNSH:
+	case PT_HRSE:
+	case PT_JCB1:
+	case PT_TANK:
 		AllocTool(std::make_unique<PlopTool>(element, elem.Identifier));
 		break;
 

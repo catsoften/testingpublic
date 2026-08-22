@@ -82,6 +82,11 @@ public:
 		return stats;
 	}
 
+	uint32_t GetColorMode() const
+	{
+		return colorMode;
+	}
+
 	const RenderableSimulation *sim = nullptr;
 
 	static std::unique_ptr<VideoBuffer> WallIcon(int wallID, Vec2<int> size);

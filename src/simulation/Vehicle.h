@@ -5,7 +5,7 @@
 #include "common/Vec2.h"
 #include "graphics/Pixel.h"
 
-class Particle;
+struct Particle;
 struct playerst;
 class Renderer;
 class Simulation;
